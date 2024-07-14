@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import connectDB from './server/DB/databaseConfigs.js';
 import productRoutes from './server/routes/productRoutes.js';
+import userRoutes from './server/routes/userRoutes.js';
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/products', productRoutes);
+app.use('/api/user', userRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello to online API");
