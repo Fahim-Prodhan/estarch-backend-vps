@@ -1,7 +1,6 @@
 import User from '../models/user.js';
 import jwt from 'jsonwebtoken';
 import { randomInt } from 'crypto';
-import { sendSms } from '../utils/generateToken.js';
 import { saveOtp, getSavedOtp, deleteOtp } from '../utils/otpStore.js';
 
 const secret = 'your_jwt_secret'; // Replace with your secret key

@@ -5,6 +5,9 @@ import cors from 'cors';
 import connectDB from './server/DB/databaseConfigs.js';
 import productRoutes from './server/routes/productRoutes.js';
 import userRoutes from './server/routes/userRoutes.js';
+import categoryRoutes from './server/routes/categoryRoutes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -16,8 +19,16 @@ app.use(cors());
 app.use(express.json()); 
 app.use(cookieParser());
 
+// Derive __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api/products', productRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/categories', categoryRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello to online API");
