@@ -4,10 +4,15 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import connectDB from './server/DB/databaseConfigs.js';
 import productRoutes from './server/routes/productRoutes.js';
+import attributeRoutes from './server/routes/attributeRoutes.js';
+import attributeListRoutes from './server/routes/attributeListRoutes.js';
 import userRoutes from './server/routes/userRoutes.js';
 import categoryRoutes from './server/routes/categoryRoutes.js';
 import supplierRoutes from './server/routes/supplierRoutes.js';
 import expenseRoutes from './server/routes/expenseRoutes.js';
+import attributeValueRoutes from './server/routes/attributeValueRoutes.js';
+import promoCodeRoutes from './server/routes/promoCodeRoutes.js';
+
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -33,8 +38,10 @@ app.use('/api/user', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
-
-
+app.use('/api/attributes', attributeRoutes);
+app.use('/api/attributesList', attributeListRoutes);
+app.use('/api/attribute-values', attributeValueRoutes);
+app.use('/api/promo-codes', promoCodeRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello to online API");
