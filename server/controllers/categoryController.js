@@ -1,5 +1,4 @@
 import Category from '../models/Category.js';
-import multer from 'multer';
 
 // Create a new category
 export const createCategory = async (req, res) => {
