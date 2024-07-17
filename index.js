@@ -6,6 +6,8 @@ import connectDB from './server/DB/databaseConfigs.js';
 import productRoutes from './server/routes/productRoutes.js';
 import userRoutes from './server/routes/userRoutes.js';
 import categoryRoutes from './server/routes/categoryRoutes.js';
+import supplierRoutes from './server/routes/supplierRoutes.js';
+import expenseRoutes from './server/routes/expenseRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -29,6 +31,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/products', productRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/expenses', expenseRoutes);
+
+
 
 app.get("/", (req, res) => {
   res.send("Hello to online API");
