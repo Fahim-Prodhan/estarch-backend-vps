@@ -12,7 +12,8 @@ import supplierRoutes from './server/routes/supplierRoutes.js';
 import expenseRoutes from './server/routes/expenseRoutes.js';
 import attributeValueRoutes from './server/routes/attributeValueRoutes.js';
 import promoCodeRoutes from './server/routes/promoCodeRoutes.js';
-
+import carosulRoutes from './server/routes/carosulRoutes.js';
+import productListRoutes from './routes/productListRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -42,6 +43,8 @@ app.use('/api/attributes', attributeRoutes);
 app.use('/api/attributesList', attributeListRoutes);
 app.use('/api/attribute-values', attributeValueRoutes);
 app.use('/api/promo-codes', promoCodeRoutes);
+app.use('/api/carosul', carosulRoutes);
+app.use('/api/productlists', productListRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello to online API");
