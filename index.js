@@ -7,9 +7,19 @@ import productRoutes from './server/routes/productRoutes.js';
 import userRoutes from './server/routes/userRoutes.js';
 import categoryRoutes from './server/routes/categoryRoutes.js';
 import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
 import { fileURLToPath } from 'url';
+import uploader from './server/middleware/uploader.js';
+import { uploadSingle } from './server/middleware/uploadSingle.js';
 
 dotenv.config();
+
+
+cloudinary.config({ 
+  cloud_name: 'dhn94c9k5', 
+  api_key: '191656742611749', 
+  api_secret: 'BEYlGBUvUbNm4sISIRNLOLd2ixU'
+});
 
 const app = express();
 
@@ -30,6 +40,9 @@ app.use('/api/products', productRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/categories', categoryRoutes);
 
+app.post("/upload", uploader.single("file"), uploadSingle, async (req, res) => {
+  res.send(req.body);
+});
 app.get("/", (req, res) => {
   res.send("Hello to online API");
 });

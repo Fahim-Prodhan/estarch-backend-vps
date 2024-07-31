@@ -1,64 +1,36 @@
 import mongoose from 'mongoose';
 
-const { Schema, model } = mongoose;
-
 const productSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: [true, 'Name is required'],
-    },
-    sku: {
-        type: String,
-        required: [true, 'SKU is required'],
-    },
-    sizes: {
-        type: [Number],
-        required: [true, 'Sizes are required'],
-        validate: {
-            validator: Array.isArray,
-            message: 'Sizes should be an array of numbers',
-        },
-    },
-    price: {
-        type: Number,
-        required: [true, 'Price is required'],
-    },
-    discountedPrice: {
-        type: Number,
-    },
-    quantity: {
-        type: Number,
-        required: [true, 'Quantity is required'],
-    },
-    images: {
-        type: [String],
-        required: [true, 'Images are required'],
-        validate: {
-            validator: Array.isArray,
-            message: 'Images should be an array of strings',
-        },
-    },
-    description: {
-        type: String,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-    isBestSelling: {
-        type: Boolean,
-        default: false,
-    },
-    isNewArrival: {
-        type: Boolean,
-        default: false,
-    },
-    category: {
-        type: String,
-        required: [true, 'Category is required'],
-    },
-});
+  showSize: { type: Boolean, default: false },
+  freeDelevary: { type: Boolean, default: false },
+  featureProduct: { type: Boolean, default: false },
+  productStatus: { type: Boolean, default: false },
+  posSuggestion: { type: Boolean, default: false },
+  images: [String], 
+  videoUrl: { type: String, default: '' },
+  content: { type: String, default: '' },
+  guideContent: { type: String, default: '' },
+  discount: {
+    type: { type: String, enum: ['Flat', 'Percentage'], default: 'Flat' },
+    amount: { type: Number, default: 0 }
+  },
+  regularPrice: { type: Number, default: 0 },
+  salePrice: { type: Number, default: 0 },
+  selectedSizes: [String], 
+  sizeDetails: [{
+    size: String,
+    barcode: String,
+    purchasePrice: Number,
+    sellingPrice: Number,
+    discountPercent: Number,
+    discountAmount: Number,
+    afterDiscount: Number,
+    wholesalePrice: Number,
+    openingStock: Number,
+    ospPrice: Number
+  }]
+}, { timestamps: true });
 
-const Product = model('Product', productSchema);
+const Product = mongoose.model('Product', productSchema);
 
 export default Product;

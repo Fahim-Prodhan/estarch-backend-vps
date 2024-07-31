@@ -1,55 +1,157 @@
-import Category from '../models/Category.js';
-
-// Create a new category
+// controllers/categoryController.js
+import Category from '../models/category.js';
+import SubCategory from '../models/subCategory.js';
+// controllers/brandController.js
+import Brand from '../models/brand.js';
+// Create Category
 export const createCategory = async (req, res) => {
     try {
-        const images = req.files.map(file => file.path);
-        const categoryData = {
-            ...req.body,
-            images
-        };
-        const category = new Category(categoryData);
-        await category.save();
-        res.status(201).json(category);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+        const { name } = req.body;
+        const newCategory = new Category({ name });
+        await newCategory.save();
+        res.status(201).json(newCategory);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
-
-// Get all categories
-export const getCategories = async (req, res) => {
+export const fetchSubCategories = async (req, res) => {
     try {
-        const categories = await Category.find();
-        res.status(200).json(categories);
+        const { categoryId } = req.params;
+
+        // Find subcategories by category ID
+        const subCategories = await SubCategory.find({ category: categoryId }).populate('category');
+        
+        if (subCategories.length === 0) {
+            return res.status(404).json({ message: 'No subcategories found for this category' });
+        }
+        
+        res.json(subCategories);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ error: error.message });
+    }
+};
+// Create SubCategory
+export const createSubCategory = async (req, res) => {
+    try {
+        const { name, categoryId } = req.body;
+        const newSubCategory = new SubCategory({ name, category: categoryId });
+        await newSubCategory.save();
+        await Category.findByIdAndUpdate(categoryId, { $push: { subcategories: newSubCategory._id } });
+        res.status(201).json(newSubCategory);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Update a category
+// Get all Categories with SubCategories
+export const getCategoriesWithSubCategories = async (req, res) => {
+    try {
+        const categories = await Category.find().populate('subcategories');
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Update Category
 export const updateCategory = async (req, res) => {
-    const { id } = req.params;
     try {
-        const category = await Category.findByIdAndUpdate(id, req.body, { new: true });
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
-        }
-        res.status(200).json(category);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+        const { id } = req.params;
+        const { name } = req.body;
+        const updatedCategory = await Category.findByIdAndUpdate(id, { name }, { new: true });
+        res.json(updatedCategory);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
-// Delete a category
-export const deleteCategory = async (req, res) => {
-    const { id } = req.params;
+// Update SubCategory
+export const updateSubCategory = async (req, res) => {
     try {
-        const category = await Category.findByIdAndDelete(id);
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found' });
-        }
-        res.status(200).json({ message: 'Category deleted' });
+        const { id } = req.params;
+        const { name, categoryId } = req.body;
+        const updatedSubCategory = await SubCategory.findByIdAndUpdate(id, { name, category: categoryId }, { new: true });
+        res.json(updatedSubCategory);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Delete Category
+export const deleteCategory = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Category.findByIdAndDelete(id);
+        res.json({ message: 'Category deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Delete SubCategory
+export const deleteSubCategory = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await SubCategory.findByIdAndDelete(id);
+        res.json({ message: 'SubCategory deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const getSubCategories = async (req, res) => {
+    try {
+        // Populate 'category' field to get category details
+        const subCategories = await SubCategory.find().populate('category');
+        res.json(subCategories);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+};
+
+
+
+// Create a new brand
+export const createBrand = async (req, res) => {
+    try {
+        const { name } = req.body;
+        const brand = new Brand({ name });
+        await brand.save();
+        res.status(201).json(brand);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+// Get all brands
+export const getBrands = async (req, res) => {
+    try {
+        const brands = await Brand.find();
+        res.json(brands);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Update a brand
+export const updateBrand = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        const brand = await Brand.findByIdAndUpdate(id, { name }, { new: true });
+        res.json(brand);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+// Delete a brand
+export const deleteBrand = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Brand.findByIdAndDelete(id);
+        res.status(204).end();
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 };

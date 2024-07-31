@@ -1,20 +1,35 @@
-import express from 'express';
-import { createCategory, getCategories, updateCategory, deleteCategory } from '../controllers/categoryController.js';
-import featureToggle from '../middleware/categoryMiddleware.js';
-import uploader from '../middleware/uploader.js';
+// routes/categoryRoutes.js
+import { Router } from 'express';
+import {
+    createCategory,
+    createSubCategory,
+    getCategoriesWithSubCategories,
+    updateCategory,
+    updateSubCategory,
+    deleteCategory,
+    deleteSubCategory,
+    getSubCategories,
+    fetchSubCategories,
+    createBrand,
+    getBrands,
+    updateBrand,
+    deleteBrand
+} from '../controllers/categoryController.js';
 
-const router = express.Router();
+const router = Router();
 
-// Create a new category
-router.post('/', uploader.array('images', 10), featureToggle, createCategory);
-
-// Get all categories
-router.get('/', getCategories);
-
-// Update a category
-router.put('/:id', featureToggle, updateCategory);
-
-// Delete a category
-router.delete('/:id', deleteCategory);
+router.post('/categories', createCategory);
+router.post('/subcategories', createSubCategory);
+router.get('/subcategories', getSubCategories);
+router.get('/categories', getCategoriesWithSubCategories);
+router.get('/subcategories/:categoryId', fetchSubCategories); 
+router.put('/categories/:id', updateCategory);
+router.put('/subcategories/:id', updateSubCategory);
+router.delete('/categories/:id', deleteCategory);
+router.delete('/subcategories/:id', deleteSubCategory);
+router.post('/brands', createBrand);
+router.get('/brands', getBrands);
+router.put('/brands/:id', updateBrand);
+router.delete('/brands/:id', deleteBrand);
 
 export default router;
