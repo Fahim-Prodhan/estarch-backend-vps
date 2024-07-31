@@ -5,8 +5,6 @@ import cors from 'cors';
 import connectDB from './server/DB/databaseConfigs.js';
 import productRoutes from './server/routes/productRoutes.js';
 import attributeRoutes from './server/routes/attributeRoutes.js';
-// import attributeListRoutes from './server/routes/attributeListRoutes.js';
-import userRoutes from './server/routes/userRoutes.js';
 import categoryRoutes from './server/routes/categoryRoutes.js';
 import supplierRoutes from './server/routes/supplierRoutes.js';
 import expenseRoutes from './server/routes/expenseRoutes.js';
