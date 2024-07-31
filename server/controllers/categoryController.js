@@ -50,8 +50,8 @@ export const deleteCategory = async (req, res) => {
 // Get SubCategories by Category
 export const fetchSubCategories = async (req, res) => {
     try {
-        const { categoryId } = req.params;
-        const subCategories = await SubCategory.find({ category: categoryId }).populate('category');
+        const { categoryName } = req.params;
+        const subCategories = await SubCategory.find({ category: categoryName }).populate('category');
         if (subCategories.length === 0) {
             return res.status(404).json({ message: 'No subcategories found for this category' });
         }
