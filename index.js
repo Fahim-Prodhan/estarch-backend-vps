@@ -13,7 +13,7 @@ import expenseRoutes from './server/routes/expenseRoutes.js';
 import attributeValueRoutes from './server/routes/attributeValueRoutes.js';
 import promoCodeRoutes from './server/routes/promoCodeRoutes.js';
 import carosulRoutes from './server/routes/carosulRoutes.js';
-import productListRoutes from './routes/productListRoutes.js';
+import productListRoutes from './server/routes/productListRoutes.js';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
 import { fileURLToPath } from 'url';
