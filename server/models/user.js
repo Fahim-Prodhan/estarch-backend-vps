@@ -1,27 +1,39 @@
-import mongoose from "mongoose";
-import bcrypt from 'bcrypt';
-const userSchema = new mongoose.Schema(
-  {
-    phoneNumber: {
-      type: String,
-      unique: true,
-      required: true
-    },
-    password: {
-      type: String
-    }
-  });
-  userSchema.pre('save', async function(next) {
-    if (this.isModified('password') || this.isNew) {
-      const salt = await bcrypt.genSalt(10);
-      this.password = await bcrypt.hash(this.password, salt);
-    }
-    next();
-  });
-  
-  userSchema.methods.comparePassword = async function(password) {
-    return bcrypt.compare(password, this.password);
-  };
-const User = mongoose.model("User", userSchema);
+// models/userModel.js
+
+import mongoose from 'mongoose';
+
+const userSchema = new mongoose.Schema({
+  mobile: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/^\+880[0-9]{10}$/, 'Please provide a valid Bangladeshi phone number']
+  },
+  otp: {
+    type: String,
+    required: false
+  },
+  otpExpires: {
+    type: Date,
+    required: false
+  },
+  password: {
+    type: String,
+    required: false
+  },
+  isActive: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Index to ensure that phone numbers are unique
+userSchema.index({ mobile: 1 }, { unique: true });
+
+const User = mongoose.model('User', userSchema);
 
 export default User;

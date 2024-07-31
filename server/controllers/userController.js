@@ -1,57 +1,30 @@
 import User from '../models/user.js';
-import jwt from 'jsonwebtoken';
-import { randomInt } from 'crypto';
-import { saveOtp, getSavedOtp, deleteOtp } from '../utils/otpStore.js';
+import { sendOtp } from './otpController.js'; // Import sendOtp function
 
-const secret = 'your_jwt_secret'; // Replace with your secret key
+export const registerUser = async (req, res) => {
+    const { mobileNumber, password } = req.body;
 
-export const sendOtp = async (req, res) => {
-  const { phoneNumber } = req.body;
-  if (!/^(\+8801)[3-9]\d{8}$/.test(phoneNumber)) {
-    return res.status(400).json({ message: 'Invalid Bangladeshi phone number' });
-  }
-
-  const otp = randomInt(100000, 999999).toString();
-  await saveOtp(phoneNumber, otp);
-  await sendSms(phoneNumber, `Your OTP is ${otp}`);
-
-  res.json({ message: 'OTP sent' });
-};
-
-export const verifyOtp = async (req, res) => {
-  const { phoneNumber, otp } = req.body;
-  const savedOtp = await getSavedOtp(phoneNumber);
-
-  if (savedOtp === otp) {
-    deleteOtp(phoneNumber);
-    let user = await User.findOne({ phoneNumber });
-    if (!user) {
-      user = new User({ phoneNumber });
-      await user.save();
+    if (!mobileNumber || !password) {
+        return res.status(400).json({ error: 'Mobile number and password are required' });
     }
 
-    const token = jwt.sign({ userId: user._id }, secret, { expiresIn: '1h' });
-    res.json({ token, message: 'OTP verified' });
-  } else {
-    res.status(400).json({ message: 'Invalid OTP' });
-  }
-};
+    try {
+        // Create a new user
+        let user = new User({ mobile: mobileNumber, password });
 
-export const setPassword = async (req, res) => {
-  const { password } = req.body;
-  req.user.password = password;
-  await req.user.save();
-  res.json({ message: 'Password set successfully' });
-};
+        await user.save();
 
-export const login = async (req, res) => {
-  const { phoneNumber, password } = req.body;
-  const user = await User.findOne({ phoneNumber });
+        // Automatically send OTP after registration
+        const response = await sendOtp({ body: { mobileNumber } }, res); // Call sendOtp function with appropriate parameters
 
-  if (user && await user.comparePassword(password)) {
-    const token = jwt.sign({ userId: user._id }, secret, { expiresIn: '1h' });
-    res.json({ token, message: 'Login successful' });
-  } else {
-    res.status(400).json({ message: 'Invalid phone number or password' });
-  }
+        if (response.status === 200) {
+            res.json({ success: true, message: 'User registered and OTP sent successfully' });
+        } else {
+            res.status(500).json({ error: 'Failed to send OTP after registration' });
+        }
+
+    } catch (error) {
+        console.error('Error registering user:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 };
