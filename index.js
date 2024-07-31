@@ -20,7 +20,6 @@ import { uploadSingle } from './server/middleware/uploadSingle.js';
 import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
 import otpRoutes from './server/routes/otpRoutes.js';
-import userRoutes from './server/routes/userRoutes.js';
 dotenv.config();
 
 
