@@ -65,7 +65,9 @@ export const fetchSubCategories = async (req, res) => {
 export const createSubCategory = async (req, res) => {
     try {
         const { name, categoryId } = req.body;
+        // console.log(name);
         const newSubCategory = new SubCategory({ name, category: categoryId });
+        console.log("new category",newSubCategory);
         await newSubCategory.save();
         await Category.findByIdAndUpdate(categoryId, { $push: { subcategories: newSubCategory._id } });
         res.status(201).json(newSubCategory);
