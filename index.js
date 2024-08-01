@@ -5,8 +5,6 @@ import cors from 'cors';
 import connectDB from './server/DB/databaseConfigs.js';
 import productRoutes from './server/routes/productRoutes.js';
 import attributeRoutes from './server/routes/attributeRoutes.js';
-import attributeListRoutes from './server/routes/attributeListRoutes.js';
-
 import categoryRoutes from './server/routes/categoryRoutes.js';
 import supplierRoutes from './server/routes/supplierRoutes.js';
 import expenseRoutes from './server/routes/expenseRoutes.js';
@@ -22,7 +20,7 @@ import { uploadSingle } from './server/middleware/uploadSingle.js';
 import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
 import otpRoutes from './server/routes/otpRoutes.js';
-import userRoutes from './server/routes/userRoutes.js';
+import userRoutes from './server/routes/userRoutes.js'
 dotenv.config();
 
 
@@ -55,11 +53,10 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/attributes', attributeRoutes);
-app.use('/api/attributesList', attributeListRoutes);
-app.use('/api/attribute-values', attributeValueRoutes);
+// app.use('/api/attribute-values', attributeValueRoutes);
 app.use('/api/promo-codes', promoCodeRoutes);
 app.use('/api/carosul', carosulRoutes);
-app.use('/api/productlists', productListRoutes);
+// app.use('/api/productlists', productListRoutes);
 
 app.post("/upload", uploader.single("file"), uploadSingle, async (req, res) => {
   res.send(req.body);

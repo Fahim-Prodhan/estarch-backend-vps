@@ -10,6 +10,10 @@ const productSchema = new mongoose.Schema({
   videoUrl: { type: String, default: '' },
   content: { type: String, default: '' },
   guideContent: { type: String, default: '' },
+  selectedCategoryName: { type: String, default: '' },
+  selectedCategory: { type: String, default: '' },
+  selectedBrand: { type: String, default: '' },
+  selectedType: { type: String, default: '' },
   discount: {
     type: { type: String, enum: ['Flat', 'Percentage'], default: 'Flat' },
     amount: { type: Number, default: 0 }
