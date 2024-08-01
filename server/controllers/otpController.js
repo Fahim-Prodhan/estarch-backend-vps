@@ -5,7 +5,7 @@ import crypto from 'crypto';
 // Replace these with your Reve SMS API credentials
 const API_KEY = '2e2d49f9273cc83c';
 const SECRET_KEY = 'f4bef7bd';
-const SENDER_ID = 'your_sender_id_here'; // Your sender ID
+const SENDER_ID = '1234'; // Your sender ID
 
 // Reve SMS API URLs
 const SMS_SEND_URL = 'https://smpp.revesms.com:7790/sendtext';
@@ -36,12 +36,17 @@ export const sendOtp = async (req, res) => {
         user.otpExpires = otpExpires;
         await user.save();
 
+        // Log the OTP and URL for debugging
+        console.log(`Sending OTP ${otp} to mobile number ${mobileNumber}`);
+
         const response = await axios.get(`${SMS_SEND_URL}?apikey=${API_KEY}&secretkey=${SECRET_KEY}&callerID=${SENDER_ID}&toUser=${mobileNumber}&messageContent=Your OTP code is: ${otp}`);
 
-        if (response.status === 200) {
+        console.log('Response from Reve SMS:', response.data);
+
+        if (response.data.Status === '0') {
             res.json({ success: true, message: 'OTP sent successfully' });
         } else {
-            res.status(500).json({ error: 'Failed to send OTP' });
+            res.status(500).json({ error: 'Failed to send OTP', details: response.data });
         }
     } catch (error) {
         console.error('Error sending OTP:', error);
@@ -71,6 +76,17 @@ export const verifyOtp = async (req, res) => {
         res.json({ success: true, message: 'OTP verified successfully' });
     } catch (error) {
         console.error('Error verifying OTP:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+export const checkSmsStatus = async (req, res) => {
+    const { messageId } = req.params; // Assuming messageId is passed as a URL parameter
+
+    try {
+        const response = await axios.get(`${SMS_STATUS_URL}?apikey=${API_KEY}&secretkey=${SECRET_KEY}&messageID=${messageId}`);
+        res.json({ deliveryStatus: response.data });
+    } catch (error) {
+        console.error('Error checking delivery status:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
