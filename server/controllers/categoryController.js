@@ -1,18 +1,26 @@
 import Category from '../models/category.js';
 import SubCategory from '../models/subCategory.js';
 import Brand from '../models/brand.js';
+import Type from '../models/type.js';
 
 // Create Category
 export const createCategory = async (req, res) => {
     try {
-        const { name, image } = req.body;
-        const newCategory = new Category({ name, image });
+        const { name, type, image } = req.body;
+        console.log(name, type, image);
+        
+        if (!name || !type) {
+            return res.status(400).json({ error: 'Name and type are required' });
+        }
+        const newCategory = new Category({ name, type, image });
         await newCategory.save();
         res.status(201).json(newCategory);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error creating category:', err); // Log the error to the server console
+        res.status(500).json({ error: 'Internal server error' });
     }
 };
+
 
 // Get all Categories with SubCategories
 export const getCategoriesWithSubCategories = async (req, res) => {
@@ -24,12 +32,61 @@ export const getCategoriesWithSubCategories = async (req, res) => {
     }
 };
 
+// Get Categories by Type
+export const getCategoriesByTypeName = async (req, res) => {
+    try {
+        const { typeName } = req.params;
+        console.log();
+        
+        // Find the Type object by name
+        const type = await Type.findOne({ name: typeName });
+
+        if (!type) {
+            return res.status(404).json({ message: 'Type not found' });
+        }
+
+        // Find categories that match the typeId
+        const categories = await Category.find({ type: type._id })
+            .populate('type')  // Populate the type field if needed
+            .populate({
+                path: 'subcategories',
+                populate: {
+                    path: 'category'
+                }
+            });
+
+        if (categories.length === 0) {
+            return res.status(404).json({ message: 'No categories found for this type' });
+        }
+
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const getCategoriesWithSubCategoriesAndTypes = async (req, res) => {
+    try {
+        const categories = await Category.find()
+            .populate('type') // Populate the type field
+            .populate({
+                path: 'subcategories',
+                populate: {
+                    path: 'category'
+                }
+            });
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // Update Category
 export const updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, image } = req.body;
-        const updatedCategory = await Category.findByIdAndUpdate(id, { name, image }, { new: true });
+        const { name, type, image } = req.body;
+        const updatedCategory = await Category.findByIdAndUpdate(id, { name, type, image }, { new: true });
         res.json(updatedCategory);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -65,9 +122,7 @@ export const fetchSubCategories = async (req, res) => {
 export const createSubCategory = async (req, res) => {
     try {
         const { name, categoryId } = req.body;
-        // console.log(name);
         const newSubCategory = new SubCategory({ name, category: categoryId });
-        console.log("new category",newSubCategory);
         await newSubCategory.save();
         await Category.findByIdAndUpdate(categoryId, { $push: { subcategories: newSubCategory._id } });
         res.status(201).json(newSubCategory);

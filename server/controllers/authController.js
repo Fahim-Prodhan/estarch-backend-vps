@@ -19,10 +19,8 @@ export const register = async (req, res) => {
     if (!mobile) {
         return res.status(400).json({ message: 'Mobile number is required' });
     }
-
-    // No need to prepend +880 again; it should be already included in mobile
     const otp = generateOtp();
-    const otpExpires = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+    const otpExpires = Date.now() + 10 * 60 * 1000;
 
     try {
         let user = await User.findOne({ mobile });
@@ -45,6 +43,8 @@ export const register = async (req, res) => {
     }
 };
 
+
+
 export const verify = async (req, res) => {
   const { mobile, otp, password } = req.body;
 
@@ -57,12 +57,10 @@ export const verify = async (req, res) => {
   if (!user || user.otp !== otp || user.otpExpires < Date.now()) {
     return res.status(400).json({ message: 'Invalid or expired OTP' });
   }
-
   user.password = await bcrypt.hash(password, 10);
   user.otp = undefined;
   user.otpExpires = undefined;
   await user.save();
-
   res.json({ message: 'Password set successfully' });
 };
 
