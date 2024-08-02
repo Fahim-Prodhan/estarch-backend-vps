@@ -24,7 +24,7 @@ import userRoutes from './server/routes/userRoutes.js';
 import jwt from 'jsonwebtoken';
 import { log } from 'console';
 import typeRoutes from './server/routes/typesRoutes.js';
-import userRoutes from './server/routes/userRoutes.js'
+// import userRoutes from './server/routes/userRoutes.js'
 import orderRoutes from './server/routes/orderRoutes.js'
 dotenv.config();
 
