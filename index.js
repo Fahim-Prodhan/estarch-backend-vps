@@ -21,6 +21,7 @@ import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
 import otpRoutes from './server/routes/otpRoutes.js';
 import userRoutes from './server/routes/userRoutes.js'
+import orderRoutes from './server/routes/orderRoutes.js'
 dotenv.config();
 
 
@@ -53,6 +54,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/attributes', attributeRoutes);
+app.use('/api/orders', orderRoutes);
 // app.use('/api/attribute-values', attributeValueRoutes);
 app.use('/api/promo-codes', promoCodeRoutes);
 app.use('/api/carosul', carosulRoutes);
