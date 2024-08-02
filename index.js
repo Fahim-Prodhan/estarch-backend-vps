@@ -24,6 +24,10 @@ import userRoutes from './server/routes/userRoutes.js';
 import jwt from 'jsonwebtoken';
 import { log } from 'console';
 import typeRoutes from './server/routes/typesRoutes.js';
+import userRoutes from './server/routes/userRoutes.js'
+import orderRoutes from './server/routes/orderRoutes.js'
+dotenv.config();
+
 
 cloudinary.config({
   cloud_name: 'dhn94c9k5',
@@ -56,6 +60,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/attributes', attributeRoutes);
+app.use('/api/orders', orderRoutes);
+// app.use('/api/attribute-values', attributeValueRoutes);
 app.use('/api/promo-codes', promoCodeRoutes);
 app.use('/api/carosul', carosulRoutes);
 app.use('/api/types', typeRoutes);
