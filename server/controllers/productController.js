@@ -21,6 +21,8 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
+// Get all products by types
+
 export const getAllProductsByType = async (req, res) => {
   const { type } = req.params;
   const { ranges, categories } = req.query;
