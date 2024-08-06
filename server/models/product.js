@@ -12,6 +12,7 @@ const productSchema = new mongoose.Schema({
   content: { type: String, default: '' },
   guideContent: { type: String, default: '' },
   selectedCategoryName: { type: String, default: '' },
+  selectedSubCategory: { type: String, default: '' },
   selectedCategory: { type: String, default: '' },
   selectedBrand: { type: String, default: '' },
   selectedType: { type: String, default: '' },

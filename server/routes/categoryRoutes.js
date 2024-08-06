@@ -25,7 +25,7 @@ router.post('/subcategories', createSubCategory);
 router.get('/subcategories', getSubCategories);
 router.get('/categories', getCategoriesWithSubCategoriesAndTypes);
 router.get('/categories/:typeName', getCategoriesByTypeName);
-router.get('/subcategories/:categoryName', fetchSubCategories); 
+router.get('/subcategories/:categoryId', fetchSubCategories);
 router.put('/categories/:id', updateCategory);
 router.put('/subcategories/:id', updateSubCategory);
 router.delete('/categories/:id', deleteCategory);

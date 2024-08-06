@@ -25,7 +25,7 @@ export const createCategory = async (req, res) => {
 // Get all Categories with SubCategories
 export const getCategoriesWithSubCategories = async (req, res) => {
     try {
-        const categories = await Category.find().populate('subcategories');
+        const categories = await Category.find().populate('type');
         res.json(categories);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -105,10 +105,24 @@ export const deleteCategory = async (req, res) => {
 };
 
 // Get SubCategories by Category
+// export const fetchSubCategories = async (req, res) => {
+//     try {
+//         const { categoryName } = req.params;
+//         const subCategories = await SubCategory.find({ category: categoryName }).populate('category');
+//         if (subCategories.length === 0) {
+//             return res.status(404).json({ message: 'No subcategories found for this category' });
+//         }
+//         res.json(subCategories);
+//     } catch (error) {
+//         res.status(500).json({ error: error.message });
+//     }
+// };
+
+// Get SubCategories by Category ID
 export const fetchSubCategories = async (req, res) => {
     try {
-        const { categoryName } = req.params;
-        const subCategories = await SubCategory.find({ category: categoryName }).populate('category');
+        const { categoryId } = req.params;
+        const subCategories = await SubCategory.find({ category: categoryId }).populate('category');
         if (subCategories.length === 0) {
             return res.status(404).json({ message: 'No subcategories found for this category' });
         }
@@ -117,6 +131,8 @@ export const fetchSubCategories = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+
 
 // Create SubCategory
 export const createSubCategory = async (req, res) => {
