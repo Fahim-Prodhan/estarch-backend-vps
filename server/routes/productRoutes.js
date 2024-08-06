@@ -8,10 +8,11 @@ router.post('/products', createProduct);
 router.get('/products', getAllProducts);
 router.get('/new-arrival', getNewArrival);
 router.get('/feature-products', getFeaturedProducts);
-router.get('/products/:type', getAllProductsByType);
-router.get('/products/category/:id', getAllProductsByCategoryId);
-router.get('/products/:id', getProductById);
+router.get('/products/category/:id', getAllProductsByCategoryId); // More specific before less specific
+router.get('/products/:type', getAllProductsByType); // Ensure this is not conflicting with id route
+router.get('/products/product/:id', getProductById); // ID route after type route
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
+
 
 export default router;

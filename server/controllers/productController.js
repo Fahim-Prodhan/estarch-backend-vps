@@ -70,126 +70,6 @@ export const getAllProductsByType = async (req, res) => {
 };
 
 
-// getAllProductsByCategoryId with filter 
-// export const getAllProductsByCategoryId = async (req, res) => {
-//   const { id } = req.params;
-//   const { ranges, subcategories } = req.query;
-
-//   console.log("range", ranges);
-//   console.log("categories", subcategories);
-
-//   try {
-//     // Parse the ranges parameter into an array of objects with min and max properties
-//     let parsedRanges = [];
-//     if (ranges) {
-//       parsedRanges = JSON.parse(ranges).map((range) => ({
-//         min: Number(range.min),
-//         max: Number(range.max),
-//       }));
-//     }
-
-//     // Parse the subcategories parameter into an array
-//     let parsedSubcategories = [];
-//     if (subcategories) {
-//       parsedSubcategories = JSON.parse(subcategories);
-//     }
-
-//     // Build the query condition
-//     let query = { selectedCategory: id };
-
-//     // If subcategories are provided, add the subcategory filtering condition
-//     if (parsedSubcategories.length > 0) {
-//       query.selectedSubCategory = { $in: parsedSubcategories };
-//     }
-
-//         // If ranges are provided, add the price filtering condition
-//         if (parsedRanges.length > 0) {
-//           query = {
-//             ...query,
-//             $or: parsedRanges.map((range) => ({
-//               salePrice: { $gte: range.min, $lte: range.max },
-//             })),
-//           };
-//         }
-
-
-//     // Fetch products based on the category, subcategories, and price ranges
-//     const products = await Product.find(query);
-//     res.json(products);
-//   } catch (err) {
-//     console.error("Error fetching products:", err);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// };
-
-// export const getAllProductsByCategoryId = async (req, res) => {
-//   const { id } = req.params;
-//   const { ranges, subcategories, sizes } = req.query;
-
-//   console.log("range", ranges);
-//   console.log("categories", subcategories);
-//   console.log("sizes", sizes);
-
-//   try {
-//     // Parse the ranges parameter into an array of objects with min and max properties
-//     let parsedRanges = [];
-//     if (ranges) {
-//       parsedRanges = JSON.parse(ranges).map((range) => ({
-//         min: Number(range.min),
-//         max: Number(range.max),
-//       }));
-//     }
-
-//     // Parse the subcategories parameter into an array
-//     let parsedSubcategories = [];
-//     if (subcategories) {
-//       parsedSubcategories = JSON.parse(subcategories);
-//     }
-
-//     // Parse the sizes parameter into an array
-//     let parsedSizes = [];
-//     if (sizes) {
-//       parsedSizes = JSON.parse(sizes);
-//     }
-
-//     // Build the query condition
-//     let query = { selectedCategory: id };
-
-//     // If subcategories are provided, add the subcategory filtering condition
-//     if (parsedSubcategories.length > 0) {
-//       query.selectedSubCategory = { $in: parsedSubcategories };
-//     }
-
-//     // If ranges are provided, add the price filtering condition
-//     if (parsedRanges.length > 0) {
-//       query = {
-//         ...query,
-//         $or: parsedRanges.map((range) => ({
-//           salePrice: { $gte: range.min, $lte: range.max },
-//         })),
-//       };
-//     }
-
-//     // If sizes are provided, add the size filtering condition with $or
-//     if (parsedSizes.length > 0) {
-//       query = {
-//         ...query,
-//         $or: [
-//           ...(query.$or || []),
-//           { selectedSizes: { $in: parsedSizes } }
-//         ]
-//       };
-//     }
-
-//     // Fetch products based on the category, subcategories, price ranges, and sizes
-//     const products = await Product.find(query);
-//     res.json(products);
-//   } catch (err) {
-//     console.error("Error fetching products:", err);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// };
-
 // getAllProductsByCategoryId with filter  main one (fahim)
 export const getAllProductsByCategoryId = async (req, res) => {
   const { id } = req.params;
@@ -313,6 +193,7 @@ export const getFeaturedProducts = async (req, res) => {
 
 // Get a product by ID
 export const getProductById = async (req, res) => {
+  console.log(`Fetching product with ID: ${req.params.id}`); // Log the ID
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -320,9 +201,11 @@ export const getProductById = async (req, res) => {
     }
     res.status(200).json(product);
   } catch (error) {
+    console.error(error); // Log the error
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Update a product
 export const updateProduct = async (req, res) => {
