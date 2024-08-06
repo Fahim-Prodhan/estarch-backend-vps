@@ -1,25 +1,37 @@
-// models/userModel.js
-
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
+  fullName: {
+    type: String,
+    default: ''
+  },
   mobile: {
     type: String,
-    required: true,
+    required: [true, 'Mobile number is required'],
     unique: true,
     match: [/^\+880[0-9]{10}$/, 'Please provide a valid Bangladeshi phone number']
   },
+  email: {
+    type: String,
+    unique: true,
+    default: 'gjjk'
+  },
+  gender: {
+    type: String,
+    enum: ['Male', 'Female', 'Other'],
+    default: 'Other'
+  },
   otp: {
     type: String,
-    required: false
+    default: null
   },
   otpExpires: {
     type: Date,
-    required: false
+    default: null
   },
   password: {
     type: String,
-    required: false
+    default: null
   },
   isActive: {
     type: Boolean,
@@ -30,9 +42,6 @@ const userSchema = new mongoose.Schema({
     default: Date.now
   }
 });
-
-// Index to ensure that phone numbers are unique
-userSchema.index({ mobile: 1 }, { unique: true });
 
 const User = mongoose.model('User', userSchema);
 

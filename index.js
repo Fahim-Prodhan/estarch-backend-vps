@@ -22,10 +22,10 @@ import authRoutes from './server/routes/authRoutes.js';
 import otpRoutes from './server/routes/otpRoutes.js';
 import userRoutes from './server/routes/userRoutes.js';
 import jwt from 'jsonwebtoken';
-import { log } from 'console';
 import typeRoutes from './server/routes/typesRoutes.js';
-import userRoutes from './server/routes/userRoutes.js'
-import orderRoutes from './server/routes/orderRoutes.js'
+import orderRoutes from './server/routes/orderRoutes.js';
+import sizeTypeRoutes from './server/routes/sizeTypeRoutes.js';
+
 dotenv.config();
 
 
@@ -65,6 +65,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/promo-codes', promoCodeRoutes);
 app.use('/api/carosul', carosulRoutes);
 app.use('/api/types', typeRoutes);
+app.use('/api/sizeTypes', sizeTypeRoutes);
 // Sample login route for generating JWT and setting it in a cookie
 app.post('/login', async (req, res) => {
   const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123456';
