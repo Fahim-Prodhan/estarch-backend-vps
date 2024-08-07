@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
+  productName: { type: String, default: "Product Name" },
   showSize: { type: Boolean, default: false },
   freeDelevary: { type: Boolean, default: false },
   featureProduct: { type: Boolean, default: false },
@@ -11,6 +12,7 @@ const productSchema = new mongoose.Schema({
   content: { type: String, default: '' },
   guideContent: { type: String, default: '' },
   selectedCategoryName: { type: String, default: '' },
+  selectedSubCategory: { type: String, default: '' },
   selectedCategory: { type: String, default: '' },
   selectedBrand: { type: String, default: '' },
   selectedType: { type: String, default: '' },

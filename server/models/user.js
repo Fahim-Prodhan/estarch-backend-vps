@@ -9,12 +9,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Mobile number is required'],
     unique: true,
-    match: [/^\+880[0-9]{10}$/, 'Please provide a valid Bangladeshi phone number']
   },
   email: {
     type: String,
     unique: true,
-    default: 'gjjk'
+    sparse: true,
   },
   gender: {
     type: String,

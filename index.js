@@ -20,11 +20,12 @@ import { uploadSingle } from './server/middleware/uploadSingle.js';
 import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
 import otpRoutes from './server/routes/otpRoutes.js';
-import userRoutes from './server/routes/userRoutes.js';
 import jwt from 'jsonwebtoken';
 import typeRoutes from './server/routes/typesRoutes.js';
 import orderRoutes from './server/routes/orderRoutes.js';
 import sizeTypeRoutes from './server/routes/sizeTypeRoutes.js';
+import sizeRoutes from './server/routes/sizeRoutes.js';
+
 
 dotenv.config();
 
@@ -55,7 +56,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/otp', otpRoutes);
-app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
@@ -66,6 +66,7 @@ app.use('/api/promo-codes', promoCodeRoutes);
 app.use('/api/carosul', carosulRoutes);
 app.use('/api/types', typeRoutes);
 app.use('/api/sizeTypes', sizeTypeRoutes);
+app.use('/api/sizes', sizeRoutes);
 // Sample login route for generating JWT and setting it in a cookie
 app.post('/login', async (req, res) => {
   const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123456';

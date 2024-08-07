@@ -3,20 +3,16 @@ import crypto from 'crypto';
 import axios from 'axios';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
-import { log } from 'util';
 
 // Send OTP function
 const sendOtp = async (mobile, otp) => {
   const url = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${mobile}&messageContent=Your OTP is ${otp}`;
-  console.log(url);
   await axios.get(url);
 };
 
-// Register user
 export const registerUser = async (req, res) => {
-  const { mobile } = req.body;
-  console.log(mobile);
-  
+  const { mobile} = req.body;
+
   // Validate mobile number
   if (!mobile || !/^\+880[0-9]{10}$/.test(mobile)) {
     return res.status(400).json({ message: 'Invalid mobile number' });
@@ -25,9 +21,6 @@ export const registerUser = async (req, res) => {
   try {
     // Check if user already exists
     const existingUser = await User.findOne({ mobile });
-    console.log(existingUser);
-    
-
     if (existingUser) {
       // If OTP has expired, regenerate OTP
       if (existingUser.otpExpires < Date.now()) {
@@ -36,18 +29,19 @@ export const registerUser = async (req, res) => {
         existingUser.otpExpires = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
         await existingUser.save();
         await sendOtp(mobile, otp);
-        return res.status(200).json({ message: 'OTP sent to mobile' });
+        return res.status(200).json({ message: 'OTP sent to mobile',userId: existingUser._id });
       }
-      return res.status(200).json({ message: 'OTP already sent, please check your mobile' });
+      return res.status(200).json({ message: 'OTP already sent, please check your mobile',
+        userId: existingUser._id
+       });
     }
 
     // Generate OTP
     const otp = crypto.randomInt(100000, 999999).toString();
-console.log(otp);
-
     // Create new user
     const user = new User({
       mobile,
+      email:  undefined, // Ensure email is either a string or undefined
       otp,
       otpExpires: Date.now() + 10 * 60 * 1000 // OTP expires in 10 minutes
     });
@@ -56,7 +50,7 @@ console.log(otp);
     await user.save();
 
     // Send OTP via SMS
-    await sendOtp(mobile, otp);
+    // await sendOtp(mobile, otp);
 
     res.status(201).json({
       message: 'User registered, OTP sent to mobile',
@@ -74,13 +68,17 @@ console.log(otp);
 
 
 export const verifyOtp = async (req, res) => {
-  const { mobile, otp } = req.body;
-
+  const { userId, otp } = req.body;
+      console.log(userId , otp);
   try {
-    const user = await User.findOne({ mobile, otp });
+    const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid OTP or mobile number' });
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    if (user.otp !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
     }
 
     if (user.otpExpires < Date.now()) {
@@ -99,11 +97,12 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
+
 export const setPassword = async (req, res) => {
-  const { mobile, password } = req.body;
+  const { userId, password } = req.body;
 
   try {
-    const user = await User.findOne({ mobile });
+    const user = await User.findById(userId);
 
     if (!user || !user.isActive) {
       return res.status(400).json({ message: 'User not found or not active' });
