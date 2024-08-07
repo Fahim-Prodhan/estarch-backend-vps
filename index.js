@@ -19,7 +19,7 @@ import uploader from './server/middleware/uploader.js';
 import { uploadSingle } from './server/middleware/uploadSingle.js';
 import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
-import otpRoutes from './server/routes/otpRoutes.js';
+
 import jwt from 'jsonwebtoken';
 import typeRoutes from './server/routes/typesRoutes.js';
 import orderRoutes from './server/routes/orderRoutes.js';
@@ -55,7 +55,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Define routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/otp', otpRoutes);
+
 app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);

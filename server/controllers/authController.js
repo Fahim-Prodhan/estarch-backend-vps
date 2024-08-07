@@ -121,3 +121,47 @@ export const setPassword = async (req, res) => {
     res.status(500).json({ message: 'Error setting password', error: error.message });
   }
 };
+export const loginUser = async (req, res) => {
+  const { mobile, password } = req.body;
+
+  try {
+    // Find user by mobile number
+    const user = await User.findOne({ mobile });
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Check if the user is active
+    if (!user.isActive) {
+      return res.status(400).json({ message: 'Account not activated' });
+    }
+
+    // Check if the password matches
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid password' });
+    }
+
+    // Successful login
+    res.status(200).json({ message: 'Login successful', userId: user._id });
+  } catch (error) {
+    console.error('Error in loginUser:', error);
+    res.status(500).json({ message: 'Error logging in', error: error.message });
+  }
+};
+
+export const getUserByMobile = async (req, res) => {
+  const { mobile } = req.query;
+
+  try {
+    const user = await User.findOne({ mobile }).select('mobile'); // Exclude password
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ mobile: user.mobile });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Error fetching user data', error: error.message });
+  }
+};
