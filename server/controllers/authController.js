@@ -100,6 +100,8 @@ export const verifyOtp = async (req, res) => {
 
 export const setPassword = async (req, res) => {
   const { userId, password } = req.body;
+  console.log(userId , password);
+  
 
   try {
     const user = await User.findById(userId);
