@@ -13,8 +13,6 @@ export const createProduct = async (req, res) => {
 
 // Get all products
 export const getAllProducts = async (req, res) => {
-  console.log('welcome');
-  
   try {
     const products = await Product.find();
     res.status(200).json(products);
@@ -230,6 +228,43 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
     res.status(200).json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// pos 
+
+export const getProductsForPos = async (req, res) => {
+  try {
+    const { brand, category, subcategory, search } = req.query;
+    console.log(brand , category, subcategory , search);
+    
+    // Build the query object
+    let query = {};
+
+    if (brand) {
+      query.selectedBrand = brand;
+    }
+
+    if (category) {
+      query.selectedCategoryName = category;
+    }
+
+    if (subcategory) {
+      query.selectedSubCategory = subcategory;
+    }
+
+    if (search) {
+      query.$or = [
+        { productName: { $regex: search, $options: 'i' } },
+        { SKU: { $regex: search, $options: 'i' } }
+      ];
+    }
+    const products = await Product.find(query);
+    
+    res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
