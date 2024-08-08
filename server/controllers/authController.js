@@ -1,4 +1,5 @@
 import User from '../models/user.js';
+import generateTokenAndSetCookie from "../utils/generateToken.js";
 import crypto from 'crypto';
 import axios from 'axios';
 import bcrypt from 'bcrypt';
@@ -11,7 +12,7 @@ const sendOtp = async (mobile, otp) => {
 };
 
 export const registerUser = async (req, res) => {
-  const { mobile} = req.body;
+  const { mobile } = req.body;
 
   // Validate mobile number
   if (!mobile || !/^\+880[0-9]{10}$/.test(mobile)) {
@@ -29,11 +30,12 @@ export const registerUser = async (req, res) => {
         existingUser.otpExpires = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
         await existingUser.save();
         await sendOtp(mobile, otp);
-        return res.status(200).json({ message: 'OTP sent to mobile',userId: existingUser._id });
+        return res.status(200).json({ message: 'OTP sent to mobile', userId: existingUser._id });
       }
-      return res.status(200).json({ message: 'OTP already sent, please check your mobile',
+      return res.status(200).json({
+        message: 'OTP already sent, please check your mobile',
         userId: existingUser._id
-       });
+      });
     }
 
     // Generate OTP
@@ -41,15 +43,18 @@ export const registerUser = async (req, res) => {
     // Create new user
     const user = new User({
       mobile,
-      email:  undefined, // Ensure email is either a string or undefined
+      email: undefined, // Ensure email is either a string or undefined
       otp,
       otpExpires: Date.now() + 10 * 60 * 1000 // OTP expires in 10 minutes
     });
+
+
 
     // Save user to the database
     await user.save();
 
     // Send OTP via SMS
+    generateTokenAndSetCookie(user._id, res);
     // await sendOtp(mobile, otp);
 
     res.status(201).json({
@@ -69,7 +74,7 @@ export const registerUser = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   const { userId, otp } = req.body;
-      console.log(userId , otp);
+  console.log(userId, otp);
   try {
     const user = await User.findById(userId);
 
@@ -100,8 +105,7 @@ export const verifyOtp = async (req, res) => {
 
 export const setPassword = async (req, res) => {
   const { userId, password } = req.body;
-  console.log(userId , password);
-  
+  console.log(userId, password);
 
   try {
     const user = await User.findById(userId);
@@ -121,12 +125,18 @@ export const setPassword = async (req, res) => {
     res.status(500).json({ message: 'Error setting password', error: error.message });
   }
 };
+
+
 export const loginUser = async (req, res) => {
   const { mobile, password } = req.body;
+  // console.log(mobile);
+  const fullMobileNumber = `+88${mobile}`
+  console.log(fullMobileNumber);
 
   try {
     // Find user by mobile number
-    const user = await User.findOne({ mobile });
+    const user = await User.findOne({ mobile: fullMobileNumber });
+    // console.log('user:',user);
 
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
@@ -142,6 +152,9 @@ export const loginUser = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid password' });
     }
+
+    // Generate JWT token and set cookie
+    generateTokenAndSetCookie(user._id, res);
 
     // Successful login
     res.status(200).json({ message: 'Login successful', userId: user._id });
@@ -163,5 +176,42 @@ export const getUserByMobile = async (req, res) => {
   } catch (error) {
     console.error('Error fetching user data:', error);
     res.status(500).json({ message: 'Error fetching user data', error: error.message });
+  }
+};
+
+
+export const logout = (req, res) => {
+  try {
+    res.cookie("jwt", "", { maxAge: 0 });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.log("Error in logout controller", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+export const getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id; // Assuming the ID is passed as a URL parameter
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      mobile: user.mobile,
+      email: user.email,
+      role: user.role,
+      // verified: user.verified,
+      isActive: user.isActive,
+      // profilePic:user.profilePic
+    });
+  } catch (error) {
+    console.log("Error in getUserById controller", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
