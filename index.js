@@ -19,13 +19,12 @@ import uploader from './server/middleware/uploader.js';
 import { uploadSingle } from './server/middleware/uploadSingle.js';
 import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
-import otpRoutes from './server/routes/otpRoutes.js';
-import jwt from 'jsonwebtoken';
+
+// import jwt from 'jsonwebtoken';
 import typeRoutes from './server/routes/typesRoutes.js';
 import orderRoutes from './server/routes/orderRoutes.js';
 import sizeTypeRoutes from './server/routes/sizeTypeRoutes.js';
 import sizeRoutes from './server/routes/sizeRoutes.js';
-
 
 dotenv.config();
 
@@ -38,8 +37,11 @@ cloudinary.config({
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({
+  origin: 'http://localhost:3000', // Ensure this matches your frontend URL
+  credentials: true, // Allow cookies to be sent
+}));
+// app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -55,7 +57,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Define routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/otp', otpRoutes);
+
 app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
@@ -68,36 +70,36 @@ app.use('/api/types', typeRoutes);
 app.use('/api/sizeTypes', sizeTypeRoutes);
 app.use('/api/sizes', sizeRoutes);
 // Sample login route for generating JWT and setting it in a cookie
-app.post('/login', async (req, res) => {
-  const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123456';
-  const { username } = req.body;
+// app.post('/login', async (req, res) => {
+//   const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123456';
+//   const { username } = req.body;
 
-  if (!username) {
-    return res.status(400).send('Username is required');
-  }
+//   if (!username) {
+//     return res.status(400).send('Username is required');
+//   }
 
-  const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
-  console.log(token);
-  res.cookie('token', token, { httpOnly: true });
-  res.json({ message: 'Logged in successfully' });
-});
+//   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
+//   console.log(token);
+//   res.cookie('token', token, { httpOnly: true });
+//   res.json({ message: 'Logged in successfully' });
+// });
 
 // Add this route to server.js
-app.get('/myinfo', (req, res) => {
-  const token = req.cookies.token;
-  console.log(token);
+// app.get('/myinfo', (req, res) => {
+//   const token = req.cookies.token;
+//   console.log(token);
   
-  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+//   if (!token) return res.status(401).json({ message: 'Unauthorized' });
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    console.log(decoded);
+//   try {
+//     const decoded = jwt.verify(token, JWT_SECRET);
+//     console.log(decoded);
     
-    res.json({ user: decoded });
-  } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
-  }
-});
+//     res.json({ user: decoded });
+//   } catch (error) {
+//     res.status(401).json({ message: 'Invalid token' });
+//   }
+// });
 
 
 // Upload route
