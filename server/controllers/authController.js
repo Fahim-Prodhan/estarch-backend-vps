@@ -180,15 +180,18 @@ export const getUserByMobile = async (req, res) => {
 };
 
 
+// Controller for logout
 export const logout = (req, res) => {
   try {
-    res.cookie("jwt", "", { maxAge: 0 });
+  res.cookie("jwt", "", { maxAge: 0 });
+    // console.log(rst);
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.log("Error in logout controller", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 
 
 export const getUserById = async (req, res) => {
@@ -213,5 +216,83 @@ export const getUserById = async (req, res) => {
   } catch (error) {
     console.log("Error in getUserById controller", error.message);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// register admin
+export const registerAdmin = async (req, res) => {
+  const { fullName, mobile, email, password, gender } = req.body;
+  console.log(mobile);
+
+  try {
+    // Check if the user already exists by mobile number
+    let user = await User.findOne({ mobile });
+
+    if (user) {
+      return res.status(400).json({ msg: 'User already exists with this mobile number' });
+    }
+
+    // Hash the password before saving to the database
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create a new user with the admin role
+    user = new User({
+      fullName,
+      mobile,
+      email,
+      gender,
+      password: hashedPassword,
+      role: 'admin',  // Set role to admin
+      isActive: true  // Optionally set the account as active
+    });
+
+    // Save the user to the database
+    await user.save();
+
+    // Respond with success message
+    res.status(201).json({ msg: 'Admin registered successfully' });
+
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+export const loginAdmin = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Find user by email
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Check if the user is active
+    if (!user.isActive) {
+      return res.status(400).json({ message: 'Account not activated' });
+    }
+
+    // Check if the user has the admin role
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Unauthorized: Admins only' });
+    }
+
+    // Check if the password matches
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid password' });
+    }
+
+    // Generate JWT token and set cookie
+    generateTokenAndSetCookie(user._id, res);
+
+    // Successful login
+    res.status(200).json({ message: 'Login successful', userId: user._id });
+  } catch (error) {
+    console.error('Error in loginAdmin:', error);
+    res.status(500).json({ message: 'Error logging in', error: error.message });
   }
 };
