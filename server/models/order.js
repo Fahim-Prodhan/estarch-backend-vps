@@ -3,7 +3,7 @@ const orderSchema = new mongoose.Schema({
   // serialId: { type: String, required: true },
   invoice: { type: String, default: '' },
   orderNotes: { type: String, default: '' },
-  date: { type: Date, required: true },
+  // date: { type: Date, required: true },
   name: { type: String, required: true },
   address: { type: String, required: true },
   phone: { type: String, required: true },
