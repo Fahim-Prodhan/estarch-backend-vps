@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
 const orderSchema = new mongoose.Schema({
-  // serialId: { type: String, required: true },
+  serialId: { type: String, required: true },
   invoice: { type: String, default: '' },
   orderNotes: { type: String, default: '' },
   // date: { type: Date, required: true },
   name: { type: String, required: true },
   address: { type: String, required: true },
+  area: { type: String, required: true },
   phone: { type: String, required: true },
   altPhone: { type: String, default: '' },
   notes: { type: String, default:'' },

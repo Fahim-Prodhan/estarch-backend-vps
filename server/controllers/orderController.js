@@ -8,7 +8,7 @@ import moment from 'moment';
 const generateInvoiceNumber = () => {
     const datePart = moment().format('YYYYMMDD'); // e.g., "20240808"
     const randomPart = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
-    return `INV-${ datePart }-${ randomPart }`;
+    return `INV-${datePart}-${randomPart}`;
 };
 
 
@@ -50,14 +50,14 @@ export const getAllOrders = async (req, res) => {
 export const createOrder = async (req, res) => {
     try {
         const {
-             orderNotes, name, address, phone, altPhone, notes,
+            serialId, orderNotes, name, address, area, phone, altPhone, notes,
             totalAmount, deliveryCharge, discount, grandTotal, advanced,
             condition, cartItems, paymentMethod, courier, employee, userId, status
         } = req.body;
 
-        console.log(cartItems);
+        // console.log(area);
         const invoice = generateInvoiceNumber();
-        console.log("invoice:", invoice);
+        // console.log("invoice:", invoice);
 
 
         // Iterate through each cart item to update the product stock
@@ -70,7 +70,7 @@ export const createOrder = async (req, res) => {
                 return res.status(404).json({ message: `Product with ID ${productId} not found.` });
             }
 
-            console.log("product", product);
+            // console.log("product", product);
 
             // Check if size is provided
             if (!size) {
@@ -83,7 +83,7 @@ export const createOrder = async (req, res) => {
                 return res.status(404).json({ message: `Size ${size} not found for product ID ${productId}.` });
             }
 
-            console.log("size:", sizeDetail);
+            // console.log("size:", sizeDetail);
 
             // Check if there is enough stock
             if (sizeDetail.openingStock < quantity) {
@@ -99,11 +99,13 @@ export const createOrder = async (req, res) => {
 
         // Create the order with the given data
         const order = new Order({
+            serialId,
             invoice,
             orderNotes,
             // date,
             name,
             address,
+            area,
             phone,
             altPhone,
             notes,
@@ -188,3 +190,25 @@ export const addCartItems = async (req, res) => {
         res.status(500).json({ error: 'Failed to update cart items' });
     }
 };
+
+
+// get order products (fahim)
+export const getOrderProducts = async (req, res) => {
+    try {
+        const { productIds } = req.body; // Expect an array of product IDs in the request body
+
+        // Find products with the given IDs
+        const products = await Product.find({
+            _id: { $in: productIds }
+        });
+
+        if (!products) {
+            return res.status(404).json({ message: 'Products not found' });
+        }
+
+        res.json(products);
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+}

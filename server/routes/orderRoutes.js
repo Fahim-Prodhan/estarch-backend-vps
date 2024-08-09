@@ -6,7 +6,8 @@ import {
     createOrder,
     updateOrderStatus,
     updateOrderCourier,
-    addCartItems
+    addCartItems,
+    getOrderProducts
 } from '../controllers/orderController.js'; // Adjust the import path based on your file structure
 
 const router = express.Router();
@@ -25,5 +26,7 @@ router.patch('/:id/courier', updateOrderCourier);
 
 // Add cart items to an order
 router.patch('/:id/cart-items', addCartItems);
+
+router.post('/product/', getOrderProducts)
 
 export default router;
