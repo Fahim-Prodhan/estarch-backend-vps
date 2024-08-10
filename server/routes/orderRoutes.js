@@ -33,5 +33,4 @@ router.post('/product/', getOrderProducts)
 router.get('/order/:id', getOrderById);
 router.get('/orders/:phone', getUserOrderByMobile);
 
-
 export default router;
