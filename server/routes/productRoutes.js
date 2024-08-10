@@ -1,11 +1,12 @@
 import express from 'express';
-import { createProduct, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts } from '../controllers/productController.js';
+import { createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts } from '../controllers/productController.js';
 
 const router = express.Router();
 
 // Routes
 router.post('/products', createProduct);
 router.get('/products', getAllProducts);
+router.get('/products-for-pos', getProductsForPos);
 router.get('/new-arrival', getNewArrival);
 router.get('/feature-products', getFeaturedProducts);
 router.get('/products/category/:id', getAllProductsByCategoryId); // More specific before less specific

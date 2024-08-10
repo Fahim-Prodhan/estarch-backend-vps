@@ -8,6 +8,8 @@ import {
     updateOrderCourier,
     addCartItems,
     getOrderProducts,
+    getOrderById,
+    getUserOrderByMobile,
     getTotalOrderCountOfUser
 } from '../controllers/orderController.js'; // Adjust the import path based on your file structure
 
@@ -29,6 +31,9 @@ router.patch('/:id/courier', updateOrderCourier);
 router.patch('/:id/cart-items', addCartItems);
 
 router.post('/product/', getOrderProducts)
+router.get('/order/:id', getOrderById);
+router.get('/orders/:phone', getUserOrderByMobile);
+
 
 router.get('/order-count/:userId',getTotalOrderCountOfUser)
 

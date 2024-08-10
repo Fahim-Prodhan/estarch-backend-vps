@@ -48,18 +48,19 @@ export const getAllOrders = async (req, res) => {
 //     }
 // };
 
-export const createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {    
     try {
         const {
             serialId, orderNotes, name, address, area, phone, altPhone, notes,
             totalAmount, deliveryCharge, discount, grandTotal, advanced,
-            condition, cartItems, paymentMethod, courier, employee, userId, status
+            condition, cartItems, paymentMethod, courier, employee, userId
         } = req.body;
 
-        // console.log(area);
+        console.log(name);
         const invoice = generateInvoiceNumber();
         // console.log("invoice:", invoice);
 
+        const initialStatus = [{ name: 'pending', user: null }];
 
         // Iterate through each cart item to update the product stock
         for (const item of cartItems) {
@@ -67,27 +68,30 @@ export const createOrder = async (req, res) => {
 
             // Find the product by ID
             const product = await Product.findById(productId);
+            console.log(product);
+            
             if (!product) {
+                console.log('not found product');
+                
                 return res.status(404).json({ message: `Product with ID ${productId} not found.` });
             }
 
-            // console.log("product", product);
-
-            // Check if size is provided
             if (!size) {
+                console.log('not found size');
+
                 return res.status(400).json({ message: `Size must be specified for product ID ${productId}.` });
             }
 
             // Find the size details by size
             const sizeDetail = product.sizeDetails.find(detail => detail.size === size);
             if (!sizeDetail) {
+                console.log('not found size details');
                 return res.status(404).json({ message: `Size ${size} not found for product ID ${productId}.` });
             }
 
-            // console.log("size:", sizeDetail);
-
-            // Check if there is enough stock
             if (sizeDetail.openingStock < quantity) {
+                console.log('not available',sizeDetail.openingStock);
+
                 return res.status(400).json({ message: `Not enough stock for size ${size} of product ID ${productId}.` });
             }
 
@@ -103,7 +107,6 @@ export const createOrder = async (req, res) => {
             serialId,
             invoice,
             orderNotes,
-            // date,
             name,
             address,
             area,
@@ -121,7 +124,7 @@ export const createOrder = async (req, res) => {
             courier,
             employee,
             userId,
-            status
+            status:initialStatus
         });
 
         await order.save();
