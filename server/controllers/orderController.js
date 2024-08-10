@@ -3,6 +3,7 @@
 import Order from '../models/order.js'; // Adjust the import path based on your file structure
 import Product from "../models/product.js";
 import moment from 'moment';
+import mongoose from 'mongoose';
 
 
 const generateInvoiceNumber = () => {
@@ -212,3 +213,20 @@ export const getOrderProducts = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 }
+
+export const getTotalOrderCountOfUser = async (req, res) => {
+    try {
+      const { userId } = req.params;
+  
+      // Find orders for the given userId and populate the userId field
+      const orders = await Order.find({ userId: userId }).populate('userId');
+  
+      // Count the number of populated orders
+      const orderCount = orders.length;
+  
+      res.status(200).json({ orderCount, orders });
+    } catch (error) {
+      console.error('Error finding order count and orders by userId:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };

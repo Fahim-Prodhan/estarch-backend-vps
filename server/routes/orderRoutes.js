@@ -7,7 +7,8 @@ import {
     updateOrderStatus,
     updateOrderCourier,
     addCartItems,
-    getOrderProducts
+    getOrderProducts,
+    getTotalOrderCountOfUser
 } from '../controllers/orderController.js'; // Adjust the import path based on your file structure
 
 const router = express.Router();
@@ -28,5 +29,7 @@ router.patch('/:id/courier', updateOrderCourier);
 router.patch('/:id/cart-items', addCartItems);
 
 router.post('/product/', getOrderProducts)
+
+router.get('/order-count/:userId',getTotalOrderCountOfUser)
 
 export default router;
