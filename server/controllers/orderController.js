@@ -8,7 +8,7 @@ import moment from 'moment';
 const generateInvoiceNumber = () => {
     const datePart = moment().format('YYYYMMDD'); // e.g., "20240808"
     const randomPart = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
-    return `INV-${ datePart }-${ randomPart }`;
+    return `INV-${datePart}-${randomPart}`;
 };
 
 
@@ -47,17 +47,17 @@ export const getAllOrders = async (req, res) => {
 //     }
 // };
 
-export const createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {    
     try {
         const {
-             orderNotes, name, address, phone, altPhone, notes,
+            serialId, orderNotes, name, address, area, phone, altPhone, notes,
             totalAmount, deliveryCharge, discount, grandTotal, advanced,
-            condition, cartItems, paymentMethod, courier, employee, userId, status
+            condition, cartItems, paymentMethod, courier, employee, userId
         } = req.body;
 
-        console.log(cartItems);
+        console.log(name);
         const invoice = generateInvoiceNumber();
-        console.log("invoice:", invoice);
+        // console.log("invoice:", invoice);
 
         const initialStatus = [{ name: 'pending', user: null }];
 
@@ -67,27 +67,30 @@ export const createOrder = async (req, res) => {
 
             // Find the product by ID
             const product = await Product.findById(productId);
+            console.log(product);
+            
             if (!product) {
+                console.log('not found product');
+                
                 return res.status(404).json({ message: `Product with ID ${productId} not found.` });
             }
 
-            console.log("product", product);
-
-            // Check if size is provided
             if (!size) {
+                console.log('not found size');
+
                 return res.status(400).json({ message: `Size must be specified for product ID ${productId}.` });
             }
 
             // Find the size details by size
             const sizeDetail = product.sizeDetails.find(detail => detail.size === size);
             if (!sizeDetail) {
+                console.log('not found size details');
                 return res.status(404).json({ message: `Size ${size} not found for product ID ${productId}.` });
             }
 
-            console.log("size:", sizeDetail);
-
-            // Check if there is enough stock
             if (sizeDetail.openingStock < quantity) {
+                console.log('not available',sizeDetail.openingStock);
+
                 return res.status(400).json({ message: `Not enough stock for size ${size} of product ID ${productId}.` });
             }
 
@@ -100,10 +103,12 @@ export const createOrder = async (req, res) => {
 
         // Create the order with the given data
         const order = new Order({
+            serialId,
             invoice,
             orderNotes,
             name,
             address,
+            area,
             phone,
             altPhone,
             notes,
@@ -189,3 +194,116 @@ export const addCartItems = async (req, res) => {
     }
 };
 
+
+// get order products (fahim)
+export const getOrderProducts = async (req, res) => {
+    try {
+        const { productIds } = req.body; // Expect an array of product IDs in the request body
+
+        // Find products with the given IDs
+        const products = await Product.find({
+            _id: { $in: productIds }
+        });
+
+        if (!products) {
+            return res.status(404).json({ message: 'Products not found' });
+        }
+
+        res.json(products);
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+}
+
+
+export const getOrderById = async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      // Fetch the order by ID
+      const order = await Order.findById(id)
+        .populate('cartItems.productId') // Populate the product details in the cartItems array
+        .populate('status.user', 'name') // Populate the user's name for the status history
+        .populate('employee', 'name') // Populate the employee's name
+        .populate('userId', 'name'); // Populate the user's name who created the order
+  
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      // Fetch all orders to determine the index
+      const allOrders = await Order.find().sort({ createdAt: 1 }); // Sort orders by creation date
+  
+      // Calculate the order number as the index + 1
+      const orderIndex = allOrders.findIndex(o => o._id.toString() === id);
+      const orderNumber = orderIndex + 1;
+  
+      // Add the order number to the response
+      const orderWithNumber = {
+        ...order.toObject(), // Convert the order document to a plain JavaScript object
+        orderNumber, // Add the calculated order number
+      };
+  
+      res.status(200).json(orderWithNumber);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+
+  export const getUserOrderByMobile = async (req, res) => {
+    const { phone } = req.params; // Assuming the phone number is passed as a URL parameter
+  
+    try {
+      // Find orders by phone number
+      const orders = await Order.find({ phone }).populate('cartItems.productId').populate('userId').populate('employee');
+  
+      if (orders.length === 0) {
+        return res.status(404).json({ message: 'No orders found for this mobile number' });
+      }
+  
+      // Extract common user details (assuming all orders have the same user details)
+      const userDetails = orders[0]; // Example, if all orders are from the same user
+  
+      // Format response data
+      const responseData = {
+        phone: userDetails.phone,
+        name: userDetails.name,
+        address: userDetails.address,
+        orderList: orders.map(order => ({
+          serialId: order.serialId,
+          invoice: order.invoice,
+          orderNotes: order.orderNotes,
+          totalAmount: order.totalAmount,
+          deliveryCharge: order.deliveryCharge,
+          discount: order.discount,
+          grandTotal: order.grandTotal,
+          advanced: order.advanced,
+          condition: order.condition,
+          cartItems: order.cartItems.map(item => ({
+            productId: item.productId,
+            title: item.title,
+            quantity: item.quantity,
+            price: item.price,
+            size: item.size
+          })),
+          paymentMethod: order.paymentMethod,
+          status: order.status,
+          courier: order.courier,
+          employee: order.employee,
+          note: order.note,
+          lastNote: order.lastNote,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt
+        }))
+      };
+  
+      // Return the formatted response
+      res.status(200).json(responseData);
+    } catch (error) {
+      // Handle any errors that occur during the query
+      console.error(error);
+      res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+  };
