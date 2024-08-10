@@ -217,6 +217,98 @@ export const getOrderProducts = async (req, res) => {
     }
 }
 
+
+export const getOrderById = async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      // Fetch the order by ID
+      const order = await Order.findById(id)
+        .populate('cartItems.productId') // Populate the product details in the cartItems array
+        .populate('status.user', 'name') // Populate the user's name for the status history
+        .populate('employee', 'name') // Populate the employee's name
+        .populate('userId', 'name'); // Populate the user's name who created the order
+  
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      // Fetch all orders to determine the index
+      const allOrders = await Order.find().sort({ createdAt: 1 }); // Sort orders by creation date
+  
+      // Calculate the order number as the index + 1
+      const orderIndex = allOrders.findIndex(o => o._id.toString() === id);
+      const orderNumber = orderIndex + 1;
+  
+      // Add the order number to the response
+      const orderWithNumber = {
+        ...order.toObject(), // Convert the order document to a plain JavaScript object
+        orderNumber, // Add the calculated order number
+      };
+  
+      res.status(200).json(orderWithNumber);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+
+  export const getUserOrderByMobile = async (req, res) => {
+    const { phone } = req.params; // Assuming the phone number is passed as a URL parameter
+  
+    try {
+      // Find orders by phone number
+      const orders = await Order.find({ phone }).populate('cartItems.productId').populate('userId').populate('employee');
+  
+      if (orders.length === 0) {
+        return res.status(404).json({ message: 'No orders found for this mobile number' });
+      }
+  
+      // Extract common user details (assuming all orders have the same user details)
+      const userDetails = orders[0]; // Example, if all orders are from the same user
+  
+      // Format response data
+      const responseData = {
+        phone: userDetails.phone,
+        name: userDetails.name,
+        address: userDetails.address,
+        orderList: orders.map(order => ({
+          serialId: order.serialId,
+          invoice: order.invoice,
+          orderNotes: order.orderNotes,
+          totalAmount: order.totalAmount,
+          deliveryCharge: order.deliveryCharge,
+          discount: order.discount,
+          grandTotal: order.grandTotal,
+          advanced: order.advanced,
+          condition: order.condition,
+          cartItems: order.cartItems.map(item => ({
+            productId: item.productId,
+            title: item.title,
+            quantity: item.quantity,
+            price: item.price,
+            size: item.size
+          })),
+          paymentMethod: order.paymentMethod,
+          status: order.status,
+          courier: order.courier,
+          employee: order.employee,
+          note: order.note,
+          lastNote: order.lastNote,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt
+        }))
+      };
+  
+      // Return the formatted response
+      res.status(200).json(responseData);
+    } catch (error) {
+      // Handle any errors that occur during the query
+      console.error(error);
+      res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+  };
+
 export const getTotalOrderCountOfUser = async (req, res) => {
     try {
       const { userId } = req.params;
