@@ -21,6 +21,17 @@ export const createCategory = async (req, res) => {
     }
 };
 
+// get category by categoryID
+export const getCategoryById = async (req, res) =>{
+    const { id } = req.params;
+    try {
+        const result = await Category.findById(id)
+        res.send(result)
+    } catch (error) {
+        res.send(error)
+    }
+}
+
 
 // Get all Categories with SubCategories
 export const getCategoriesWithSubCategories = async (req, res) => {
@@ -36,7 +47,7 @@ export const getCategoriesWithSubCategories = async (req, res) => {
 export const getCategoriesByTypeName = async (req, res) => {
     try {
         const { typeName } = req.params;
-        console.log();
+        // console.log();
         
         // Find the Type object by name
         const type = await Type.findOne({ name: typeName });
@@ -66,6 +77,7 @@ export const getCategoriesByTypeName = async (req, res) => {
 };
 
 export const getCategoriesWithSubCategoriesAndTypes = async (req, res) => {
+    // console.log('heit');
     try {
         const categories = await Category.find()
             .populate('type') // Populate the type field
