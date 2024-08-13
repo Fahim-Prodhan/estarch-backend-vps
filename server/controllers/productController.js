@@ -269,3 +269,37 @@ export const getProductsForPos = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+export const generateSku = async (req, res) => {
+  try {
+    const baseSku = 'EST'; // Base part of the SKU
+    
+    // Get the total number of products in the database
+    const productCount = await Product.countDocuments();
+    
+    // Start the SKU number from 0000 + productCount
+    let skuNumber = productCount + 1;
+
+    let sku;
+
+    while (true) {
+      sku = `${baseSku}${skuNumber.toString().padStart(4, '0')}`; // Generate SKU like EST0001, EST0002, etc.
+      const existingProduct = await Product.findOne({ SKU: sku });
+      
+      if (!existingProduct) {
+        // If no product is found with the generated SKU, break the loop
+        break;
+      }
+
+      // If a product is found, increment the SKU number and try again
+      skuNumber++;
+    }
+
+    // Return the generated SKU
+    res.status(200).json({ sku });
+  } catch (error) {
+    console.error('Error generating SKU:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

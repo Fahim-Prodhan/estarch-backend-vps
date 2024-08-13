@@ -23,7 +23,7 @@ const productSchema = new mongoose.Schema({
   regularPrice: { type: Number, default: 0 },
   salePrice: { type: Number, default: 0 },
   selectedSizes: [String], 
-  SKU:{type:String , default:''},
+  SKU:{type:String , default:'EST0001'},
   sizeDetails: [{
     size: String,
     barcode: String,

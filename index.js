@@ -19,6 +19,7 @@ import uploader from './server/middleware/uploader.js';
 import { uploadSingle } from './server/middleware/uploadSingle.js';
 import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
+import chartRoutes from './server/routes/sizeChartRoutes.js';
 
 // import jwt from 'jsonwebtoken';
 import typeRoutes from './server/routes/typesRoutes.js';
@@ -38,8 +39,8 @@ cloudinary.config({
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors({
-  origin: 'http://localhost:3000', // Ensure this matches your frontend URL
-  credentials: true, // Allow cookies to be sent
+  origin: 'http://localhost:3000', 
+  credentials: true, 
 }));
 // app.use(cors());
 app.use(express.json());
@@ -69,6 +70,7 @@ app.use('/api/carosul', carosulRoutes);
 app.use('/api/types', typeRoutes);
 app.use('/api/sizeTypes', sizeTypeRoutes);
 app.use('/api/sizes', sizeRoutes);
+app.use('/api/charts', chartRoutes);
 // Sample login route for generating JWT and setting it in a cookie
 // app.post('/login', async (req, res) => {
 //   const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123456';

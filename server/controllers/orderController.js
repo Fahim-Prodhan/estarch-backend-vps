@@ -325,3 +325,20 @@ export const getTotalOrderCountOfUser = async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   };
+
+  export const getOrderByInvoice = async (req, res) => {
+    try {
+      const { invoice } = req.params;
+        console.log(invoice);
+        
+      const order = await Order.findOne({ invoice });
+  
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      res.status(200).json(order);
+    } catch (error) {
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+  };
