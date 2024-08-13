@@ -1,5 +1,5 @@
 import express from 'express';
-import { createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct } from '../controllers/productController.js';
+import { createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct } from '../controllers/productController.js';
 
 const router = express.Router();
 
@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/products', createProduct);
 router.get('/products', getAllProducts);
 router.get('/new-all-products', getAllNewArrivalProduct);
+router.get('/all-feature-products', getAllFeatureProduct);
 router.get('/products-for-pos', getProductsForPos);
 router.get('/new-arrival', getNewArrival);
 router.get('/feature-products', getFeaturedProducts);
