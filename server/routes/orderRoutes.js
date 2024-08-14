@@ -23,7 +23,7 @@ router.get('/', getAllOrders);
 // Create a new order
 router.post('/', createOrder);
 // Update an order's status
-router.patch('/status/:id', updateOrderStatus);
+router.patch('/status/:orderId', updateOrderStatus);
 // Update an order's courier
 // router.patch('/courier/:id', updateOrderCourier);
 // Add cart items to an order

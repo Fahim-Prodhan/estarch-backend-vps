@@ -211,33 +211,43 @@ export const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    // Ensure user information exists in the request
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Find the order by ID
     const order = await Order.findById(id);
-    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
 
     const statusHierarchy = [
-        'new', 'pending', 'pendingPayment', 'confirm', 'hold', 
-        'processing', 'sentToCourier', 'courierProcessing', 'delivered', 
-        'return', 'returnExchange', 'returnWithDeliveryCharge', 'exchange', 'cancel'
+      'new', 'pending', 'pendingPayment', 'confirm', 'hold', 
+      'processing', 'sentToCourier', 'courierProcessing', 'delivered', 
+      'return', 'returnExchange', 'returnWithDeliveryCharge', 'exchange', 'cancel'
     ];
 
-    // Check the current status by looking at the last status in the array
+    // Get current status and new status indexes
     const currentStatusIndex = statusHierarchy.indexOf(order.status[order.status.length - 1].name);
     const newStatusIndex = statusHierarchy.indexOf(status);
 
-    // Validate if the new status can be applied
+    // Validate status progression
     if (newStatusIndex > currentStatusIndex) {
-        order.status.push({ name: status, user: req.user._id }); // Assuming `req.user` contains the logged-in user's info
-        await order.save();
-        return res.json(order);
+      order.status.push({ name: status, user: req.user._id, timestamp: new Date() });
+      await order.save();
+      return res.json(order);
     } else {
-        return res.status(400).json({ error: 'Status progression is not valid' });
+      return res.status(400).json({ error: 'Invalid status progression' });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to update order status' });
+    console.error('Failed to update order status:', error);
+    return res.status(500).json({ error: 'Failed to update order status', details: error.message });
   }
 };
 
-// Dynamic filtering of orders based on criteria
+
+// Filter Orders Dynamically Based on Query Parameters
 export const filterOrders = async (req, res) => {
   try {
     const filters = {};
@@ -252,10 +262,10 @@ export const filterOrders = async (req, res) => {
       filters.courier = req.query.courier;
     }
 
-    const orders = await Order.find(filters);
-    return res.json(orders);
+    const orders = await Order.find(filters).sort({ createdAt: -1 }); // Sort by newest orders first
+    return res.status(200).json({ success: true, orders });
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to filter orders' });
+    return res.status(500).json({ error: 'Failed to filter orders', details: error.message });
   }
 };
 // Add cart items to an order
