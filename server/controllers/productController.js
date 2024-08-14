@@ -1,7 +1,11 @@
 import Product from "../models/product.js";
+import Chart from '../models/sizeChart.js';
+
 // Create a new product
 export const createProduct = async (req, res) => {
   try {
+    console.log(req.body);
+    
     const newProduct = new Product(req.body);
     // return console.log(req.body);
     await newProduct.save();
@@ -14,7 +18,7 @@ export const createProduct = async (req, res) => {
 // Get all products
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate('charts');
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -61,7 +65,7 @@ export const getAllProductsByType = async (req, res) => {
     }
 
     // Fetch products based on the type, categories, and price ranges
-    const products = await Product.find(query);
+    const products = await Product.find(query).populate('charts');
     res.json(products);
   } catch (err) {
     console.error("Error fetching products:", err);
@@ -150,7 +154,7 @@ export const getAllProductsByCategoryId = async (req, res) => {
     }
 
     // Fetch products based on the constructed query and sort order
-    const products = await Product.find(query).sort(sortOptions);
+    const products = await Product.find(query).sort(sortOptions).populate('charts');
     res.json(products);
   } catch (err) {
     console.error("Error fetching products:", err);
@@ -163,7 +167,7 @@ export const getAllProductsByCategoryId = async (req, res) => {
 export const getNewArrival = async (req, res) => {
   try {
     // Fetch the latest 10 products sorted by the createdAt field in descending order
-    const latestProducts = await Product.find()
+    const latestProducts = await Product.find().populate('charts')
       .sort({ createdAt: -1 }) // Sort by createdAt in descending order
       .limit(10); // Limit to 10 products
 
@@ -179,7 +183,7 @@ export const getFeaturedProducts = async (req, res) => {
   try {
     // Fetch the latest 10 featured products sorted by the createdAt field in descending order
     const latestFeaturedProducts = await Product.find({ featureProduct: true }) // Filter for featured products
-      .sort({ createdAt: -1 }) // Sort by createdAt in descending order
+      .sort({ createdAt: -1 }).populate('charts') // Sort by createdAt in descending order
 
     res.json(latestFeaturedProducts);
   } catch (err) {
@@ -195,7 +199,7 @@ export const getFeaturedProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
   console.log(`Fetching product with ID: ${req.params.id}`); // Log the ID
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('charts');
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }

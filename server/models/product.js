@@ -23,19 +23,20 @@ const productSchema = new mongoose.Schema({
   regularPrice: { type: Number, default: 0 },
   salePrice: { type: Number, default: 0 },
   selectedSizes: [String], 
-  SKU:{type:String , default:'EST0001'},
+  SKU: { type: String, default: 'EST0001' },
   sizeDetails: [{
     size: String,
     barcode: String,
     purchasePrice: Number,
-    sellingPrice: Number,
+    regularPrice: Number,
     discountPercent: Number,
     discountAmount: Number,
-    afterDiscount: Number,
+    salePrice: Number,
     wholesalePrice: Number,
     openingStock: Number,
     ospPrice: Number
-  }]
+  }],
+  charts: { type: mongoose.Schema.Types.ObjectId, ref: 'Chart' }
 }, { timestamps: true });
 
 const Product = mongoose.model('Product', productSchema);
