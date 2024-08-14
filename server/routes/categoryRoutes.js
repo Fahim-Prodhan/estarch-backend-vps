@@ -15,13 +15,15 @@ import {
     updateBrand,
     deleteBrand,
     getCategoriesWithSubCategoriesAndTypes,
-    getCategoriesByTypeName
+    getCategoriesByTypeName,
+    getCategoryById
 } from '../controllers/categoryController.js';
 
 const router = Router();
 
 router.post('/categories', createCategory);
 router.post('/subcategories', createSubCategory);
+router.get('/find/:id', getCategoryById);
 router.get('/subcategories', getSubCategories);
 router.get('/categories', getCategoriesWithSubCategoriesAndTypes);
 router.get('/categories/:typeName', getCategoriesByTypeName);
