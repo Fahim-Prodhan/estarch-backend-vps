@@ -8,10 +8,8 @@ import attributeRoutes from './server/routes/attributeRoutes.js';
 import categoryRoutes from './server/routes/categoryRoutes.js';
 import supplierRoutes from './server/routes/supplierRoutes.js';
 import expenseRoutes from './server/routes/expenseRoutes.js';
-import attributeValueRoutes from './server/routes/attributeValueRoutes.js';
 import promoCodeRoutes from './server/routes/promoCodeRoutes.js';
 import carosulRoutes from './server/routes/carosulRoutes.js';
-import productListRoutes from './server/routes/productListRoutes.js';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
 import { fileURLToPath } from 'url';
@@ -63,45 +61,11 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/attributes', attributeRoutes);
 app.use('/api/orders', orderRoutes);
-// app.use('/api/attribute-values', attributeValueRoutes);
 app.use('/api/promo-codes', promoCodeRoutes);
 app.use('/api/carosul', carosulRoutes);
 app.use('/api/types', typeRoutes);
 app.use('/api/sizeTypes', sizeTypeRoutes);
 app.use('/api/sizes', sizeRoutes);
-// Sample login route for generating JWT and setting it in a cookie
-// app.post('/login', async (req, res) => {
-//   const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123456';
-//   const { username } = req.body;
-
-//   if (!username) {
-//     return res.status(400).send('Username is required');
-//   }
-
-//   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
-//   console.log(token);
-//   res.cookie('token', token, { httpOnly: true });
-//   res.json({ message: 'Logged in successfully' });
-// });
-
-// Add this route to server.js
-// app.get('/myinfo', (req, res) => {
-//   const token = req.cookies.token;
-//   console.log(token);
-  
-//   if (!token) return res.status(401).json({ message: 'Unauthorized' });
-
-//   try {
-//     const decoded = jwt.verify(token, JWT_SECRET);
-//     console.log(decoded);
-    
-//     res.json({ user: decoded });
-//   } catch (error) {
-//     res.status(401).json({ message: 'Invalid token' });
-//   }
-// });
-
-
 // Upload route
 app.post("/upload", uploader.single("file"), uploadSingle, async (req, res) => {
   res.send(req.body);
