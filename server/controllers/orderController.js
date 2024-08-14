@@ -3,7 +3,63 @@
 import Order from '../models/order.js'; // Adjust the import path based on your file structure
 import Product from "../models/product.js";
 import moment from 'moment';
-import mongoose from 'mongoose';
+
+// Get all notes for a specific order
+export const getOrderNotes = async (req, res) => {
+  try {
+      const { orderId } = req.params;  
+      const order = await Order.findById(orderId).select('notes');  // Only select the notes field
+      if (!order) {
+          return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Return the notes for the order
+      res.status(200).json({ notes: order.notes });
+  } catch (error) {
+      console.error('Error retrieving notes:', error);
+      res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+// Add a note to a specific order
+export const addNoteController = async (req, res) => {
+  try {
+    const { orderId } = req.params;  // Get order ID from URL parameters
+    const { adminName, noteContent } = req.body;  // Get adminName and noteContent from request body
+
+    // Validate that both adminName and noteContent are provided
+    if (!adminName || !noteContent) {
+      return res.status(400).json({ message: 'Both adminName and noteContent are required' });
+    }
+
+    // Find the order by its ID
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Ensure the new note is an object
+    const newNote = { adminName, noteContent };
+
+    // Add the new note to the notes array
+    order.notes.push(newNote);
+
+    // Save the updated order
+    await order.save();
+
+    // Return the updated order with a success message
+    return res.status(200).json({ message: 'Note added successfully', order });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+
+
+
+
+
 
 
 const generateInvoiceNumber = () => {
@@ -323,5 +379,22 @@ export const getTotalOrderCountOfUser = async (req, res) => {
     } catch (error) {
       console.error('Error finding order count and orders by userId:', error);
       res.status(500).json({ message: 'Server error' });
+    }
+  };
+
+  export const getOrderByInvoice = async (req, res) => {
+    try {
+      const { invoice } = req.params;
+        console.log(invoice);
+        
+      const order = await Order.findOne({ invoice });
+  
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      res.status(200).json(order);
+    } catch (error) {
+      res.status(500).json({ message: 'Server error', error: error.message });
     }
   };

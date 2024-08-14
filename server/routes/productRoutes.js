@@ -1,11 +1,12 @@
 import express from 'express';
-import { createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct } from '../controllers/productController.js';
+import { createProduct,getProductsForPos,generateSku, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct } from '../controllers/productController.js';
 
 const router = express.Router();
 
 // Routes
 router.post('/products', createProduct);
 router.get('/products', getAllProducts);
+router.get('/products/sku', generateSku);
 router.get('/new-all-products', getAllNewArrivalProduct);
 router.get('/all-feature-products', getAllFeatureProduct);
 router.get('/products-for-pos', getProductsForPos);

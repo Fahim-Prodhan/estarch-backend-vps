@@ -17,6 +17,7 @@ import uploader from './server/middleware/uploader.js';
 import { uploadSingle } from './server/middleware/uploadSingle.js';
 import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
+import chartRoutes from './server/routes/sizeChartRoutes.js';
 
 // import jwt from 'jsonwebtoken';
 import typeRoutes from './server/routes/typesRoutes.js';
@@ -36,8 +37,8 @@ cloudinary.config({
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors({
-  origin: 'http://localhost:3000', // Ensure this matches your frontend URL
-  credentials: true, // Allow cookies to be sent
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true, 
 }));
 // app.use(cors());
 app.use(express.json());
@@ -66,6 +67,40 @@ app.use('/api/carosul', carosulRoutes);
 app.use('/api/types', typeRoutes);
 app.use('/api/sizeTypes', sizeTypeRoutes);
 app.use('/api/sizes', sizeRoutes);
+app.use('/api/charts', chartRoutes);
+// Sample login route for generating JWT and setting it in a cookie
+// app.post('/login', async (req, res) => {
+//   const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123456';
+//   const { username } = req.body;
+
+//   if (!username) {
+//     return res.status(400).send('Username is required');
+//   }
+
+//   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
+//   console.log(token);
+//   res.cookie('token', token, { httpOnly: true });
+//   res.json({ message: 'Logged in successfully' });
+// });
+
+// Add this route to server.js
+// app.get('/myinfo', (req, res) => {
+//   const token = req.cookies.token;
+//   console.log(token);
+  
+//   if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+//   try {
+//     const decoded = jwt.verify(token, JWT_SECRET);
+//     console.log(decoded);
+    
+//     res.json({ user: decoded });
+//   } catch (error) {
+//     res.status(401).json({ message: 'Invalid token' });
+//   }
+// });
+
+
 // Upload route
 app.post("/upload", uploader.single("file"), uploadSingle, async (req, res) => {
   res.send(req.body);
