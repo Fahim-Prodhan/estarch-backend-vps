@@ -27,7 +27,9 @@ const orderSchema = new mongoose.Schema({
   paymentMethod: { type: String },
   status: [
     {
-      name: { type: String, enum: ['new', 'pending', 'confirm', 'processing', 'courier', 'delivered', 'cancel'], default: 'new' },
+      name: { type: String, enum: ['new', 'pending', 'pendingPayment', 'confirm', 'hold', 
+        'processing', 'sentToCourier', 'courierProcessing', 'delivered', 
+        'return', 'returnExchange', 'returnWithDeliveryCharge', 'exchange', 'cancel'], default: 'new' },
       user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
     }
   ],

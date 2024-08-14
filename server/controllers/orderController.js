@@ -5,19 +5,19 @@ import Product from "../models/product.js";
 import moment from 'moment';
 
 // Get all notes for a specific order
-export const getOrderNotes = async (req, res) => {
+export const getAllNotesController = async (req, res) => {
   try {
-      const { orderId } = req.params;  
-      const order = await Order.findById(orderId).select('notes');  // Only select the notes field
-      if (!order) {
-          return res.status(404).json({ message: 'Order not found' });
-      }
+    const { orderId } = req.params;
 
-      // Return the notes for the order
-      res.status(200).json({ notes: order.notes });
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    return res.status(200).json({ notes: order.notes });
   } catch (error) {
-      console.error('Error retrieving notes:', error);
-      res.status(500).json({ message: 'Server error', error });
+    console.error('Error fetching notes:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -203,47 +203,61 @@ export const createOrder = async (req, res) => {
 };
 
 // Update an order's status
-export const updateOrderStatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { status } = req.body;
 
-        const order = await Order.findById(id);
-        if (!order) return res.status(404).json({ error: 'Order not found' });
-
-        const statusHierarchy = ['new', 'pending', 'confirm', 'processing', 'courier', 'delivered', 'cancel'];
-        const currentStatusIndex = statusHierarchy.indexOf(order.status);
-        const newStatusIndex = statusHierarchy.indexOf(status);
-
-        if (newStatusIndex > currentStatusIndex) {
-            order.status = status;
-            await order.save();
-            res.json(order);
-        } else {
-            res.status(400).json({ error: 'Status progression is not valid' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to update order status' });
-    }
-};
 
 // Update an order's courier
-export const updateOrderCourier = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { courier } = req.body;
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
 
-        const order = await Order.findById(id);
-        if (!order) return res.status(404).json({ error: 'Order not found' });
+    const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
 
-        order.courier = courier;
+    const statusHierarchy = [
+        'new', 'pending', 'pendingPayment', 'confirm', 'hold', 
+        'processing', 'sentToCourier', 'courierProcessing', 'delivered', 
+        'return', 'returnExchange', 'returnWithDeliveryCharge', 'exchange', 'cancel'
+    ];
+
+    // Check the current status by looking at the last status in the array
+    const currentStatusIndex = statusHierarchy.indexOf(order.status[order.status.length - 1].name);
+    const newStatusIndex = statusHierarchy.indexOf(status);
+
+    // Validate if the new status can be applied
+    if (newStatusIndex > currentStatusIndex) {
+        order.status.push({ name: status, user: req.user._id }); // Assuming `req.user` contains the logged-in user's info
         await order.save();
-        res.json(order);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to update order courier' });
+        return res.json(order);
+    } else {
+        return res.status(400).json({ error: 'Status progression is not valid' });
     }
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to update order status' });
+  }
 };
 
+// Dynamic filtering of orders based on criteria
+export const filterOrders = async (req, res) => {
+  try {
+    const filters = {};
+
+    if (req.query.status) {
+      filters['status.name'] = req.query.status;
+    }
+    if (req.query.userId) {
+      filters.userId = req.query.userId;
+    }
+    if (req.query.courier) {
+      filters.courier = req.query.courier;
+    }
+
+    const orders = await Order.find(filters);
+    return res.json(orders);
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to filter orders' });
+  }
+};
 // Add cart items to an order
 export const addCartItems = async (req, res) => {
     try {
