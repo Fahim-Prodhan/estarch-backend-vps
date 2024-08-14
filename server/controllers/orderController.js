@@ -3,7 +3,73 @@
 import Order from '../models/order.js'; // Adjust the import path based on your file structure
 import Product from "../models/product.js";
 import moment from 'moment';
-import mongoose from 'mongoose';
+
+// Get all notes for a specific order
+export const getOrderNotes = async (req, res) => {
+  try {
+      const { orderId } = req.params;  
+      const order = await Order.findById(orderId).select('notes');  // Only select the notes field
+      if (!order) {
+          return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Return the notes for the order
+      res.status(200).json({ notes: order.notes });
+  } catch (error) {
+      console.error('Error retrieving notes:', error);
+      res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+// Add a note to a specific order
+export const addNoteController = async (req, res) => {
+  try {
+    const { orderId } = req.params; // Get order ID from URL parameters
+    const { adminName, noteContent } = req.body; // Get adminName and noteContent from request body
+
+    // Validate that both adminName and noteContent are provided
+    if (!adminName || !noteContent) {
+      return res.status(400).json({ message: 'Both adminName and noteContent are required' });
+    }
+
+    // Find the order by its ID and handle cases where the order is not found
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Ensure notes is initialized as an array if not already
+    if (!Array.isArray(order.notes)) {
+      order.notes = [];
+    }
+
+    console.log(order.notes);
+    
+    // Create a new note object
+    const newNote = {
+      adminName,
+      noteContent,
+      timestamp: new Date() // Add a timestamp to the note
+    };
+
+    // Add the new note to the notes array
+    order.notes.push(newNote);
+    console.log(order.notes);
+    
+    // // Save the updated order with the new note
+    await order.save();
+
+    // Return the updated order with a success message
+    return res.status(200).json({ message: 'Note added successfully',order });
+  } catch (error) {
+    // Log the error for debugging
+    console.error('Error adding note:', error);
+
+    // Handle any server errors
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 
 
 const generateInvoiceNumber = () => {

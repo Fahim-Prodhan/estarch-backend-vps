@@ -11,7 +11,10 @@ import {
     getOrderById,
     getUserOrderByMobile,
     getTotalOrderCountOfUser,
-    getOrderByInvoice
+    getOrderByInvoice,
+    getOrderNotes,
+    addNoteController,
+    
 } from '../controllers/orderController.js';
 
 const router = express.Router();
@@ -30,6 +33,7 @@ router.get('/order/:id', getOrderById);
 router.get('/orders/:phone', getUserOrderByMobile);
 router.get('/order-count/:userId',getTotalOrderCountOfUser);
 router.get('/order/invoice/:invoice', getOrderByInvoice);
-
+router.post('/orders/notes/:orderId', addNoteController);
+router.get('/orders/notes/:orderId', getOrderNotes);
 
 export default router;
