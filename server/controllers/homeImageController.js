@@ -1,11 +1,11 @@
-import Carosul from "../models/carosul.js";
+import Carosul from "../models/HomeImage.js";
 
 export const createOrUpdateCarosul = async (req, res) => {
     try {
         console.log('Request Body:', req.body);
         console.log('Files:', req.files);
 
-        const { link, active } = req.body;
+        const {name, link, active } = req.body;
         const images = req.files.map(file => file.path);
 
         if (req.params.id) {

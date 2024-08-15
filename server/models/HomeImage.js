@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
-const CarosulSchema = new mongoose.Schema({
+const HomeImageSchema = new mongoose.Schema({
+    name:{type:string},
     images: [String], // Array of image paths
     link: { type: String, default: '' }, // Link associated with the carousel
     active: { type: Boolean, default: true } // Toggle for active status
@@ -9,5 +10,5 @@ const CarosulSchema = new mongoose.Schema({
 });
 
 
-const Carosul = mongoose.model('Carosul', CarosulSchema);
-export default Carosul
+const HomeImage = mongoose.model('HomeImage',HomeImageSchema);
+export default HomeImage
