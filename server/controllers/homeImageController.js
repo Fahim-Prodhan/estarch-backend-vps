@@ -1,61 +1,90 @@
-import Carosul from "../models/HomeImage.js";
+import HomeImage from "../models/HomeImage.js";
 
-export const createOrUpdateCarosul = async (req, res) => {
+// Create or Update Home Image
+export const createOrUpdateHomeImage = async (req, res) => {
     try {
         console.log('Request Body:', req.body);
         console.log('Files:', req.files);
 
-        const {name, link, active } = req.body;
-        const images = req.files.map(file => file.path);
+        const { name, link, active } = req.body;
+        const images = req.files ? req.files.map(file => file.path) : [];
 
         if (req.params.id) {
-            const carousel = await Carosul.findByIdAndUpdate(req.params.id, { images, link, active }, { new: true });
-            if (!carousel) return res.status(404).send('Carousel not found');
-            return res.json(carousel);
+            // Update existing HomeImage
+            const updatedHomeImage = await HomeImage.findByIdAndUpdate(
+                req.params.id,
+                { name, images, link, active },
+                { new: true }
+            );
+            
+            if (!updatedHomeImage) {
+                return res.status(404).send('HomeImage not found');
+            }
+
+            res.json(updatedHomeImage);
         } else {
-            const newCarousel = new Carosul({ images, link, active });
-            await newCarousel.save();
-            return res.status(201).json(newCarousel);
+            // Create new HomeImage
+            const newHomeImage = new HomeImage({
+                name,
+                images,
+                link,
+                active
+            });
+
+            await newHomeImage.save();
+            res.status(201).json(newHomeImage);
         }
     } catch (error) {
-        console.error('Error creating or updating carousel:', error);
+        console.error('Error creating or updating HomeImage:', error);
         res.status(500).send('Server error');
     }
 };
 
-
-// Get All Carousels
-export const getCarosul = async (req, res) => {
+// Get All Home Images
+export const getHomeImage = async (req, res) => {
     try {
-        const carousels = await Carosul.find();
-        res.json(carousels);
+        const homeImages = await HomeImage.find();
+        res.json(homeImages);
     } catch (error) {
-        console.error('Error fetching carousels:', error);
+        console.error('Error fetching HomeImages:', error);
         res.status(500).send('Server error');
     }
 };
 
-// Delete Carousel
-export const deleteCarosul = async (req, res) => {
+// Delete Home Image
+export const deleteHomeImage = async (req, res) => {
     try {
-        const carousel = await Carosul.findByIdAndDelete(req.params.id);
-        if (!carousel) return res.status(404).send('Carousel not found');
-        res.json({ message: 'Carousel deleted successfully' });
+        const homeImage = await HomeImage.findByIdAndDelete(req.params.id);
+        
+        if (!homeImage) {
+            return res.status(404).send('HomeImage not found');
+        }
+
+        res.json({ message: 'HomeImage deleted successfully' });
     } catch (error) {
-        console.error('Error deleting carousel:', error);
+        console.error('Error deleting HomeImage:', error);
         res.status(500).send('Server error');
     }
 };
 
 // Toggle Active Status
-export const toggleCarosulStatus = async (req, res) => {
+export const toggleHomeImageStatus = async (req, res) => {
     try {
-        const { active } = req.body; // new active status
-        const carousel = await Carosul.findByIdAndUpdate(req.params.id, { active }, { new: true });
-        if (!carousel) return res.status(404).send('Carousel not found');
-        res.json(carousel);
+        const { active } = req.body;
+
+        const updatedHomeImage = await HomeImage.findByIdAndUpdate(
+            req.params.id,
+            { active },
+            { new: true }
+        );
+
+        if (!updatedHomeImage) {
+            return res.status(404).send('HomeImage not found');
+        }
+
+        res.json(updatedHomeImage);
     } catch (error) {
-        console.error('Error updating carousel status:', error);
+        console.error('Error updating HomeImage status:', error);
         res.status(500).send('Server error');
     }
 };

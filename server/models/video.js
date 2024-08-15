@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
-const HomeImageSchema = new mongoose.Schema({
+const VideoSchema = new mongoose.Schema({
     name: {type:String},
-    images: [String], // Array of image paths
+     // Array of image paths
     link: { type: String, default: '' }, // Link associated with the carousel
     active: { type: Boolean, default: true } // Toggle for active status
 }, {
@@ -10,5 +10,5 @@ const HomeImageSchema = new mongoose.Schema({
 });
 
 
-const HomeImage = mongoose.model('HomeImage',HomeImageSchema);
-export default HomeImage
+const Video = mongoose.model('Video',VideoSchema);
+export default Video
