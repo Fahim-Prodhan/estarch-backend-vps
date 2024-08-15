@@ -144,13 +144,11 @@ export const fetchSubCategories = async (req, res) => {
     }
 };
 
-
-
 // Create SubCategory
 export const createSubCategory = async (req, res) => {
     try {
-        const { name, categoryId } = req.body;
-        const newSubCategory = new SubCategory({ name, category: categoryId });
+        const { name, categoryId, image } = req.body; // Include image in the request body
+        const newSubCategory = new SubCategory({ name, category: categoryId, image });
         await newSubCategory.save();
         await Category.findByIdAndUpdate(categoryId, { $push: { subcategories: newSubCategory._id } });
         res.status(201).json(newSubCategory);
@@ -163,8 +161,12 @@ export const createSubCategory = async (req, res) => {
 export const updateSubCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, categoryId } = req.body;
-        const updatedSubCategory = await SubCategory.findByIdAndUpdate(id, { name, category: categoryId }, { new: true });
+        const { name, categoryId, image } = req.body; // Include image in the request body
+        const updatedSubCategory = await SubCategory.findByIdAndUpdate(
+            id, 
+            { name, category: categoryId, image }, // Include image in the update
+            { new: true }
+        );
         res.json(updatedSubCategory);
     } catch (err) {
         res.status(500).json({ error: err.message });

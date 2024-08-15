@@ -3,8 +3,8 @@ import Type from '../models/type.js';
 // Create Type
 export const createType = async (req, res) => {
     try {
-        const { name } = req.body;
-        const newType = new Type({ name });
+        const { name, image } = req.body; // Accept 'image' from the request body
+        const newType = new Type({ name, image });
         await newType.save();
         res.status(201).json(newType);
     } catch (err) {
@@ -26,8 +26,8 @@ export const getTypes = async (req, res) => {
 export const updateType = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name } = req.body;
-        const updatedType = await Type.findByIdAndUpdate(id, { name }, { new: true });
+        const { name, image } = req.body; // Accept 'image' from the request body
+        const updatedType = await Type.findByIdAndUpdate(id, { name, image }, { new: true });
         res.json(updatedType);
     } catch (err) {
         res.status(500).json({ error: err.message });
