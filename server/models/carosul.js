@@ -1,15 +1,13 @@
 import mongoose from "mongoose";
 
 const CarosulSchema = new mongoose.Schema({
-    images: {
-        type: [String],
-        required: [true, 'Images are required'],
-        validate: {
-            validator: Array.isArray,
-            message: 'Images should be an array of strings',
-        },
-    },
-})
+    images: [String], // Array of image paths
+    link: { type: String, default: '' }, // Link associated with the carousel
+    active: { type: Boolean, default: true } // Toggle for active status
+}, {
+    timestamps: true
+});
+
 
 const Carosul = mongoose.model('Carosul', CarosulSchema);
 export default Carosul
