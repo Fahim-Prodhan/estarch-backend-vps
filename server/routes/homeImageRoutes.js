@@ -4,7 +4,7 @@ import {
     getHomeImage,
     deleteHomeImage,
     toggleHomeImageStatus
-} from '../controllers/HomeImageController.js';  // Import your controller methods
+} from '../controllers/homeImageController.js';  // Import your controller methods
 import uploader from '../middleware/uploader.js'; // To handle file uploads
 
 const router = express.Router();
