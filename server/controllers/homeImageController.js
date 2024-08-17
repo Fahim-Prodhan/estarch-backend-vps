@@ -1,4 +1,4 @@
-import HomeImage from "../models/HomeImage.js";
+import HomeImage from "../models/homeImage.js";
 
 // Create or Update Home Image
 export const createOrUpdateHomeImage = async (req, res) => {
@@ -41,15 +41,35 @@ export const createOrUpdateHomeImage = async (req, res) => {
 };
 
 // Get All Home Images
+// export const getHomeImage = async (req, res) => {
+//     try {
+//         const homeImages = await HomeImage.find({ active: true });
+//         res.json(homeImages);
+//     } catch (error) {
+//         console.error('Error fetching HomeImages:', error);
+//         res.status(500).send('Server error');
+//     }
+// };
 export const getHomeImage = async (req, res) => {
     try {
-        const homeImages = await HomeImage.find();
+        const showAll = req.query.showAll === 'true';  // Check if `showAll` query param is true
+
+        let homeImages;
+        if (showAll) {
+            // Fetch all home images (for the admin panel)
+            homeImages = await HomeImage.find();
+        } else {
+            // Fetch only active home images (for the main frontend)
+            homeImages = await HomeImage.find({ active: true });
+        }
+
         res.json(homeImages);
     } catch (error) {
         console.error('Error fetching HomeImages:', error);
         res.status(500).send('Server error');
     }
 };
+
 
 // Delete Home Image
 export const deleteHomeImage = async (req, res) => {

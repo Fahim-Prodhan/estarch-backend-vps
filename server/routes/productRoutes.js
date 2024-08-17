@@ -1,11 +1,12 @@
 import express from 'express';
-import { createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku } from '../controllers/productController.js';
+import {updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku } from '../controllers/productController.js';
 
 const router = express.Router();
 
 // Routes
 router.post('/products', createProduct);
 router.get('/products', getAllProducts);
+router.get('/all-products', getProducts);
 router.get('/products/sku', generateSku);
 router.get('/new-all-products', getAllNewArrivalProduct);
 router.get('/all-feature-products', getAllFeatureProduct);
@@ -17,6 +18,7 @@ router.get('/products/:type', getAllProductsByType);
 router.get('/products/product/:id', getProductById); 
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
+router.put('/products/serials/update', updateProductSerials);
 
 
 export default router;

@@ -36,7 +36,13 @@ const productSchema = new mongoose.Schema({
     openingStock: Number,
     ospPrice: Number
   }],
-  charts: { type: mongoose.Schema.Types.ObjectId, ref: 'Chart' }
+  charts: { type: mongoose.Schema.Types.ObjectId, ref: 'Chart' },
+  serialNo: { type: Number, default: 0 },
+  relatedProducts: [{ 
+    name : String ,
+    SKU:String,
+    product:{type: mongoose.Schema.Types.ObjectId, ref: 'Product'}
+   }]  
 }, { timestamps: true });
 
 const Product = mongoose.model('Product', productSchema);

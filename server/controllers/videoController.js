@@ -36,15 +36,27 @@ export const createOrUpdateVideo = async (req, res) => {
     }
 };
 
+// 
 export const getVideos = async (req, res) => {
     try {
-        const videos = await Video.find();
+        const showAll = req.query.showAll === 'true';  // Check if `showAll` query param is true
+
+        let videos;
+        if (showAll) {
+            // Fetch all videos (for the admin panel)
+            videos = await Video.find();
+        } else {
+            // Fetch only active videos (for the main frontend)
+            videos = await Video.find({ active: true });
+        }
+
         res.json(videos);
     } catch (error) {
-        console.error('Error fetching Videos:', error);
-        res.status(500).send('Server error');
+        console.error('Error fetching videos:', error);
+        res.status(500).json({ error: 'Server error', details: error.message });
     }
 };
+
 
 
 export const deleteVideo = async (req, res) => {

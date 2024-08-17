@@ -25,9 +25,28 @@ export const createOrUpdateCarosul = async (req, res) => {
 
 
 // Get All Carousels
+// export const getCarosul = async (req, res) => {
+//     try {
+//         const carousels = await Carosul.find();
+//         res.json(carousels);
+//     } catch (error) {
+//         console.error('Error fetching carousels:', error);
+//         res.status(500).send('Server error');
+//     }
+// };
 export const getCarosul = async (req, res) => {
     try {
-        const carousels = await Carosul.find();
+        const showAll = req.query.showAll === 'true';  // Check if `showAll` query param is true
+
+        let carousels;
+        if (showAll) {
+            // Fetch all carousels (for the admin panel)
+            carousels = await Carosul.find();
+        } else {
+            // Fetch only active carousels (for the main frontend)
+            carousels = await Carosul.find({ active: true });
+        }
+
         res.json(carousels);
     } catch (error) {
         console.error('Error fetching carousels:', error);
