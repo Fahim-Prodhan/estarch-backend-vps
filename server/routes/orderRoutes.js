@@ -14,6 +14,8 @@ import {
     getOrderByInvoice,
     getAllNotesController,
     addNoteController,
+    getAllStatusByOrderId,
+    getAllOrdersWithLastStatus
     
 } from '../controllers/orderController.js';
 
@@ -24,8 +26,6 @@ router.get('/', getAllOrders);
 router.post('/', createOrder);
 // Update an order's status
 router.patch('/status/:orderId', updateOrderStatus);
-// Update an order's courier
-// router.patch('/courier/:id', updateOrderCourier);
 // Add cart items to an order
 router.patch('/:id/cart-items', addCartItems);
 router.post('/product/', getOrderProducts)
@@ -35,5 +35,7 @@ router.get('/order-count/:userId',getTotalOrderCountOfUser);
 router.get('/order/invoice/:invoice', getOrderByInvoice);
 router.post('/orders/notes/:orderId', addNoteController);
 router.get('/orders/notes/:orderId',getAllNotesController);
+router.get('/order/status/:orderId', getAllStatusByOrderId);
+router.get('/orders/all/laststatus', getAllOrdersWithLastStatus);
 
 export default router;

@@ -1,5 +1,6 @@
 // controllers/orderController.js
 
+import mongoose from 'mongoose';
 import Order from '../models/order.js'; // Adjust the import path based on your file structure
 import Product from "../models/product.js";
 import moment from 'moment';
@@ -44,7 +45,7 @@ export const addNoteController = async (req, res) => {
     }
 
     console.log(order.notes);
-    
+
     // Create a new note object
     const newNote = {
       adminName,
@@ -55,12 +56,12 @@ export const addNoteController = async (req, res) => {
     // Add the new note to the notes array
     order.notes.push(newNote);
     console.log(order.notes);
-    
+
     // // Save the updated order with the new note
     await order.save();
 
     // Return the updated order with a success message
-    return res.status(200).json({ message: 'Note added successfully',order });
+    return res.status(200).json({ message: 'Note added successfully', order });
   } catch (error) {
     // Log the error for debugging
     console.error('Error adding note:', error);
@@ -73,32 +74,32 @@ export const addNoteController = async (req, res) => {
 
 
 const generateInvoiceNumber = () => {
-    const datePart = moment().format('YYYYMMDD'); // e.g., "20240808"
-    const randomPart = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
-    return `INV-${datePart}-${randomPart}`;
+  const datePart = moment().format('YYYYMMDD'); // e.g., "20240808"
+  const randomPart = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
+  return `INV-${datePart}-${randomPart}`;
 };
 
 
 
 // Fetch all orders with optional filters
 export const getAllOrders = async (req, res) => {
-    try {
-        const { status, courier, date } = req.query;
+  try {
+    const { status, courier, date } = req.query;
 
-        const filters = {};
-        if (status) filters.status = status;
-        if (courier) filters.courier = courier;
-        if (date) {
-            const startDate = new Date(date).setHours(0, 0, 0, 0);
-            const endDate = new Date(date).setHours(23, 59, 59, 999);
-            filters.date = { $gte: startDate, $lte: endDate };
-        }
-
-        const orders = await Order.find(filters);
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch orders' });
+    const filters = {};
+    if (status) filters.status = status;
+    if (courier) filters.courier = courier;
+    if (date) {
+      const startDate = new Date(date).setHours(0, 0, 0, 0);
+      const endDate = new Date(date).setHours(23, 59, 59, 999);
+      filters.date = { $gte: startDate, $lte: endDate };
     }
+
+    const orders = await Order.find(filters);
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
 };
 
 // Create a new order
@@ -114,92 +115,92 @@ export const getAllOrders = async (req, res) => {
 //     }
 // };
 
-export const createOrder = async (req, res) => {    
-    try {
-        const {
-            serialId, orderNotes, name, address, area, phone, altPhone, notes,
-            totalAmount, deliveryCharge, discount, grandTotal, advanced,
-            condition, cartItems, paymentMethod, courier, employee, userId
-        } = req.body;
+export const createOrder = async (req, res) => {
+  try {
+    const {
+      serialId, orderNotes, name, address, area, phone, altPhone, notes,
+      totalAmount, deliveryCharge, discount, grandTotal, advanced,
+      condition, cartItems, paymentMethod, courier, employee, userId
+    } = req.body;
 
-        console.log(name);
-        const invoice = generateInvoiceNumber();
-        // console.log("invoice:", invoice);
+    console.log(name);
+    const invoice = generateInvoiceNumber();
+    // console.log("invoice:", invoice);
 
-        const initialStatus = [{ name: 'pending', user: null }];
+    const initialStatus = [{ name: 'pending', user: null }];
 
-        // Iterate through each cart item to update the product stock
-        for (const item of cartItems) {
-            const { productId, size, quantity } = item;
+    // Iterate through each cart item to update the product stock
+    for (const item of cartItems) {
+      const { productId, size, quantity } = item;
 
-            // Find the product by ID
-            const product = await Product.findById(productId);
-            console.log(product);
-            
-            if (!product) {
-                console.log('not found product');
-                
-                return res.status(404).json({ message: `Product with ID ${productId} not found.` });
-            }
+      // Find the product by ID
+      const product = await Product.findById(productId);
+      console.log(product);
 
-            if (!size) {
-                console.log('not found size');
+      if (!product) {
+        console.log('not found product');
 
-                return res.status(400).json({ message: `Size must be specified for product ID ${productId}.` });
-            }
+        return res.status(404).json({ message: `Product with ID ${productId} not found.` });
+      }
 
-            // Find the size details by size
-            const sizeDetail = product.sizeDetails.find(detail => detail.size === size);
-            if (!sizeDetail) {
-                console.log('not found size details');
-                return res.status(404).json({ message: `Size ${size} not found for product ID ${productId}.` });
-            }
+      if (!size) {
+        console.log('not found size');
 
-            if (sizeDetail.openingStock < quantity) {
-                console.log('not available',sizeDetail.openingStock);
+        return res.status(400).json({ message: `Size must be specified for product ID ${productId}.` });
+      }
 
-                return res.status(400).json({ message: `Not enough stock for size ${size} of product ID ${productId}.` });
-            }
+      // Find the size details by size
+      const sizeDetail = product.sizeDetails.find(detail => detail.size === size);
+      if (!sizeDetail) {
+        console.log('not found size details');
+        return res.status(404).json({ message: `Size ${size} not found for product ID ${productId}.` });
+      }
 
-            // Subtract the quantity from openingStock
-            sizeDetail.openingStock -= quantity;
+      if (sizeDetail.openingStock < quantity) {
+        console.log('not available', sizeDetail.openingStock);
 
-            // Update the product's sizeDetails in the database
-            await Product.findByIdAndUpdate(productId, { sizeDetails: product.sizeDetails });
-        }
+        return res.status(400).json({ message: `Not enough stock for size ${size} of product ID ${productId}.` });
+      }
 
-        // Create the order with the given data
-        const order = new Order({
-            serialId,
-            invoice,
-            orderNotes,
-            name,
-            address,
-            area,
-            phone,
-            altPhone,
-            notes,
-            totalAmount,
-            deliveryCharge,
-            discount,
-            grandTotal,
-            advanced,
-            condition,
-            cartItems,
-            paymentMethod,
-            courier,
-            employee,
-            userId,
-            status:initialStatus
-        });
+      // Subtract the quantity from openingStock
+      sizeDetail.openingStock -= quantity;
 
-        await order.save();
-
-        return res.status(201).json({ message: 'Order placed successfully', order });
-    } catch (error) {
-        console.error('Error placing order:', error);
-        return res.status(500).json({ message: 'Server error', error });
+      // Update the product's sizeDetails in the database
+      await Product.findByIdAndUpdate(productId, { sizeDetails: product.sizeDetails });
     }
+
+    // Create the order with the given data
+    const order = new Order({
+      serialId,
+      invoice,
+      orderNotes,
+      name,
+      address,
+      area,
+      phone,
+      altPhone,
+      notes,
+      totalAmount,
+      deliveryCharge,
+      discount,
+      grandTotal,
+      advanced,
+      condition,
+      cartItems,
+      paymentMethod,
+      courier,
+      employee,
+      userId,
+      status: initialStatus
+    });
+
+    await order.save();
+
+    return res.status(201).json({ message: 'Order placed successfully', order });
+  } catch (error) {
+    console.error('Error placing order:', error);
+    return res.status(500).json({ message: 'Server error', error });
+  }
 };
 
 // Update an order's status
@@ -208,23 +209,23 @@ export const createOrder = async (req, res) => {
 // Update an order's courier
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const { orderId } = req.params;
+    const { status, userId } = req.body;
 
-    // Ensure user information exists in the request
-    if (!req.user || !req.user._id) {
-      return res.status(401).json({ error: 'User not authenticated' });
+    console.log(orderId, status, userId);
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid userId format' });
     }
-
     // Find the order by ID
-    const order = await Order.findById(id);
+    const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
     const statusHierarchy = [
-      'new', 'pending', 'pendingPayment', 'confirm', 'hold', 
-      'processing', 'sentToCourier', 'courierProcessing', 'delivered', 
+      'new', 'pending', 'pendingPayment', 'confirm', 'hold',
+      'processing', 'sentToCourier', 'courierProcessing', 'delivered',
       'return', 'returnExchange', 'returnWithDeliveryCharge', 'exchange', 'cancel'
     ];
 
@@ -234,7 +235,7 @@ export const updateOrderStatus = async (req, res) => {
 
     // Validate status progression
     if (newStatusIndex > currentStatusIndex) {
-      order.status.push({ name: status, user: req.user._id, timestamp: new Date() });
+      order.status.push({ name: status, user: userId, timestamp: new Date() });
       await order.save();
       return res.json(order);
     } else {
@@ -270,165 +271,231 @@ export const filterOrders = async (req, res) => {
 };
 // Add cart items to an order
 export const addCartItems = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { cartItems } = req.body;
+  try {
+    const { id } = req.params;
+    const { cartItems } = req.body;
 
-        const order = await Order.findById(id);
-        if (!order) return res.status(404).json({ error: 'Order not found' });
+    const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
 
-        order.cartItems = cartItems;
-        await order.save();
-        res.json(order);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to update cart items' });
-    }
+    order.cartItems = cartItems;
+    await order.save();
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update cart items' });
+  }
 };
 
 
 // get order products (fahim)
 export const getOrderProducts = async (req, res) => {
-    try {
-        const { productIds } = req.body; // Expect an array of product IDs in the request body
+  try {
+    const { productIds } = req.body; // Expect an array of product IDs in the request body
 
-        // Find products with the given IDs
-        const products = await Product.find({
-            _id: { $in: productIds }
-        });
+    // Find products with the given IDs
+    const products = await Product.find({
+      _id: { $in: productIds }
+    });
 
-        if (!products) {
-            return res.status(404).json({ message: 'Products not found' });
-        }
-
-        res.json(products);
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ message: 'Server error' });
+    if (!products) {
+      return res.status(404).json({ message: 'Products not found' });
     }
+
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 }
 
 
 export const getOrderById = async (req, res) => {
-    try {
-      const { id } = req.params;
-  
-      // Fetch the order by ID
-      const order = await Order.findById(id)
-        .populate('cartItems.productId') // Populate the product details in the cartItems array
-        .populate('status.user', 'name') // Populate the user's name for the status history
-        .populate('employee', 'name') // Populate the employee's name
-        .populate('userId', 'name'); // Populate the user's name who created the order
-  
-      if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-  
-      // Fetch all orders to determine the index
-      const allOrders = await Order.find().sort({ createdAt: 1 }); // Sort orders by creation date
-  
-      // Calculate the order number as the index + 1
-      const orderIndex = allOrders.findIndex(o => o._id.toString() === id);
-      const orderNumber = orderIndex + 1;
-  
-      // Add the order number to the response
-      const orderWithNumber = {
-        ...order.toObject(), // Convert the order document to a plain JavaScript object
-        orderNumber, // Add the calculated order number
-      };
-  
-      res.status(200).json(orderWithNumber);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  };
+  try {
+    const { id } = req.params;
 
-  export const getUserOrderByMobile = async (req, res) => {
-    const { phone } = req.params; // Assuming the phone number is passed as a URL parameter
-  
-    try {
-      // Find orders by phone number
-      const orders = await Order.find({ phone }).populate('cartItems.productId').populate('userId').populate('employee');
-  
-      if (orders.length === 0) {
-        return res.status(404).json({ message: 'No orders found for this mobile number' });
-      }
-  
-      // Extract common user details (assuming all orders have the same user details)
-      const userDetails = orders[0]; // Example, if all orders are from the same user
-  
-      // Format response data
-      const responseData = {
-        phone: userDetails.phone,
-        name: userDetails.name,
-        address: userDetails.address,
-        orderList: orders.map(order => ({
-          serialId: order.serialId,
-          invoice: order.invoice,
-          orderNotes: order.orderNotes,
-          totalAmount: order.totalAmount,
-          deliveryCharge: order.deliveryCharge,
-          discount: order.discount,
-          grandTotal: order.grandTotal,
-          advanced: order.advanced,
-          condition: order.condition,
-          cartItems: order.cartItems.map(item => ({
-            productId: item.productId,
-            title: item.title,
-            quantity: item.quantity,
-            price: item.price,
-            size: item.size
-          })),
-          paymentMethod: order.paymentMethod,
-          status: order.status,
-          courier: order.courier,
-          employee: order.employee,
-          note: order.note,
-          lastNote: order.lastNote,
-          createdAt: order.createdAt,
-          updatedAt: order.updatedAt
-        }))
-      };
-  
-      // Return the formatted response
-      res.status(200).json(responseData);
-    } catch (error) {
-      // Handle any errors that occur during the query
-      console.error(error);
-      res.status(500).json({ message: 'Server error. Please try again later.' });
+    // Fetch the order by ID
+    const order = await Order.findById(id)
+      .populate('cartItems.productId') // Populate the product details in the cartItems array
+      .populate('status.user', 'name') // Populate the user's name for the status history
+      .populate('employee', 'name') // Populate the employee's name
+      .populate('userId', 'name'); // Populate the user's name who created the order
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
     }
-  };
+
+    // Fetch all orders to determine the index
+    const allOrders = await Order.find().sort({ createdAt: 1 }); // Sort orders by creation date
+
+    // Calculate the order number as the index + 1
+    const orderIndex = allOrders.findIndex(o => o._id.toString() === id);
+    const orderNumber = orderIndex + 1;
+
+    // Add the order number to the response
+    const orderWithNumber = {
+      ...order.toObject(), // Convert the order document to a plain JavaScript object
+      orderNumber, // Add the calculated order number
+    };
+
+    res.status(200).json(orderWithNumber);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getUserOrderByMobile = async (req, res) => {
+  const { phone } = req.params; // Assuming the phone number is passed as a URL parameter
+
+  try {
+    // Find orders by phone number
+    const orders = await Order.find({ phone }).populate('cartItems.productId').populate('userId').populate('employee');
+
+    if (orders.length === 0) {
+      return res.status(404).json({ message: 'No orders found for this mobile number' });
+    }
+
+    // Extract common user details (assuming all orders have the same user details)
+    const userDetails = orders[0]; // Example, if all orders are from the same user
+
+    // Format response data
+    const responseData = {
+      phone: userDetails.phone,
+      name: userDetails.name,
+      address: userDetails.address,
+      orderList: orders.map(order => ({
+        serialId: order.serialId,
+        invoice: order.invoice,
+        orderNotes: order.orderNotes,
+        totalAmount: order.totalAmount,
+        deliveryCharge: order.deliveryCharge,
+        discount: order.discount,
+        grandTotal: order.grandTotal,
+        advanced: order.advanced,
+        condition: order.condition,
+        cartItems: order.cartItems.map(item => ({
+          productId: item.productId,
+          title: item.title,
+          quantity: item.quantity,
+          price: item.price,
+          size: item.size
+        })),
+        paymentMethod: order.paymentMethod,
+        status: order.status,
+        courier: order.courier,
+        employee: order.employee,
+        note: order.note,
+        lastNote: order.lastNote,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt
+      }))
+    };
+
+    // Return the formatted response
+    res.status(200).json(responseData);
+  } catch (error) {
+    // Handle any errors that occur during the query
+    console.error(error);
+    res.status(500).json({ message: 'Server error. Please try again later.' });
+  }
+};
 
 export const getTotalOrderCountOfUser = async (req, res) => {
-    try {
-      const { userId } = req.params;
-  
-      // Find orders for the given userId and populate the userId field
-      const orders = await Order.find({ userId: userId }).populate('userId');
-  
-      // Count the number of populated orders
-      const orderCount = orders.length;
-  
-      res.status(200).json({ orderCount, orders });
-    } catch (error) {
-      console.error('Error finding order count and orders by userId:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  };
+  try {
+    const { userId } = req.params;
 
-  export const getOrderByInvoice = async (req, res) => {
-    try {
-      const { invoice } = req.params;
-        console.log(invoice);
-        
-      const order = await Order.findOne({ invoice });
-  
-      if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-  
-      res.status(200).json(order);
-    } catch (error) {
-      res.status(500).json({ message: 'Server error', error: error.message });
+    // Find orders for the given userId and populate the userId field
+    const orders = await Order.find({ userId: userId }).populate('userId');
+
+    // Count the number of populated orders
+    const orderCount = orders.length;
+
+    res.status(200).json({ orderCount, orders });
+  } catch (error) {
+    console.error('Error finding order count and orders by userId:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getOrderByInvoice = async (req, res) => {
+  try {
+    const { invoice } = req.params;
+    console.log(invoice);
+
+    const order = await Order.findOne({ invoice });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
     }
-  };
+
+    res.status(200).json(order);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+export const getAllStatusByOrderId = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // Find the order by its ID and select only the status field
+    const order = await Order.findById(orderId).select('status').populate('status.user', 'name fullName');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Return the status array
+    res.status(200).json(order.status);
+  } catch (error) {
+    console.error('Error fetching order status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getAllOrdersWithLastStatus = async (req, res) => {
+  try {
+    // Aggregation pipeline to get orders with the latest status in an array
+    const orders = await Order.aggregate([
+      // Unwind the status array to work with individual status documents
+      { $unwind: "$status" },
+      // Sort statuses by timestamp in descending order
+      { $sort: { "status.timestamp": -1 } },
+      // Group by order id and take the latest status
+      {
+        $group: {
+          _id: "$_id",
+          serialId: { $first: "$serialId" },
+          invoice: { $first: "$invoice" },
+          orderNotes: { $first: "$orderNotes" },
+          name: { $first: "$name" },
+          address: { $first: "$address" },
+          area: { $first: "$area" },
+          phone: { $first: "$phone" },
+          altPhone: { $first: "$altPhone" },
+          totalAmount: { $first: "$totalAmount" },
+          deliveryCharge: { $first: "$deliveryCharge" },
+          discount: { $first: "$discount" },
+          grandTotal: { $first: "$grandTotal" },
+          advanced: { $first: "$advanced" },
+          condition: { $first: "$condition" },
+          cartItems: { $first: "$cartItems" },
+          paymentMethod: { $first: "$paymentMethod" },
+          courier: { $first: "$courier" },
+          employee: { $first: "$employee" },
+          userId: { $first: "$userId" },
+          notes: { $first: "$notes" },
+          // Collect the latest status into an array
+          status: { $push: "$status" }
+        }
+      },
+      // Sort by order ID if needed
+      { $sort: { serialId: 1 } } // Optional sorting
+    ]);
+
+    res.status(200).json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
