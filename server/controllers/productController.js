@@ -485,3 +485,27 @@ export const generateSku = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+export const searchProductListsByName = async (req, res) => {
+  const { productName } = req.query;
+
+  if (!productName) {
+    return res.status(400).json({ message: 'Product name query parameter is required' });
+  }
+
+  try {
+    // Using a case-insensitive search
+    const productLists = await Product.find({
+      productName: { $regex: productName, $options: 'i' }
+    });
+
+    if (productLists.length === 0) {
+      return res.status(404).json({ message: 'No product lists found with the specified name' });
+    }
+
+    res.status(200).json(productLists);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
