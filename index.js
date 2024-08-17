@@ -8,10 +8,10 @@ import attributeRoutes from './server/routes/attributeRoutes.js';
 import categoryRoutes from './server/routes/categoryRoutes.js';
 import supplierRoutes from './server/routes/supplierRoutes.js';
 import expenseRoutes from './server/routes/expenseRoutes.js';
-import attributeValueRoutes from './server/routes/attributeValueRoutes.js';
 import promoCodeRoutes from './server/routes/promoCodeRoutes.js';
 import carosulRoutes from './server/routes/carosulRoutes.js';
-import productListRoutes from './server/routes/productListRoutes.js';
+import homeImageRoutes from './server/routes/homeImageRoutes.js';
+import videoRoutes from './server/routes/videoRoutes.js';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
 import { fileURLToPath } from 'url';
@@ -26,6 +26,7 @@ import typeRoutes from './server/routes/typesRoutes.js';
 import orderRoutes from './server/routes/orderRoutes.js';
 import sizeTypeRoutes from './server/routes/sizeTypeRoutes.js';
 import sizeRoutes from './server/routes/sizeRoutes.js';
+import toggleRoutes from './server/routes/toggleRoutes.js';
 
 dotenv.config();
 
@@ -39,7 +40,7 @@ cloudinary.config({
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001' , 'https://next.estarch.online' , 'https://genz.estarch.online'],
   credentials: true, 
 }));
 // app.use(cors());
@@ -58,15 +59,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Define routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/toggle', toggleRoutes);
 
 app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/attributes', attributeRoutes);
 app.use('/api/orders', orderRoutes);
-// app.use('/api/attribute-values', attributeValueRoutes);
 app.use('/api/promo-codes', promoCodeRoutes);
 app.use('/api/carosul', carosulRoutes);
+app.use('/api/video', videoRoutes);
+app.use('/api/home-image',homeImageRoutes);
 app.use('/api/types', typeRoutes);
 app.use('/api/sizeTypes', sizeTypeRoutes);
 app.use('/api/sizes', sizeRoutes);

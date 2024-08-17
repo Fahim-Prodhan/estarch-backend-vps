@@ -5,7 +5,7 @@ import Chart from '../models/sizeChart.js';
 export const createProduct = async (req, res) => {
   try {
     console.log(req.body);
-    
+
     const newProduct = new Product(req.body);
     // return console.log(req.body);
     await newProduct.save();
@@ -370,14 +370,14 @@ export const getFeaturedProducts = async (req, res) => {
   }
 };
 
+ // Adjust the import path as needed
 
-
-
-// Get a product by ID
-export const getProductById = async (req, res) => {
+ export const getProductById = async (req, res) => {
   // console.log(`Fetching product with ID: ${req.params.id}`); // Log the ID
   try {
-    const product = await Product.findById(req.params.id).populate('charts');
+    const product = await Product.findById(req.params.id)
+      .populate('charts')
+      .populate('relatedProducts.product'); // Populate related products
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -387,7 +387,6 @@ export const getProductById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 // Update a product
 export const updateProduct = async (req, res) => {
@@ -421,8 +420,8 @@ export const deleteProduct = async (req, res) => {
 export const getProductsForPos = async (req, res) => {
   try {
     const { brand, category, subcategory, search } = req.query;
-    console.log(brand , category, subcategory , search);
-    
+    console.log(brand, category, subcategory, search);
+
     // Build the query object
     let query = {};
 
@@ -445,7 +444,7 @@ export const getProductsForPos = async (req, res) => {
       ];
     }
     const products = await Product.find(query);
-    
+
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -456,10 +455,10 @@ export const getProductsForPos = async (req, res) => {
 export const generateSku = async (req, res) => {
   try {
     const baseSku = 'EST'; // Base part of the SKU
-    
+
     // Get the total number of products in the database
     const productCount = await Product.countDocuments();
-    
+
     // Start the SKU number from 0000 + productCount
     let skuNumber = productCount + 1;
 
@@ -468,7 +467,7 @@ export const generateSku = async (req, res) => {
     while (true) {
       sku = `${baseSku}${skuNumber.toString().padStart(4, '0')}`; // Generate SKU like EST0001, EST0002, etc.
       const existingProduct = await Product.findOne({ SKU: sku });
-      
+
       if (!existingProduct) {
         // If no product is found with the generated SKU, break the loop
         break;
@@ -485,3 +484,55 @@ export const generateSku = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+
+
+export const updateProductSerials = async (req, res) => {
+  const { serialUpdates } = req.body;
+  try {
+    const updatePromises = serialUpdates.map(({ productId, serialNo }) => {
+      return Product.findByIdAndUpdate(productId, { serialNo }, { new: true });
+    });
+
+    const updatedProducts = await Promise.all(updatePromises);
+    res.json({ message: 'Serial numbers updated successfully', updatedProducts });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({ message: 'Error updating serial numbers', error });
+  }
+};
+
+export const getProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ serialNo: { $gt: 0 } }).sort({ serialNo: 1 });
+    res.json({ products });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching products', error });
+  }
+};
+
+export const searchProductListsByName = async (req, res) => {
+  const { productName } = req.query;
+
+  if (!productName) {
+    return res.status(400).json({ message: 'Product name query parameter is required' });
+  }
+
+  try {
+    // Using a case-insensitive search
+    const productLists = await Product.find({
+      productName: { $regex: productName, $options: 'i' }
+    });
+
+    if (productLists.length === 0) {
+      return res.status(404).json({ message: 'No product lists found with the specified name' });
+    }
+
+    res.status(200).json(productLists);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
