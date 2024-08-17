@@ -26,6 +26,7 @@ import typeRoutes from './server/routes/typesRoutes.js';
 import orderRoutes from './server/routes/orderRoutes.js';
 import sizeTypeRoutes from './server/routes/sizeTypeRoutes.js';
 import sizeRoutes from './server/routes/sizeRoutes.js';
+import toggleRoutes from './server/routes/toggleRoutes.js';
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Define routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/toggle', toggleRoutes);
 
 app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
