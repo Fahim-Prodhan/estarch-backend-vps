@@ -95,7 +95,7 @@ export const getAllOrders = async (req, res) => {
       filters.date = { $gte: startDate, $lte: endDate };
     }
 
-    const orders = await Order.find(filters);
+    const orders = await Order.find(filters).sort({_id: -1});
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
@@ -127,7 +127,7 @@ export const createOrder = async (req, res) => {
     const invoice = generateInvoiceNumber();
     // console.log("invoice:", invoice);
 
-    const initialStatus = [{ name: 'pending', user: null }];
+    const initialStatus = [{ name: 'new', user: null }];
 
     // Iterate through each cart item to update the product stock
     for (const item of cartItems) {
