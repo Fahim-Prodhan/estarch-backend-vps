@@ -443,9 +443,20 @@ export const getProductsForPos = async (req, res) => {
         { SKU: { $regex: search, $options: 'i' } }
       ];
     }
-    const products = await Product.find(query);
 
-    res.status(200).json(products);
+    // Aggregate the products with total stock
+    const productsWithTotalStock = await Product.aggregate([
+      { $match: query },
+      {
+        $addFields: {
+          totalStock: {
+            $sum: "$sizeDetails.openingStock"
+          }
+        }
+      }
+    ]);
+
+    res.status(200).json(productsWithTotalStock);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
