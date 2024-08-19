@@ -611,3 +611,51 @@ export const toggleBooleanField = async (req, res) => {
       return res.status(500).json({ message: 'Server error', error });
   }
 };
+//barcode seearching
+
+export const searchProductByBarcode = async (req, res) => {
+  const { barcode } = req.params;
+
+  try {
+      // Search for the product in the database by barcode within sizeDetails array
+      const product = await Product.findOne(
+          { 'sizeDetails.barcode': barcode },
+          { 
+              'sizeDetails.$': 1, // Include only the matching size detail
+              productName: 1,
+              showSize: 1,
+              freeDelevary: 1,
+              featureProduct: 1,
+              productStatus: 1,
+              posSuggestion: 1,
+              images: 1,
+              videoUrl: 1,
+              content: 1,
+              guideContent: 1,
+              selectedCategoryName: 1,
+              selectedSubCategory: 1,
+              selectedCategory: 1,
+              selectedBrand: 1,
+              selectedType: 1,
+              discount: 1,
+              regularPrice: 1,
+              salePrice: 1,
+              SKU: 1,
+              charts: 1,
+              serialNo: 1,
+              relatedProducts: 1,
+              // Add any other fields you want to include
+          }
+      );
+
+      if (product) {
+          return res.status(200).json(product);
+      } else {
+          return res.status(404).json({ message: 'Product not found' });
+      }
+  } catch (error) {
+      console.error('Error fetching product:', error.message);
+      return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
