@@ -390,6 +390,8 @@ export const getFeaturedProducts = async (req, res) => {
 
 // Update a product
 export const updateProduct = async (req, res) => {
+  console.log(req.params.id);
+  
   try {
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedProduct) {
