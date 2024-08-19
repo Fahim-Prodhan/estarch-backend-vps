@@ -1,5 +1,5 @@
 import express from 'express';
-import {searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku } from '../controllers/productController.js';
+import {searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName } from '../controllers/productController.js';
 
 const router = express.Router();
 
