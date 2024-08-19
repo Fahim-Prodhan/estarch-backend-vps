@@ -129,45 +129,6 @@ export const createOrder = async (req, res) => {
 
     const initialStatus = [{ name: 'new', user: null }];
 
-    // Iterate through each cart item to update the product stock
-    for (const item of cartItems) {
-      const { productId, size, quantity } = item;
-
-      // Find the product by ID
-      const product = await Product.findById(productId);
-      console.log(product);
-
-      if (!product) {
-        console.log('not found product');
-
-        return res.status(404).json({ message: `Product with ID ${productId} not found.` });
-      }
-
-      if (!size) {
-        console.log('not found size');
-
-        return res.status(400).json({ message: `Size must be specified for product ID ${productId}.` });
-      }
-
-      // Find the size details by size
-      const sizeDetail = product.sizeDetails.find(detail => detail.size === size);
-      if (!sizeDetail) {
-        console.log('not found size details');
-        return res.status(404).json({ message: `Size ${size} not found for product ID ${productId}.` });
-      }
-
-      if (sizeDetail.openingStock < quantity) {
-        console.log('not available', sizeDetail.openingStock);
-
-        return res.status(400).json({ message: `Not enough stock for size ${size} of product ID ${productId}.` });
-      }
-
-      // Subtract the quantity from openingStock
-      sizeDetail.openingStock -= quantity;
-
-      // Update the product's sizeDetails in the database
-      await Product.findByIdAndUpdate(productId, { sizeDetails: product.sizeDetails });
-    }
 
     // Create the order with the given data
     const order = new Order({
@@ -217,30 +178,42 @@ export const updateOrderStatus = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ error: 'Invalid userId format' });
     }
+
     // Find the order by ID
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    const statusHierarchy = [
-      'new', 'pending', 'pendingPayment', 'confirm', 'hold',
-      'processing', 'sentToCourier', 'courierProcessing', 'delivered',
-      'return', 'returnExchange', 'returnWithDeliveryCharge', 'exchange', 'cancel'
-    ];
+    const statusHierarchy = ['new', 'pending', 'pendingPayment', 'confirm', 'hold',
+      'processing', 'sendToCourier', 'courierProcessing',
+      'delivered', 'partialReturn', 'returnWithDeliveryCharge',
+      'return', 'exchange', 'cancel'];
 
-    // Get current status and new status indexes
-    const currentStatusIndex = statusHierarchy.indexOf(order.status[order.status.length - 1].name);
-    const newStatusIndex = statusHierarchy.indexOf(status);
 
-    // Validate status progression
-    if (newStatusIndex > currentStatusIndex) {
+      // Update the lastStatus field
+      order.lastStatus = {
+        name: status,
+        timestamp: new Date()
+      };
+
+      // Update product size details if the status is 'confirm'
+      if (status === 'confirm') {
+        for (const item of order.cartItems) {
+          const product = await Product.findById(item.productId);
+          if (product) {
+            const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
+            if (sizeDetail) {
+              sizeDetail.openingStock -= item.quantity;
+              await product.save();
+            }
+          }
+        }
+      }
+      // Update the status
       order.status.push({ name: status, user: userId, timestamp: new Date() });
       await order.save();
       return res.json(order);
-    } else {
-      return res.status(400).json({ error: 'Invalid status progression' });
-    }
   } catch (error) {
     console.error('Failed to update order status:', error);
     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
