@@ -6,7 +6,7 @@ const orderSchema = new mongoose.Schema({
   orderNotes: { type: String, default: '' },
   name: { type: String, required: true },
   address: { type: String, required: true },
-  area: { type: String, required: true },
+  area: { type: String  },
   phone: { type: String, required: true },
   altPhone: { type: String, default: '' },
   totalAmount: { type: Number, required: true },
@@ -21,6 +21,7 @@ const orderSchema = new mongoose.Schema({
       productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
       title: { type: String, required: true },
       quantity: { type: Number, required: true },
+      discountAmount: { type: Number  },
       price: { type: Number, required: true },
       size: { type: String, required: true, default: '' }
     }

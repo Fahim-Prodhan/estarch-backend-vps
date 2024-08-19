@@ -242,7 +242,7 @@ export const getAllNewArrivalProduct = async (req, res) => {
     }
 
     // Fetch products based on the constructed query and sort order
-    const products = await Product.find(query).sort(sortOptions);
+    const products = await Product.find(query).sort(sortOptions).populate('charts');
     res.json(products);
   } catch (err) {
     console.error("Error fetching products:", err);
@@ -330,7 +330,7 @@ export const getAllFeatureProduct = async (req, res) => {
     }
 
     // Fetch products based on the constructed query and sort order
-    const products = await Product.find(query).sort(sortOptions);
+    const products = await Product.find(query).sort(sortOptions).populate('charts');
     res.json(products);
   } catch (err) {
     console.error("Error fetching products:", err);

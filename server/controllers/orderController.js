@@ -127,7 +127,7 @@ export const createOrder = async (req, res) => {
     const invoice = generateInvoiceNumber();
     // console.log("invoice:", invoice);
 
-    const initialStatus = [{ name: 'pending', user: null }];
+    const initialStatus = [{ name: 'new', user: null }];
 
     // Iterate through each cart item to update the product stock
     for (const item of cartItems) {

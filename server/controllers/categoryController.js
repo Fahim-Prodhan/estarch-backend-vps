@@ -77,21 +77,23 @@ export const getCategoriesByTypeName = async (req, res) => {
 };
 
 export const getCategoriesWithSubCategoriesAndTypes = async (req, res) => {
-    // console.log('heit');
     try {
         const categories = await Category.find()
-            .populate('type') // Populate the type field
+            .populate('type', 'name') // Populate the type field with relevant details (e.g., name)
             .populate({
                 path: 'subcategories',
                 populate: {
-                    path: 'category'
+                    path: 'category', // Populate the category field within each subcategory, if it exists
                 }
             });
+
         res.json(categories);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
+
 
 // Update Category
 export const updateCategory = async (req, res) => {
