@@ -18,7 +18,7 @@ export const createProduct = async (req, res) => {
 // Get all products
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find().populate('charts');
+    const products = await Product.find().sort({_id: -1}).populate('charts');
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -74,7 +74,7 @@ export const getAllProductsByType = async (req, res) => {
 };
 
 
-// getAllProductsByCategoryId with filter  main one (fahim)
+// getAllProductsByCategoryId with filter  main one (fahim)(this is deprecated)
 export const getAllProductsByCategoryId = async (req, res) => {
   const { id } = req.params;
   const { ranges, subcategories, sizes, sortBy } = req.query;
@@ -161,6 +161,95 @@ export const getAllProductsByCategoryId = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+
+
+// getAllProductsByCategoryName with filter main one (fahim)
+export const getAllProductsByCategoryName = async (req, res) => {
+  const { categoryName } = req.params;
+  const { ranges, subcategories, sizes, sortBy } = req.query;
+
+  try {
+    // Decode the categoryName and trim spaces
+    const decodedCategoryName = decodeURIComponent(categoryName).trim();
+
+    // Parse query parameters
+    let parsedRanges = [];
+    if (ranges) {
+      parsedRanges = JSON.parse(ranges).map((range) => ({
+        min: Number(range.min),
+        max: Number(range.max),
+      }));
+    }
+
+    let parsedSubcategories = [];
+    if (subcategories) {
+      parsedSubcategories = JSON.parse(subcategories);
+    }
+
+    let parsedSizes = [];
+    if (sizes) {
+      parsedSizes = JSON.parse(sizes);
+    }
+
+    // Build the query condition
+    let query = { selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') } };
+    let andConditions = [];
+
+    if (parsedSubcategories.length > 0) {
+      andConditions.push({
+        selectedSubCategory: { $in: parsedSubcategories },
+      });
+    }
+
+    if (parsedRanges.length > 0) {
+      andConditions.push({
+        $or: parsedRanges.map((range) => ({
+          salePrice: { $gte: range.min, $lte: range.max },
+        })),
+      });
+    }
+
+    if (parsedSizes.length > 0) {
+      andConditions.push({
+        selectedSizes: { $in: parsedSizes },
+      });
+    }
+
+    if (andConditions.length > 0) {
+      query = {
+        ...query,
+        $and: andConditions,
+      };
+    }
+
+    // Determine the sort order
+    let sortOptions = {};
+    switch (sortBy) {
+      case 'Price High to Low':
+        sortOptions = { salePrice: -1 };
+        break;
+      case 'Price Low to High':
+        sortOptions = { salePrice: 1 };
+        break;
+      case 'Sort by Latest':
+        sortOptions = { createdAt: -1 };
+        break;
+      default:
+        sortOptions = { createdAt: -1 };
+        break;
+    }
+
+    // Fetch products based on the constructed query and sort order
+    const products = await Product.find(query).sort(sortOptions).populate('charts');
+    console.log('Products:', products);
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 
 // get all the products of new arrival(fahim)
@@ -370,8 +459,8 @@ export const getFeaturedProducts = async (req, res) => {
   }
 };
 
- // Adjust the import path as needed
 
+// (this is deprecated)
  export const getProductById = async (req, res) => {
   // console.log(`Fetching product with ID: ${req.params.id}`); // Log the ID
   try {
@@ -387,6 +476,33 @@ export const getFeaturedProducts = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// get single product by productName (Fahim)
+export const getProductByName = async (req, res) => {
+  const { productName } = req.params;
+
+  try {
+    // Decode and trim productName
+    const decodedProductName = decodeURIComponent(productName).trim();
+
+    // Query for the product by name
+    const product = await Product.findOne({ productName: decodedProductName })
+      .populate('charts')
+      .populate('relatedProducts.product'); // Populate related products
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    res.status(200).json(product);
+  } catch (error) {
+    console.error(error); // Log the error
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
 
 // Update a product
 export const updateProduct = async (req, res) => {
@@ -588,7 +704,7 @@ export const toggleBooleanField = async (req, res) => {
   const { productId, fieldName } = req.params;
 
   // List of allowed fields to toggle
-  const allowedFields = ['showSize', 'freeDelivery', 'featureProduct', 'productStatus', 'posSuggestion'];
+  const allowedFields = ['showSize', 'freeDelevary', 'featureProduct', 'productStatus', 'posSuggestion'];
 
   if (!allowedFields.includes(fieldName)) {
       return res.status(400).json({ message: 'Invalid field name' });
@@ -604,7 +720,7 @@ export const toggleBooleanField = async (req, res) => {
 
       // Toggle the value of the specified field
       product[fieldName] = !product[fieldName];
-
+      
       // Save the updated product
       await product.save();
 
@@ -613,3 +729,51 @@ export const toggleBooleanField = async (req, res) => {
       return res.status(500).json({ message: 'Server error', error });
   }
 };
+//barcode seearching
+
+export const searchProductByBarcode = async (req, res) => {
+  const { barcode } = req.params;
+
+  try {
+      // Search for the product in the database by barcode within sizeDetails array
+      const product = await Product.findOne(
+          { 'sizeDetails.barcode': barcode },
+          { 
+              'sizeDetails.$': 1, // Include only the matching size detail
+              productName: 1,
+              showSize: 1,
+              freeDelevary: 1,
+              featureProduct: 1,
+              productStatus: 1,
+              posSuggestion: 1,
+              images: 1,
+              videoUrl: 1,
+              content: 1,
+              guideContent: 1,
+              selectedCategoryName: 1,
+              selectedSubCategory: 1,
+              selectedCategory: 1,
+              selectedBrand: 1,
+              selectedType: 1,
+              discount: 1,
+              regularPrice: 1,
+              salePrice: 1,
+              SKU: 1,
+              charts: 1,
+              serialNo: 1,
+              relatedProducts: 1,
+              // Add any other fields you want to include
+          }
+      );
+
+      if (product) {
+          return res.status(200).json(product);
+      } else {
+          return res.status(404).json({ message: 'Product not found' });
+      }
+  } catch (error) {
+      console.error('Error fetching product:', error.message);
+      return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
