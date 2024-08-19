@@ -506,6 +506,8 @@ export const getProductByName = async (req, res) => {
 
 // Update a product
 export const updateProduct = async (req, res) => {
+  console.log(req.params.id);
+  
   try {
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedProduct) {
@@ -718,7 +720,7 @@ export const toggleBooleanField = async (req, res) => {
 
       // Toggle the value of the specified field
       product[fieldName] = !product[fieldName];
-
+      
       // Save the updated product
       await product.save();
 
@@ -775,3 +777,32 @@ export const searchProductByBarcode = async (req, res) => {
   }
 };
 
+export const getProductByBarcode = async (req, res) => {
+  try {
+    const { barcode } = req.params;
+
+    // Find the product that contains the specified barcode in any of its sizeDetails
+    const product = await Product.findOne({ 'sizeDetails.barcode': barcode });
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Find the specific size detail with the given barcode
+    const sizeDetail = product.sizeDetails.find(detail => detail.barcode === barcode);
+
+    // Construct the response
+    const response = {
+      size: sizeDetail.size,
+      productId: product,
+      price: sizeDetail.salePrice,
+      quantity: 1,
+      title: product.productName,
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};

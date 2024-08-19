@@ -1,5 +1,5 @@
 import express from 'express';
-import {searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName } from '../controllers/productController.js';
+import {getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName } from '../controllers/productController.js';
 
 const router = express.Router();
 
@@ -25,4 +25,5 @@ router.get('/search', searchProductListsByName);
 router.put('/toggle-size-availability', toggleSizeAvailability);
 router.put('/product/toggle/:productId/:fieldName', toggleBooleanField);
 router.get('/search/:barcode', searchProductByBarcode);
+router.get('/product/barcode/:barcode', getProductByBarcode);
 export default router;
