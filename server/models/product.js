@@ -1,3 +1,4 @@
+import { type } from '@testing-library/user-event/dist/cjs/utility/type.js';
 import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
@@ -26,6 +27,7 @@ const productSchema = new mongoose.Schema({
   SKU: { type: String, default: 'EST0001' },
   sizeDetails: [{
     size: String,
+    available: {type:Boolean , default: true},
     barcode: String,
     purchasePrice: Number,
     regularPrice: Number,

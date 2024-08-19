@@ -547,3 +547,36 @@ export const searchProductListsByName = async (req, res) => {
   }
 };
 
+export const toggleSizeAvailability = async (req, res) => {
+  const { productId, sizeDetailId } = req.body;
+
+  if (!productId || !sizeDetailId) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+  try {
+    // Find the product and the sizeDetails item
+    const product = await Product.findOne({ _id: productId, 'sizeDetails._id': sizeDetailId });
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product or size detail not found' });
+    }
+
+    // Find the specific sizeDetails item
+    const sizeDetail = product.sizeDetails.id(sizeDetailId);
+
+    if (!sizeDetail) {
+      return res.status(404).json({ message: 'Size detail not found' });
+    }
+
+    // Toggle the availability
+    sizeDetail.available = !sizeDetail.available;
+
+    // Save the updated product
+    await product.save();
+
+    res.status(200).json({ message: 'Size availability toggled successfully', product });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
