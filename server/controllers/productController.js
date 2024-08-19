@@ -702,7 +702,7 @@ export const toggleBooleanField = async (req, res) => {
   const { productId, fieldName } = req.params;
 
   // List of allowed fields to toggle
-  const allowedFields = ['showSize', 'freeDelivery', 'featureProduct', 'productStatus', 'posSuggestion'];
+  const allowedFields = ['showSize', 'freeDelevary', 'featureProduct', 'productStatus', 'posSuggestion'];
 
   if (!allowedFields.includes(fieldName)) {
       return res.status(400).json({ message: 'Invalid field name' });
