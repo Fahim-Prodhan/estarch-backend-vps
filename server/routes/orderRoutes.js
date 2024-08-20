@@ -15,7 +15,8 @@ import {
     getAllNotesController,
     addNoteController,
     getAllStatusByOrderId,
-    getAllOrdersWithLastStatus
+    getAllOrdersWithLastStatus,
+    manageOrder
     
 } from '../controllers/orderController.js';
 
@@ -37,5 +38,6 @@ router.post('/orders/notes/:orderId', addNoteController);
 router.get('/orders/notes/:orderId',getAllNotesController);
 router.get('/order/status/:orderId', getAllStatusByOrderId);
 router.get('/orders/all/laststatus', getAllOrdersWithLastStatus);
+router.patch('/manage-order/:orderId', manageOrder);
 
 export default router;

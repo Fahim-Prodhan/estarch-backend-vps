@@ -798,6 +798,7 @@ export const getProductByBarcode = async (req, res) => {
       price: sizeDetail.salePrice,
       quantity: 1,
       title: product.productName,
+      discountAmount:sizeDetail.discountAmount
     };
 
     return res.status(200).json(response);

@@ -95,7 +95,7 @@ export const getAllOrders = async (req, res) => {
       filters.date = { $gte: startDate, $lte: endDate };
     }
 
-    const orders = await Order.find(filters).sort({_id: -1});
+    const orders = await Order.find(filters).sort({ _id: -1 });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
@@ -191,29 +191,29 @@ export const updateOrderStatus = async (req, res) => {
       'return', 'exchange', 'cancel'];
 
 
-      // Update the lastStatus field
-      order.lastStatus = {
-        name: status,
-        timestamp: new Date()
-      };
+    // Update the lastStatus field
+    order.lastStatus = {
+      name: status,
+      timestamp: new Date()
+    };
 
-      // Update product size details if the status is 'confirm'
-      if (status === 'confirm') {
-        for (const item of order.cartItems) {
-          const product = await Product.findById(item.productId);
-          if (product) {
-            const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-            if (sizeDetail) {
-              sizeDetail.openingStock -= item.quantity;
-              await product.save();
-            }
+    // Update product size details if the status is 'confirm'
+    if (status === 'confirm') {
+      for (const item of order.cartItems) {
+        const product = await Product.findById(item.productId);
+        if (product) {
+          const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
+          if (sizeDetail) {
+            sizeDetail.openingStock -= item.quantity;
+            await product.save();
           }
         }
       }
-      // Update the status
-      order.status.push({ name: status, user: userId, timestamp: new Date() });
-      await order.save();
-      return res.json(order);
+    }
+    // Update the status
+    order.status.push({ name: status, user: userId, timestamp: new Date() });
+    await order.save();
+    return res.json(order);
   } catch (error) {
     console.error('Failed to update order status:', error);
     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
@@ -471,6 +471,51 @@ export const getAllOrdersWithLastStatus = async (req, res) => {
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+
+// manage Order or edit order
+export const manageOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { cartItems, advanced, discount, totalAmount, grandTotal, dueAmount } = req.body;
+
+    // Check if at least one field is provided
+    if (
+      cartItems === undefined &&
+      advanced === undefined &&
+      discount === undefined &&
+      totalAmount === undefined &&
+      grandTotal === undefined &&
+      dueAmount === undefined
+    ) {
+      return res.status(400).json({ error: 'At least one field must be provided' });
+    }
+
+    // Update fields
+    const updateFields = {};
+    if (cartItems !== undefined) updateFields.cartItems = cartItems;
+    if (advanced !== undefined) updateFields.advanced = advanced;
+    if (discount !== undefined) updateFields.discount = discount;
+    if (totalAmount !== undefined) updateFields.totalAmount = totalAmount;
+    if (grandTotal !== undefined) updateFields.grandTotal = grandTotal;
+    if (dueAmount !== undefined) updateFields.dueAmount = dueAmount;
+
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error('Error updating order:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
