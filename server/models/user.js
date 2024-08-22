@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 // Function to generate a random 6-digit number
 function generateRandomEmail() {
   const randomDigits = Math.floor(100000 + Math.random() * 900000);
-  return `abc+${randomDigits}@gmail.com`;
+  return `abc${randomDigits}@gmail.com`;
 }
 
 const userSchema = new mongoose.Schema({
