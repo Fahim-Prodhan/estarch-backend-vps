@@ -123,7 +123,7 @@ export const createOrder = async (req, res) => {
       condition, cartItems, paymentMethod, courier, employee, userId
     } = req.body;
 
-    console.log(name);
+
     const invoice = generateInvoiceNumber();
     // console.log("invoice:", invoice);
 

@@ -1,5 +1,11 @@
 import mongoose from 'mongoose';
 
+// Function to generate a random 6-digit number
+function generateRandomEmail() {
+  const randomDigits = Math.floor(100000 + Math.random() * 900000);
+  return `abc+${randomDigits}@gmail.com`;
+}
+
 const userSchema = new mongoose.Schema({
   fullName: {
     type: String,
@@ -14,7 +20,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true,
-    default: ''
+    default: generateRandomEmail // Set the default using the function
   },
   role: {
     type: String,
