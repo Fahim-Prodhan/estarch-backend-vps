@@ -40,9 +40,10 @@ cloudinary.config({
 const app = express();
 const PORT = process.env.PORT || 5000;
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001' , 'https://next.estarch.online' , 'https://genz.estarch.online'],
+  origin: ['https://estarch-admin.vercel.app','http://localhost:3000', 'http://localhost:3001' , 'https://next.estarch.online' , 'https://genz.estarch.online'],
   credentials: true, 
 }));
+
 // app.use(cors());
 app.use(express.json());
 app.use(cookieParser());

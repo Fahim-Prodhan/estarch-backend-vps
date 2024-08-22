@@ -479,13 +479,13 @@ export const getAllOrdersWithLastStatus = async (req, res) => {
 export const manageOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { cartItems, advanced, discount, totalAmount, grandTotal, dueAmount } = req.body;
+    const { cartItems, advanced, discount, adminDiscount, totalAmount, grandTotal, dueAmount } = req.body;
 
-    // Check if at least one field is provided
     if (
       cartItems === undefined &&
       advanced === undefined &&
       discount === undefined &&
+      adminDiscount === undefined &&
       totalAmount === undefined &&
       grandTotal === undefined &&
       dueAmount === undefined
@@ -498,6 +498,7 @@ export const manageOrder = async (req, res) => {
     if (cartItems !== undefined) updateFields.cartItems = cartItems;
     if (advanced !== undefined) updateFields.advanced = advanced;
     if (discount !== undefined) updateFields.discount = discount;
+    if (adminDiscount !== undefined) updateFields.adminDiscount = adminDiscount;
     if (totalAmount !== undefined) updateFields.totalAmount = totalAmount;
     if (grandTotal !== undefined) updateFields.grandTotal = grandTotal;
     if (dueAmount !== undefined) updateFields.dueAmount = dueAmount;

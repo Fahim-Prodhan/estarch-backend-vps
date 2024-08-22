@@ -12,6 +12,7 @@ const orderSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true },
   deliveryCharge: { type: Number, required: true },
   discount: { type: Number, default: 0 },
+  adminDiscount: { type: Number, default: 0 },
   grandTotal: { type: Number, default: 0 },
   advanced: { type: Number, default: 0 },
   dueAmount: { type: Number, default: 0 },

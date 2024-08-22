@@ -47,7 +47,7 @@ export const getAllProductsByType = async (req, res) => {
     }
 
     // Build the query condition
-    let query = { selectedType: type };
+    let query = { selectedType: type, productStatus:true };
 
     // Add category filter if provided
     if (parsedCategories.length > 0) {
@@ -193,7 +193,7 @@ export const getAllProductsByCategoryName = async (req, res) => {
     }
 
     // Build the query condition
-    let query = { selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') } };
+    let query = { selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') }, productStatus:true};
     let andConditions = [];
 
     if (parsedSubcategories.length > 0) {
@@ -279,7 +279,7 @@ export const getAllNewArrivalProduct = async (req, res) => {
     }
 
     // Build the query condition
-    let query = {};
+    let query = {productStatus:true};
     let andConditions = [];
 
     // If subcategories are provided, add the subcategory filtering condition
@@ -367,7 +367,7 @@ export const getAllFeatureProduct = async (req, res) => {
     }
 
     // Build the query condition
-    let query = { featureProduct: true }; // Only fetch products where featureProduct is true
+    let query = { featureProduct: true, productStatus:true }; // Only fetch products where featureProduct is true
     let andConditions = [];
 
     // If subcategories are provided, add the subcategory filtering condition
@@ -434,7 +434,7 @@ export const getAllFeatureProduct = async (req, res) => {
 export const getNewArrival = async (req, res) => {
   try {
     // Fetch the latest 10 products sorted by the createdAt field in descending order
-    const latestProducts = await Product.find().populate('charts')
+    const latestProducts = await Product.find({productStatus:true}).populate('charts')
       .sort({ createdAt: -1 }) // Sort by createdAt in descending order
       .limit(10); // Limit to 10 products
 
@@ -449,7 +449,7 @@ export const getNewArrival = async (req, res) => {
 export const getFeaturedProducts = async (req, res) => {
   try {
     // Fetch the latest 10 featured products sorted by the createdAt field in descending order
-    const latestFeaturedProducts = await Product.find({ featureProduct: true }) // Filter for featured products
+    const latestFeaturedProducts = await Product.find({ featureProduct: true,productStatus:true }) // Filter for featured products
       .sort({ createdAt: -1 }).populate('charts') // Sort by createdAt in descending order
 
     res.json(latestFeaturedProducts);
@@ -487,7 +487,7 @@ export const getProductByName = async (req, res) => {
     const decodedProductName = decodeURIComponent(productName).trim();
 
     // Query for the product by name
-    const product = await Product.findOne({ SKU: sku })
+    const product = await Product.findOne({ SKU: sku,productStatus:true })
       .populate('charts')
       .populate('relatedProducts.product'); // Populate related products
 
@@ -652,7 +652,7 @@ export const searchProductListsByName = async (req, res) => {
   try {
     // Using a case-insensitive search
     const productLists = await Product.find({
-      productName: { $regex: productName, $options: 'i' }
+      productName: { $regex: productName, $options: 'i' },productStatus:true
     });
 
     if (productLists.length === 0) {
@@ -727,6 +727,7 @@ export const toggleBooleanField = async (req, res) => {
 
       return res.status(200).json({ message: `${fieldName} updated successfully`, product });
   } catch (error) {
+    console.log(error);
       return res.status(500).json({ message: 'Server error', error });
   }
 };
