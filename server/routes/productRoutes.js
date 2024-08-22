@@ -17,7 +17,7 @@ router.get('/products/category/:id', getAllProductsByCategoryId);
 router.get('/products/category/products/:categoryName', getAllProductsByCategoryName);
 router.get('/products/:type', getAllProductsByType);
 router.get('/products/product/:id', getProductById); 
-router.get('/products/product-details/:productName', getProductByName); 
+router.get('/products/product-details/:productName/:sku', getProductByName); 
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
 router.put('/products/serials/update', updateProductSerials);

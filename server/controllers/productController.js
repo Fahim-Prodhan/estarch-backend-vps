@@ -480,13 +480,14 @@ export const getFeaturedProducts = async (req, res) => {
 // get single product by productName (Fahim)
 export const getProductByName = async (req, res) => {
   const { productName } = req.params;
+  const {sku} = req.params
 
   try {
     // Decode and trim productName
     const decodedProductName = decodeURIComponent(productName).trim();
 
     // Query for the product by name
-    const product = await Product.findOne({ productName: decodedProductName })
+    const product = await Product.findOne({ SKU: sku })
       .populate('charts')
       .populate('relatedProducts.product'); // Populate related products
 
