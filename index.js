@@ -14,6 +14,7 @@ import homeImageRoutes from './server/routes/homeImageRoutes.js';
 import videoRoutes from './server/routes/videoRoutes.js';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
+
 import { fileURLToPath } from 'url';
 import uploader from './server/middleware/uploader.js';
 import { uploadSingle } from './server/middleware/uploadSingle.js';
@@ -27,6 +28,7 @@ import orderRoutes from './server/routes/orderRoutes.js';
 import sizeTypeRoutes from './server/routes/sizeTypeRoutes.js';
 import sizeRoutes from './server/routes/sizeRoutes.js';
 import toggleRoutes from './server/routes/toggleRoutes.js';
+import extraSectionRoutes from './server/routes/extraSectionRoutes.js';
 
 dotenv.config();
 
@@ -61,6 +63,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/toggle', toggleRoutes);
+app.use('/api/extra-section', extraSectionRoutes);
 
 app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
