@@ -13,38 +13,51 @@ import carosulRoutes from './server/routes/carosulRoutes.js';
 import homeImageRoutes from './server/routes/homeImageRoutes.js';
 import videoRoutes from './server/routes/videoRoutes.js';
 import path from 'path';
-import { v2 as cloudinary } from 'cloudinary';
 import { fileURLToPath } from 'url';
-import uploader from './server/middleware/uploader.js';
-import { uploadSingle } from './server/middleware/uploadSingle.js';
 import bodyParser from 'body-parser';
 import authRoutes from './server/routes/authRoutes.js';
 import chartRoutes from './server/routes/sizeChartRoutes.js';
-
-// import jwt from 'jsonwebtoken';
 import typeRoutes from './server/routes/typesRoutes.js';
 import orderRoutes from './server/routes/orderRoutes.js';
 import sizeTypeRoutes from './server/routes/sizeTypeRoutes.js';
 import sizeRoutes from './server/routes/sizeRoutes.js';
 import toggleRoutes from './server/routes/toggleRoutes.js';
+import uploader from './server/middleware/uploader.js';
+import { uploadSingle } from './server/middleware/uploadSingle.js';
 
 dotenv.config();
 
-
-cloudinary.config({
-  cloud_name: 'dhn94c9k5',
-  api_key: '191656742611749',
-  api_secret: 'BEYlGBUvUbNm4sISIRNLOLd2ixU'
-});
-
 const app = express();
 const PORT = process.env.PORT || 5000;
-app.use(cors({
-  origin: ['https://estarch-admin.vercel.app','http://localhost:3000', 'http://localhost:3001' , 'https://next.estarch.online' , 'https://genz.estarch.online','https://www.estarch.com.bd','https://estarch.com.bd','http://www.estarch.com.bd','http://estarch.com.bd','https://www.estarch.net','http://www.estarch.net','https://estarch.net','http://estarch.net','https://estarch.shop','http://estarch.shop','https://www.estarch.shop','http://www.estarch.shop'],
-  credentials: true, 
-}));
 
-// app.use(cors());
+// Improved CORS configuration
+const allowedOrigins = [
+  'https://estarch-admin.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://next.estarch.online',
+  'https://genz.estarch.online',
+  'https://www.estarch.com.bd',
+  'https://estarch.com.bd',
+  'https://www.estarch.net',
+  'https://estarch.net',
+  'https://estarch.shop',
+  'https://www.estarch.shop',
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -61,7 +74,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/toggle', toggleRoutes);
-
 app.use('/api/categories', categoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/expenses', expenseRoutes);
@@ -70,56 +82,28 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/promo-codes', promoCodeRoutes);
 app.use('/api/carosul', carosulRoutes);
 app.use('/api/video', videoRoutes);
-app.use('/api/home-image',homeImageRoutes);
+app.use('/api/home-image', homeImageRoutes);
 app.use('/api/types', typeRoutes);
 app.use('/api/sizeTypes', sizeTypeRoutes);
 app.use('/api/sizes', sizeRoutes);
 app.use('/api/charts', chartRoutes);
-// Sample login route for generating JWT and setting it in a cookie
-// app.post('/login', async (req, res) => {
-//   const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123456';
-//   const { username } = req.body;
-
-//   if (!username) {
-//     return res.status(400).send('Username is required');
-//   }
-
-//   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
-//   console.log(token);
-//   res.cookie('token', token, { httpOnly: true });
-//   res.json({ message: 'Logged in successfully' });
-// });
-
-// Add this route to server.js
-// app.get('/myinfo', (req, res) => {
-//   const token = req.cookies.token;
-//   console.log(token);
-  
-//   if (!token) return res.status(401).json({ message: 'Unauthorized' });
-
-//   try {
-//     const decoded = jwt.verify(token, JWT_SECRET);
-//     console.log(decoded);
-    
-//     res.json({ user: decoded });
-//   } catch (error) {
-//     res.status(401).json({ message: 'Invalid token' });
-//   }
-// });
-
 
 // Upload route
-app.post("/upload", uploader.single("file"), uploadSingle, async (req, res) => {
-  res.send(req.body);
+app.post('/upload', uploadSingle, (req, res) => {
+  res.json({ file: req.file ? req.file.path : null });
 });
 
+
 // Root route
-app.get("/", (req, res) => {
-  res.send("Hello to online API");
+app.get('/', (req, res) => {
+  res.send('Hello to online API');
 });
 
 // Start server and connect to the database
 app.listen(PORT, () => {
-  connectDB();
+  connectDB().catch((err) => {
+    console.error('Failed to connect to the database:', err);
+    process.exit(1); // Exit the process with a failure code if DB connection fails
+  });
   console.log(`Server Running on port ${PORT}`);
 });
