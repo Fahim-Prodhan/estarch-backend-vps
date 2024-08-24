@@ -1,14 +1,17 @@
-import { v2 as cloudinary } from "cloudinary";
+import multer from 'multer';
+import uploader from './uploader.js';
 
-export const uploadSingle = async (req, res, next) => {
-  try {
-    const uploadResponse = await cloudinary.uploader.upload(req.file.path);
-    
-    const { public_id, url } = uploadResponse;
+export const uploadSingle = (req, res, next) => {
+    const upload = uploader.single('image');
 
-    req.body.file = url;
-    next();
-  } catch (error) {
-    console.log(error);
-  }
+    upload(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            // Handle multer-specific errors
+            return res.status(400).json({ error: err.message });
+        } else if (err) {
+            // Handle other errors
+            return res.status(400).json({ error: err.message });
+        }
+        next();
+    });
 };

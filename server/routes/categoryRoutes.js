@@ -3,7 +3,6 @@ import { Router } from 'express';
 import {
     createCategory,
     createSubCategory,
-    getCategoriesWithSubCategories,
     updateCategory,
     updateSubCategory,
     deleteCategory,
@@ -18,11 +17,14 @@ import {
     getCategoriesByTypeName,
     getCategoryById
 } from '../controllers/categoryController.js';
+import uploader from '../middleware/uploader.js';
 
 const router = Router();
 
-router.post('/categories', createCategory);
-router.post('/subcategories', createSubCategory);
+// router.post('/categories', createCategory);
+router.post('/categories', uploader.single('image'), createCategory);
+
+router.post('/subcategories',uploader.single('image'), createSubCategory);
 router.get('/find/:id', getCategoryById);
 router.get('/subcategories', getSubCategories);
 router.get('/categories', getCategoriesWithSubCategoriesAndTypes);

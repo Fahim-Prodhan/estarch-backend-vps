@@ -4,22 +4,50 @@ import Brand from '../models/brand.js';
 import Type from '../models/type.js';
 
 // Create Category
+// export const createCategory = async (req, res) => {
+//     try {
+//         const { name, type, image } = req.body;
+//         console.log(name, type, image);
+        
+//         if (!name || !type) {
+//             return res.status(400).json({ error: 'Name and type are required' });
+//         }
+//         const newCategory = new Category({ name, type, image });
+//         await newCategory.save();
+//         res.status(201).json(newCategory);
+//     } catch (err) {
+//         console.error('Error creating category:', err); // Log the error to the server console
+//         res.status(500).json({ error: 'Internal server error' });
+//     }
+// };
+
 export const createCategory = async (req, res) => {
+    console.log('File received:', req.file);
+
     try {
         const { name, type, image } = req.body;
-        console.log(name, type, image);
-        
         if (!name || !type) {
             return res.status(400).json({ error: 'Name and type are required' });
         }
-        const newCategory = new Category({ name, type, image });
-        await newCategory.save();
-        res.status(201).json(newCategory);
+        const newCategory = new Category({
+            name,
+            type,
+            image 
+        });
+
+        await newCategory.save(); 
+
+        res.status(201).json(newCategory); 
     } catch (err) {
-        console.error('Error creating category:', err); // Log the error to the server console
+        console.error('Error creating category:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+
+
+
+
 
 // get category by categoryID
 export const getCategoryById = async (req, res) =>{
