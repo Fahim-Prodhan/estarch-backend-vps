@@ -1,5 +1,5 @@
 import express from 'express';
-import {getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName } from '../controllers/productController.js';
+import {getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName } from '../controllers/productController.js';
 
 const router = express.Router();
 
@@ -15,6 +15,7 @@ router.get('/new-arrival', getNewArrival);
 router.get('/feature-products', getFeaturedProducts);
 router.get('/products/category/:id', getAllProductsByCategoryId);
 router.get('/products/category/products/:categoryName', getAllProductsByCategoryName);
+router.get('/products/subcategory/:subcategoryName', getAllProductsBySubcategoryName);
 router.get('/products/:type', getAllProductsByType);
 router.get('/products/product/:id', getProductById); 
 router.get('/products/product-details/:productName/:sku', getProductByName); 

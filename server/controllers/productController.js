@@ -1,5 +1,7 @@
 import Product from "../models/product.js";
 import Chart from '../models/sizeChart.js';
+import SubCategory from '../models/subCategory.js';
+
 
 // Create a new product
 export const createProduct = async (req, res) => {
@@ -249,6 +251,19 @@ export const getAllProductsByCategoryName = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+// get Product By subcategoryName
+export const getAllProductsBySubcategoryName = async (req, res)=>{
+  const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
+
+  try {
+      const products = await Product.find({ selectedSubCategory:subcategoryName,productStatus:true });
+      const subcategory = await SubCategory.findOne({name:subcategoryName}).populate('category')
+      res.status(200).json({products,subcategory});
+  } catch (error) {
+      res.status(500).json({ message: 'Error fetching products', error });
+  }
+}
 
 
 

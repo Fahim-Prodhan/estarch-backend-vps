@@ -44,3 +44,14 @@ export const deleteType = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// Get single type(Fahim)
+export const getTypeById = async (req, res)=>{
+    try {
+        const { id } = req.params;
+        const type = await Type.findById(id);
+        res.send(type)
+    } catch (error) {
+        console.log(error);     
+    }
+}
