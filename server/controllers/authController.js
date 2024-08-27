@@ -74,7 +74,6 @@ export const registerUser = async (req, res) => {
 
 export const verifyOtp = async (req, res) => {
   const { userId, otp } = req.body;
-  console.log(userId, otp);
   try {
     const user = await User.findById(userId);
 
@@ -105,7 +104,6 @@ export const verifyOtp = async (req, res) => {
 
 export const setPassword = async (req, res) => {
   const { userId, password } = req.body;
-  console.log(userId, password);
 
   try {
     const user = await User.findById(userId);
@@ -129,9 +127,7 @@ export const setPassword = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   const { mobile, password } = req.body;
-  // console.log(mobile);
   const fullMobileNumber = `+88${mobile}`
-  console.log(fullMobileNumber);
 
   try {
     // Find user by mobile number
@@ -184,7 +180,6 @@ export const getUserByMobile = async (req, res) => {
 export const logout = (req, res) => {
   try {
   res.cookie("jwt", "", { maxAge: 0 });
-    // console.log(rst);
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.log("Error in logout controller", error.message);

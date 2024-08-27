@@ -6,7 +6,6 @@ import SubCategory from '../models/subCategory.js';
 // Create a new product
 export const createProduct = async (req, res) => {
   try {
-    console.log(req.body);
 
     const newProduct = new Product(req.body);
     // return console.log(req.body);
@@ -244,7 +243,6 @@ export const getAllProductsByCategoryName = async (req, res) => {
 
     // Fetch products based on the constructed query and sort order
     const products = await Product.find(query).sort(sortOptions).populate('charts');
-    console.log('Products:', products);
     res.json(products);
   } catch (err) {
     console.error("Error fetching products:", err);
@@ -353,6 +351,15 @@ export const getAllNewArrivalProduct = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const getHomePageNewArrival = async (req, res)=>{
+  try {
+    const newArrival = await Product.find().limit(10)
+    res.send(newArrival)
+  } catch (error) {
+    res.send(error)
+  }
+}
 
 
 // get all the feature product
@@ -522,7 +529,6 @@ export const getProductByName = async (req, res) => {
 
 // Update a product
 export const updateProduct = async (req, res) => {
-  console.log(req.params.id);
   
   try {
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -554,7 +560,6 @@ export const deleteProduct = async (req, res) => {
 export const getProductsForPos = async (req, res) => {
   try {
     const { brand, category, subcategory, search } = req.query;
-    console.log(brand, category, subcategory, search);
 
     // Build the query object
     let query = {};

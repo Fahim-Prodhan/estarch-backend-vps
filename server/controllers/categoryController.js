@@ -75,7 +75,6 @@ export const getCategoriesWithSubCategories = async (req, res) => {
 export const getCategoriesByTypeName = async (req, res) => {
     try {
         const { typeName } = req.params;
-        // console.log();
         
         // Find the Type object by name
         const type = await Type.findOne({ name: typeName });
