@@ -1,3 +1,5 @@
+// controllers/supplierController.js
+
 import Supplier from '../models/supplier.js';
 
 // Create a new supplier
@@ -21,29 +23,34 @@ export const getSuppliers = async (req, res) => {
     }
 };
 
-// Update a supplier
-export const updateSupplier = async (req, res) => {
-    const { id } = req.params;
+// Get supplier by ID
+export const getSupplierById = async (req, res) => {
     try {
-        const supplier = await Supplier.findByIdAndUpdate(id, req.body, { new: true });
-        if (!supplier) {
-            return res.status(404).json({ message: 'Supplier not found' });
-        }
+        const supplier = await Supplier.findById(req.params.id);
+        if (!supplier) return res.status(404).json({ message: "Supplier not found" });
+        res.status(200).json(supplier);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Update supplier by ID
+export const updateSupplier = async (req, res) => {
+    try {
+        const supplier = await Supplier.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!supplier) return res.status(404).json({ message: "Supplier not found" });
         res.status(200).json(supplier);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
 };
 
-// Delete a supplier
+// Delete supplier by ID
 export const deleteSupplier = async (req, res) => {
-    const { id } = req.params;
     try {
-        const supplier = await Supplier.findByIdAndDelete(id);
-        if (!supplier) {
-            return res.status(404).json({ message: 'Supplier not found' });
-        }
-        res.status(200).json({ message: 'Supplier deleted' });
+        const supplier = await Supplier.findByIdAndDelete(req.params.id);
+        if (!supplier) return res.status(404).json({ message: "Supplier not found" });
+        res.status(200).json({ message: "Supplier deleted" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
