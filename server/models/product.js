@@ -40,6 +40,8 @@ const productSchema = new mongoose.Schema({
   }],
   charts: { type: mongoose.Schema.Types.ObjectId, ref: 'Chart' },
   serialNo: { type: Number, default: 0 },
+  catSerialNo: { type: Number, default: 0 },
+  SubcatSerialNo: { type: Number, default: 0 },
   relatedProducts: [{ 
     name : String ,
     SKU:String,
