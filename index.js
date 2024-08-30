@@ -45,6 +45,7 @@ const allowedOrigins = [
   'https://estarch.net',
   'https://estarch.shop',
   'https://www.estarch.shop',
+  'http://localhost:5173'
 ];
 
 app.use(
