@@ -22,6 +22,7 @@ import orderRoutes from './server/routes/orderRoutes.js';
 import sizeTypeRoutes from './server/routes/sizeTypeRoutes.js';
 import sizeRoutes from './server/routes/sizeRoutes.js';
 import toggleRoutes from './server/routes/toggleRoutes.js';
+import purchaseRoutes from './server/routes/purchaseRoutes.js';
 import uploader from './server/middleware/uploader.js';
 import { uploadSingle } from './server/middleware/uploadSingle.js';
 import extraSectionRoutes from './server/routes/extraSectionRoutes.js';
@@ -90,6 +91,7 @@ app.use('/api/types', typeRoutes);
 app.use('/api/sizeTypes', sizeTypeRoutes);
 app.use('/api/sizes', sizeRoutes);
 app.use('/api/charts', chartRoutes);
+app.use('/api/purchase', purchaseRoutes);
 
 // Upload route
 app.post('/upload', uploadSingle, (req, res) => {
