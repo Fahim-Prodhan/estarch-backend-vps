@@ -1,3 +1,4 @@
+import { Try } from "@mui/icons-material";
 import Product from "../models/product.js";
 import Chart from '../models/sizeChart.js';
 import SubCategory from '../models/subCategory.js';
@@ -13,10 +14,12 @@ export const createProduct = async (req, res) => {
     res.status(201).json(newProduct);
   } catch (error) {
     res.status(500).json({ message: error.message });
+    console.log(error);
+    
   }
 };
 
-// Get all products
+// Get all products(admin)
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find().sort({_id: -1}).populate('charts');
@@ -25,6 +28,16 @@ export const getAllProducts = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// for serial
+export const getAllStatusOnProduct = async (req, res)=>{
+  try {
+    const products = await Product.find({productStatus:true}).sort({serialNo: 1}).populate('charts');
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
 
 // Get all products by types
 export const getAllProductsByType = async (req, res) => {
@@ -194,7 +207,10 @@ export const getAllProductsByCategoryName = async (req, res) => {
     }
 
     // Build the query condition
-    let query = { selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') }, productStatus:true};
+    let query = {
+      selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') },
+      serialNo: { $gt: 0 }
+    };
     let andConditions = [];
 
     if (parsedSubcategories.length > 0) {
@@ -236,8 +252,11 @@ export const getAllProductsByCategoryName = async (req, res) => {
       case 'Sort by Latest':
         sortOptions = { createdAt: -1 };
         break;
+      case 'Sort by Serial':
+        sortOptions = { catSerialNo: 1 }; // Sorting by serial number in ascending order
+        break;
       default:
-        sortOptions = { createdAt: -1 };
+        sortOptions = { catSerialNo: 1 }; // Default sorting
         break;
     }
 
@@ -250,14 +269,48 @@ export const getAllProductsByCategoryName = async (req, res) => {
   }
 };
 
+
+// getAllProductsByCategoryNameStatusOn for serial in admin (fahim)
+export const getAllProductsByCategoryNameStatusOn = async (req, res) => {
+  const { categoryName } = req.params;
+
+  try {
+    // Decode the categoryName and trim spaces
+    const decodedCategoryName = decodeURIComponent(categoryName).trim();
+
+    // Build the query condition
+    let query = { selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') }, productStatus:true};
+    
+    // Fetch products based on the constructed query and sort order
+    const products = await Product.find(query).sort({catSerialNo:1}).populate('charts');
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // get Product By subcategoryName
 export const getAllProductsBySubcategoryName = async (req, res)=>{
   const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
 
   try {
-      const products = await Product.find({ selectedSubCategory:subcategoryName,productStatus:true });
+      const products = await Product.find({ selectedSubCategory:subcategoryName, serialNo: { $gt: 0 } });
       const subcategory = await SubCategory.findOne({name:subcategoryName}).populate('category')
       res.status(200).json({products,subcategory});
+  } catch (error) {
+      res.status(500).json({ message: 'Error fetching products', error });
+  }
+}
+
+// for serial admin site
+export const getAllProductsBySubcategoryNameStatusOn = async (req, res)=>{
+  const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
+
+  try {
+      const products = await Product.find({ selectedSubCategory:subcategoryName,productStatus:true });
+      
+      res.status(200).json({products});
   } catch (error) {
       res.status(500).json({ message: 'Error fetching products', error });
   }
@@ -292,7 +345,7 @@ export const getAllNewArrivalProduct = async (req, res) => {
     }
 
     // Build the query condition
-    let query = {productStatus:true};
+    let query = { serialNo: { $gt: 0 } };
     let andConditions = [];
 
     // If subcategories are provided, add the subcategory filtering condition
@@ -338,8 +391,11 @@ export const getAllNewArrivalProduct = async (req, res) => {
       case 'Sort by Latest':
         sortOptions = { createdAt: -1 };
         break;
+      case 'Sort by Serial':
+        sortOptions = { serialNo: 1 }; // Sorting by serial number in ascending order
+        break;
       default:
-        sortOptions = { createdAt: -1 }; // Default sorting
+        sortOptions = { serialNo: 1 }; // Default sorting
         break;
     }
 
@@ -352,9 +408,10 @@ export const getAllNewArrivalProduct = async (req, res) => {
   }
 };
 
+
 export const getHomePageNewArrival = async (req, res)=>{
   try {
-    const newArrival = await Product.find().limit(10)
+    const newArrival = await Product.find({serialNo: { $gt: 0 }}).limit(10)
     res.send(newArrival)
   } catch (error) {
     res.send(error)
@@ -389,7 +446,7 @@ export const getAllFeatureProduct = async (req, res) => {
     }
 
     // Build the query condition
-    let query = { featureProduct: true, productStatus:true }; // Only fetch products where featureProduct is true
+    let query = { featureProduct: true, serialNo: { $gt: 0 } }; // Only fetch products where featureProduct is true
     let andConditions = [];
 
     // If subcategories are provided, add the subcategory filtering condition
@@ -435,8 +492,11 @@ export const getAllFeatureProduct = async (req, res) => {
       case 'Sort by Latest':
         sortOptions = { createdAt: -1 };
         break;
+      case 'Sort by Serial':
+        sortOptions = { serialNo: 1 }; // Sorting by serial number in ascending order
+        break;
       default:
-        sortOptions = { createdAt: -1 }; // Default sorting
+        sortOptions = { serialNo: 1 }; // Default sorting
         break;
     }
 
@@ -456,8 +516,8 @@ export const getAllFeatureProduct = async (req, res) => {
 export const getNewArrival = async (req, res) => {
   try {
     // Fetch the latest 10 products sorted by the createdAt field in descending order
-    const latestProducts = await Product.find({productStatus:true}).populate('charts')
-      .sort({ createdAt: -1 }) // Sort by createdAt in descending order
+    const latestProducts = await Product.find({serialNo: { $gt: 0 }}).populate('charts')
+      .sort({ serialNo: 1 }) // Sort by createdAt in descending order
       .limit(10); // Limit to 10 products
 
     res.json(latestProducts);
@@ -471,8 +531,8 @@ export const getNewArrival = async (req, res) => {
 export const getFeaturedProducts = async (req, res) => {
   try {
     // Fetch the latest 10 featured products sorted by the createdAt field in descending order
-    const latestFeaturedProducts = await Product.find({ featureProduct: true,productStatus:true }) // Filter for featured products
-      .sort({ createdAt: -1 }).populate('charts') // Sort by createdAt in descending order
+    const latestFeaturedProducts = await Product.find({ featureProduct: true,serialNo: { $gt: 0 } }) // Filter for featured products
+      .sort({ serialNo: 1 }).populate('charts').limit(10) // Sort by createdAt in descending order
 
     res.json(latestFeaturedProducts);
   } catch (err) {
@@ -509,7 +569,7 @@ export const getProductByName = async (req, res) => {
     const decodedProductName = decodeURIComponent(productName).trim();
 
     // Query for the product by name
-    const product = await Product.findOne({ SKU: sku,productStatus:true })
+    const product = await Product.findOne({ SKU: sku,serialNo: { $gt: 0 } })
       .populate('charts')
       .populate('relatedProducts.product'); // Populate related products
 
@@ -642,6 +702,38 @@ export const updateProductSerials = async (req, res) => {
   try {
     const updatePromises = serialUpdates.map(({ productId, serialNo }) => {
       return Product.findByIdAndUpdate(productId, { serialNo }, { new: true });
+    });
+
+    const updatedProducts = await Promise.all(updatePromises);
+    res.json({ message: 'Serial numbers updated successfully', updatedProducts });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({ message: 'Error updating serial numbers', error });
+  }
+};
+
+export const updateProductCategorySerials = async (req, res) => {
+  const { serialUpdates } = req.body;
+  try {
+    const updatePromises = serialUpdates.map(({ productId, catSerialNo }) => {
+      return Product.findByIdAndUpdate(productId, { catSerialNo }, { new: true });
+    });
+
+    const updatedProducts = await Promise.all(updatePromises);
+    res.json({ message: 'Serial numbers updated successfully', updatedProducts });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({ message: 'Error updating serial numbers', error });
+  }
+};
+
+export const updateProductSubcategorySerials = async (req, res) => {
+  const { serialUpdates } = req.body;
+  try {
+    const updatePromises = serialUpdates.map(({ productId, SubcatSerialNo }) => {
+      return Product.findByIdAndUpdate(productId, { SubcatSerialNo }, { new: true });
     });
 
     const updatedProducts = await Promise.all(updatePromises);
