@@ -1,5 +1,5 @@
 import express from 'express';
-import {getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName } from '../controllers/productController.js';
+import {getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival } from '../controllers/productController.js';
 
 const router = express.Router();
 
@@ -27,4 +27,6 @@ router.put('/toggle-size-availability', toggleSizeAvailability);
 router.put('/product/toggle/:productId/:fieldName', toggleBooleanField);
 router.get('/search/:barcode', searchProductByBarcode);
 router.get('/product/barcode/:barcode', getProductByBarcode);
+router.get('/home-new-arrival', getHomePageNewArrival);
+
 export default router;

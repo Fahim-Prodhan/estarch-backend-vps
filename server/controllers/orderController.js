@@ -369,7 +369,6 @@ export const updateOrderStatus = async (req, res) => {
     const { orderId } = req.params;
     const { status, userId } = req.body;
 
-    console.log(orderId, status, userId);
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ error: 'Invalid userId format' });
