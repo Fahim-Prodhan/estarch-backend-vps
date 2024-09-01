@@ -256,7 +256,8 @@ export const registerAdmin = async (req, res) => {
 
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
-
+  console.log(email, password);
+  
   try {
     // Find user by email
     const user = await User.findOne({ email: email });
@@ -273,6 +274,46 @@ export const loginAdmin = async (req, res) => {
     // Check if the user has the admin role
     if (user.role !== 'admin') {
       return res.status(403).json({ message: 'Unauthorized: Admins only' });
+    }
+
+    // Check if the password matches
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid password' });
+    }
+
+    // Generate JWT token and set cookie
+    generateTokenAndSetCookie(user._id, res);
+
+    // Successful login
+    res.status(200).json({ message: 'Login successful', userId: user._id });
+  } catch (error) {
+    console.error('Error in loginAdmin:', error);
+    res.status(500).json({ message: 'Error logging in', error: error.message });
+  }
+};
+
+
+export const loginShowroomManager = async (req, res) => {
+  const { email, password } = req.body;
+  console.log(email, password);
+  
+  try {
+    // Find user by email
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Check if the user is active
+    if (!user.isActive) {
+      return res.status(400).json({ message: 'Account not activated' });
+    }
+
+    // Check if the user has the admin role
+    if (user.role !== 'showroom_manager') {
+      return res.status(403).json({ message: 'Unauthorized: Showroom Manager only' });
     }
 
     // Check if the password matches

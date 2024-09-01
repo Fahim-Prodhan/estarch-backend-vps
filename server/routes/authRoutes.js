@@ -1,5 +1,5 @@
 import express from 'express';
-import {getUserByMobile, loginUser, registerUser, verifyOtp, setPassword,getUserById,logout,registerAdmin,loginAdmin } from '../controllers/authController.js';
+import {getUserByMobile, loginUser, registerUser, verifyOtp, setPassword,getUserById,logout,registerAdmin,loginAdmin,loginShowroomManager } from '../controllers/authController.js';
 
 const router = express.Router();
 
@@ -18,5 +18,6 @@ router.get('/user/:id', getUserById);
 router.post("/logout", logout);
 router.post('/register-admin',registerAdmin)
 router.post('/login-admin',loginAdmin)
+router.post('/login-showroom-manager',loginShowroomManager)
 
 export default router;

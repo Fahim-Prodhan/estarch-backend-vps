@@ -308,7 +308,7 @@ export const getAllProductsBySubcategoryNameStatusOn = async (req, res)=>{
   const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
 
   try {
-      const products = await Product.find({ selectedSubCategory:subcategoryName,productStatus:true });
+      const products = await Product.find({ selectedSubCategory:subcategoryName,productStatus:true }).sort({SubcatSerialNo:1});
       
       res.status(200).json({products});
   } catch (error) {
@@ -833,18 +833,24 @@ export const toggleBooleanField = async (req, res) => {
 
       // Toggle the value of the specified field
       product[fieldName] = !product[fieldName];
-      
+
+      // Check if the field is 'productStatus' and update 'serialNo' accordingly
+      if (fieldName === 'productStatus') {
+          product.serialNo = 0;
+      }
+
       // Save the updated product
       await product.save();
 
       return res.status(200).json({ message: `${fieldName} updated successfully`, product });
   } catch (error) {
-    console.log(error);
+      console.log(error);
       return res.status(500).json({ message: 'Server error', error });
   }
 };
-//barcode seearching
 
+
+//barcode seearching
 export const searchProductByBarcode = async (req, res) => {
   const { barcode } = req.params;
 
