@@ -1,5 +1,5 @@
 import express from 'express';
-import {getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival,getAllStatusOnProduct, updateProductCategorySerials,updateProductSubcategorySerials, getAllProductsByCategoryNameStatusOn,getAllProductsBySubcategoryNameStatusOn} from '../controllers/productController.js';
+import {updatePurchasePriceToRatio, getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival,getAllStatusOnProduct, updateProductCategorySerials,updateProductSubcategorySerials, getAllProductsByCategoryNameStatusOn,getAllProductsBySubcategoryNameStatusOn} from '../controllers/productController.js';
 
 const router = express.Router();
 
@@ -33,5 +33,6 @@ router.put('/product/toggle/:productId/:fieldName', toggleBooleanField);
 router.get('/search/:barcode', searchProductByBarcode);
 router.get('/product/barcode/:barcode', getProductByBarcode);
 router.get('/home-new-arrival', getHomePageNewArrival);
+router.put('/update-ratio', updatePurchasePriceToRatio);
 
 export default router;
