@@ -589,6 +589,7 @@ export const getUserOrderByMobile = async (req, res) => {
         })),
         paymentMethod: order.paymentMethod,
         status: order.status,
+        lastStatus:order.lastStatus,
         courier: order.courier,
         employee: order.employee,
         note: order.note,

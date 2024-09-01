@@ -921,3 +921,28 @@ export const getProductByBarcode = async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 };
+
+export const updatePurchasePriceToRatio = async (req, res) => {
+  try {
+    // Find all products that have sizeDetails with purchasePrice field
+    const products = await Product.find({ "sizeDetails.purchasePrice": { $exists: true } });
+
+    // Update each product by renaming purchasePrice to ratio
+    for (let product of products) {
+      product.sizeDetails = product.sizeDetails.map(detail => {
+        return {
+          ...detail,
+          ratio: detail.purchasePrice, // Assign purchasePrice value to ratio
+          purchasePrice: undefined // Remove purchasePrice
+        };
+      });
+
+      await product.save(); // Save the updated product
+    }
+
+    res.status(200).json({ message: 'Products updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating products', error });
+  }
+};

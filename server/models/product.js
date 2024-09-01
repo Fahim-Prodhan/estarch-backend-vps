@@ -1,4 +1,3 @@
-import { type } from '@testing-library/user-event/dist/cjs/utility/type.js';
 import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
@@ -29,7 +28,7 @@ const productSchema = new mongoose.Schema({
     size: String,
     available: {type:Boolean , default: true},
     barcode: String,
-    purchasePrice: Number,
+    ratio: Number,
     regularPrice: Number,
     discountPercent: Number,
     discountAmount: Number,
