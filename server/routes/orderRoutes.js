@@ -16,7 +16,9 @@ import {
     addNoteController,
     getAllStatusByOrderId,
     getAllOrdersWithLastStatus,
-    manageOrder
+    manageOrder,
+    updateOrderIsPrint,
+    getCountOfStatus
     
 } from '../controllers/orderController.js';
 
@@ -39,5 +41,7 @@ router.get('/orders/notes/:orderId',getAllNotesController);
 router.get('/order/status/:orderId', getAllStatusByOrderId);
 router.get('/orders/all/laststatus', getAllOrdersWithLastStatus);
 router.patch('/manage-order/:orderId', manageOrder);
+router.put('/update-print/:orderId', updateOrderIsPrint);
+router.get('/status-count', getCountOfStatus);
 
 export default router;

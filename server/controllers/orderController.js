@@ -83,35 +83,147 @@ const generateInvoiceNumber = () => {
 
 // Fetch all orders with optional filters
 export const getAllOrders = async (req, res) => {
-  try {
-    const { status, courier, date, page = 1, limit = 10 } = req.query;
+  const page = parseInt(req.query.page) || 1; // Default to 1 if page is not provided
+  const size = parseInt(req.query.size) || 10;
+  const text = req.query.search || '';
+  const status = req.query.status;
+  const date = req.query.date; // Local date in 'YYYY-MM-DD' format
 
-    const filters = {};
-    if (status) filters.status = { $elemMatch: { name: status } };
-    if (courier) filters.courier = courier;
-    if (date) {
-      const startDate = new Date(date).setHours(0, 0, 0, 0);
-      const endDate = new Date(date).setHours(23, 59, 59, 999);
-      filters.createdAt = { $gte: startDate, $lte: endDate };
+  console.log(date);
+
+  try {
+
+    let query = {
+      $or: [
+        { invoice: { $regex: text, $options: "i" } },
+        { phone: { $regex: text, $options: "i" } }
+      ]
+    };
+    if (status) {
+      query['lastStatus.name'] = status;
     }
 
-    const orders = await Order.find(filters)
+    if (date) {
+      // Convert the local date to the start and end of the UTC day
+      const localDate = new Date(date);
+
+      // Start of the day in local time
+      const startDateLocal = new Date(
+        localDate.getFullYear(),
+        localDate.getMonth(),
+        localDate.getDate(),
+        0, 0, 0, 0
+      );
+
+      // Convert to UTC
+      const startDateUTC = new Date(startDateLocal.toUTCString());
+
+      // End of the day in local time (start of the next day)
+      const endDateLocal = new Date(startDateLocal);
+      endDateLocal.setDate(startDateLocal.getDate() + 1);
+
+      // Convert to UTC
+      const endDateUTC = new Date(endDateLocal.toUTCString());
+
+      query['createdAt'] = { $gte: startDateUTC, $lt: endDateUTC };
+    }
+
+    const orders = await Order.find(query)
       .sort({ _id: -1 })
-      .skip((page - 1) * limit) // Apply skip based on page number
-      .limit(parseInt(limit))   // Limit the number of results
+      .skip((page - 1) * size) // Apply skip based on page number
+      .limit(size) // Limit the number of results
       .populate({
         path: 'cartItems.productId',
       })
       .populate('userId');
 
-    const totalOrders = await Order.countDocuments(filters); // Total number of orders matching the filters
-    const totalPages = Math.ceil(totalOrders / limit); // Calculate total pages
+    const totalOrders = await Order.countDocuments(query); // Total number of orders matching the filters
+    const totalPages = Math.ceil(totalOrders / size); // Calculate total pages
+    const new_orders = await Order.countDocuments({ 'lastStatus.name': 'new' });
+    const pending = await Order.countDocuments({ 'lastStatus.name': 'pending' });
+    const pendingPayment = await Order.countDocuments({ 'lastStatus.name': 'pendingPayment' });
+    const confirm = await Order.countDocuments({ 'lastStatus.name': 'confirm' });
+    const hold = await Order.countDocuments({ 'lastStatus.name': 'hold' });
+    const processing = await Order.countDocuments({ 'lastStatus.name': 'processing' });
+    const sendToCourier = await Order.countDocuments({ 'lastStatus.name': 'sendToCourier' });
+    const courierProcessing = await Order.countDocuments({ 'lastStatus.name': 'courierProcessing' });
+    const delivered = await Order.countDocuments({ 'lastStatus.name': 'delivered' });
+    const partialReturn = await Order.countDocuments({ 'lastStatus.name': 'partialReturn' });
+    const returnWithDeliveryCharge = await Order.countDocuments({ 'lastStatus.name': 'returnWithDeliveryCharge' });
+    const return_delivery = await Order.countDocuments({ 'lastStatus.name': 'return' });
+    const exchange = await Order.countDocuments({ 'lastStatus.name': 'exchange' });
+    const cancel = await Order.countDocuments({ 'lastStatus.name': 'cancel' });
+    const doubleOrderCancel = await Order.countDocuments({ 'lastStatus.name': 'doubleOrderCancel' });
 
-    res.json({ orders, totalOrders, totalPages, currentPage: parseInt(page) });
+    res.json({
+      orders,
+      totalOrders,
+      totalPages,
+      currentPage: page,
+  
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
+    console.log(error);
   }
 };
+
+export const updateOrderIsPrint = async (req, res) => {
+  const { orderId } = req.params; // Assuming you're passing the order ID as a URL parameter
+
+  try {
+    const result = await Order.updateOne(
+      { _id: orderId }, // Find the order by its ID
+      { $set: { isPrint: true } } // Set the isPrint property to true
+    );
+
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update order' });
+    console.log(error);
+  }
+};
+
+
+export const getCountOfStatus = async (req, res) => {
+  try {
+    const new_orders = await Order.countDocuments({ 'lastStatus.name': 'new' });
+    const pending = await Order.countDocuments({ 'lastStatus.name': 'pending' });
+    const pendingPayment = await Order.countDocuments({ 'lastStatus.name': 'pendingPayment' });
+    const confirm = await Order.countDocuments({ 'lastStatus.name': 'confirm' });
+    const hold = await Order.countDocuments({ 'lastStatus.name': 'hold' });
+    const processing = await Order.countDocuments({ 'lastStatus.name': 'processing' });
+    const sendToCourier = await Order.countDocuments({ 'lastStatus.name': 'sendToCourier' });
+    const courierProcessing = await Order.countDocuments({ 'lastStatus.name': 'courierProcessing' });
+    const delivered = await Order.countDocuments({ 'lastStatus.name': 'delivered' });
+    const partialReturn = await Order.countDocuments({ 'lastStatus.name': 'partialReturn' });
+    const returnWithDeliveryCharge = await Order.countDocuments({ 'lastStatus.name': 'returnWithDeliveryCharge' });
+    const return_delivery = await Order.countDocuments({ 'lastStatus.name': 'return' });
+    const exchange = await Order.countDocuments({ 'lastStatus.name': 'exchange' });
+    const cancel = await Order.countDocuments({ 'lastStatus.name': 'cancel' });
+    const doubleOrderCancel = await Order.countDocuments({ 'lastStatus.name': 'doubleOrderCancel' });
+    res.send({
+      new_orders,
+      pending,
+      pendingPayment,
+      confirm,
+      hold,
+      processing,
+      sendToCourier,
+      courierProcessing,
+      delivered,
+      partialReturn,
+      returnWithDeliveryCharge,
+      return_delivery,
+      exchange,
+      cancel,
+      doubleOrderCancel
+    })
+  } catch (error) {
+    console.log(error);   
+  }
+}
+
+
 
 
 // Create a new order
@@ -393,7 +505,7 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     // Define status groups based on the rules
-    const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel'];
+    const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel', 'doubleOrderCancel'];
     const beforeConfirmRestricted = [
       'hold', 'processing', 'sendToCourier', 'courierProcessing',
       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
@@ -409,9 +521,10 @@ export const updateOrderStatus = async (req, res) => {
 
     const isConfirmed = order.status.some(s => s.name === 'confirm');
     const isCancelled = order.status.some(s => s.name === 'cancel');
+    const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
 
     // Restrict all statuses if the order is already canceled
-    if (isCancelled) {
+    if (isCancelled || isDoubleOrderCancel) {
       return res.status(400).json({
         error: `Order is already canceled. No further status updates are allowed.`
       });
@@ -601,7 +714,7 @@ export const getUserOrderByMobile = async (req, res) => {
         })),
         paymentMethod: order.paymentMethod,
         status: order.status,
-        lastStatus:order.lastStatus,
+        lastStatus: order.lastStatus,
         courier: order.courier,
         employee: order.employee,
         note: order.note,
