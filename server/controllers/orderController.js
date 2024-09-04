@@ -84,23 +84,35 @@ const generateInvoiceNumber = () => {
 // Fetch all orders with optional filters
 export const getAllOrders = async (req, res) => {
   try {
-    const { status, courier, date } = req.query;
+    const { status, courier, date, page = 1, limit = 10 } = req.query;
 
     const filters = {};
-    if (status) filters.status = status;
+    if (status) filters.status = { $elemMatch: { name: status } };
     if (courier) filters.courier = courier;
     if (date) {
       const startDate = new Date(date).setHours(0, 0, 0, 0);
       const endDate = new Date(date).setHours(23, 59, 59, 999);
-      filters.date = { $gte: startDate, $lte: endDate };
+      filters.createdAt = { $gte: startDate, $lte: endDate };
     }
 
-    const orders = await Order.find(filters).sort({ _id: -1 });
-    res.json(orders);
+    const orders = await Order.find(filters)
+      .sort({ _id: -1 })
+      .skip((page - 1) * limit) // Apply skip based on page number
+      .limit(parseInt(limit))   // Limit the number of results
+      .populate({
+        path: 'cartItems.productId',
+      })
+      .populate('userId');
+
+    const totalOrders = await Order.countDocuments(filters); // Total number of orders matching the filters
+    const totalPages = Math.ceil(totalOrders / limit); // Calculate total pages
+
+    res.json({ orders, totalOrders, totalPages, currentPage: parseInt(page) });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
   }
 };
+
 
 // Create a new order
 // export const createOrder = async (req, res) => {
