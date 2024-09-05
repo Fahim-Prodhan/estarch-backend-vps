@@ -105,10 +105,22 @@ export const getCategoriesByTypeName = async (req, res) => {
 
 export const getCategoriesWithSubCategoriesAndTypes = async (req, res) => {
     try {
-        const categories = await Category.find()
+        // Fetch only active types
+        const activeTypes = await Type.find({ active: true }).select('_id');
+
+        if (activeTypes.length === 0) {
+            return res.status(404).json({ message: 'No active types found' });
+        }
+
+        // Extract active type IDs
+        const activeTypeIds = activeTypes.map(type => type._id);
+
+        // Fetch categories with only active types
+        const categories = await Category.find({ type: { $in: activeTypeIds } })
             .populate('type', 'name') // Populate the type field with relevant details (e.g., name)
             .populate({
                 path: 'subcategories',
+                match: { active: true }, // Ensure only active subcategories are included
                 populate: {
                     path: 'category', // Populate the category field within each subcategory, if it exists
                 }
@@ -119,6 +131,50 @@ export const getCategoriesWithSubCategoriesAndTypes = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+
+export const toggleCategoryStatus = async (req, res) => {
+    try {
+        const { active } = req.body;
+
+        const updatedCategoryStatus = await Category.findByIdAndUpdate(
+            req.params.id,
+            { active },
+            { new: true }
+        );
+
+        if (!updatedCategoryStatus) {
+            return res.status(404).send('Category not found');
+        }
+
+        res.json(updatedCategoryStatus);
+    } catch (error) {
+        console.error('Error updating updatedCategoryStatus status:', error);
+        res.status(500).send('Server error');
+    }
+};
+export const toggleSubCategoryStatus = async (req, res) => {
+    try {
+        const { active } = req.body; // The desired status from the client
+
+        // Find and update the subcategory
+        const updatedSubCategoryStatus = await SubCategory.findByIdAndUpdate(
+            req.params.id,
+            { active }, // Set the status based on the provided value
+            { new: true }
+        );
+
+        if (!updatedSubCategoryStatus) {
+            return res.status(404).send('Subcategory not found');
+        }
+
+        res.json(updatedSubCategoryStatus);
+    } catch (error) {
+        console.error('Error updating subcategory status:', error);
+        res.status(500).send('Server error');
+    }
+};
+
 
 
 
@@ -144,20 +200,6 @@ export const deleteCategory = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
-// Get SubCategories by Category
-// export const fetchSubCategories = async (req, res) => {
-//     try {
-//         const { categoryName } = req.params;
-//         const subCategories = await SubCategory.find({ category: categoryName }).populate('category');
-//         if (subCategories.length === 0) {
-//             return res.status(404).json({ message: 'No subcategories found for this category' });
-//         }
-//         res.json(subCategories);
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// };
 
 // Get SubCategories by Category ID
 export const fetchSubCategories = async (req, res) => {

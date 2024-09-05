@@ -55,3 +55,25 @@ export const getTypeById = async (req, res)=>{
         console.log(error);     
     }
 }
+
+
+export const toggleTypeStatus = async (req, res) => {
+    try {
+        const { active } = req.body;
+
+        const updatedType = await Type.findByIdAndUpdate(
+            req.params.id,
+            { active },
+            { new: true }
+        );
+
+        if (!updatedType) {
+            return res.status(404).send('Type not found');
+        }
+
+        res.json(updatedType);
+    } catch (error) {
+        console.error('Error updating Type status:', error);
+        res.status(500).send('Server error');
+    }
+};

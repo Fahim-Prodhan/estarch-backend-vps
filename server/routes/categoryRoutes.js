@@ -15,7 +15,9 @@ import {
     deleteBrand,
     getCategoriesWithSubCategoriesAndTypes,
     getCategoriesByTypeName,
-    getCategoryById
+    getCategoryById,
+    toggleCategoryStatus,
+    toggleSubCategoryStatus
 } from '../controllers/categoryController.js';
 import uploader from '../middleware/uploader.js';
 
@@ -38,5 +40,7 @@ router.post('/brands', createBrand);
 router.get('/brands', getBrands);
 router.put('/brands/:id', updateBrand);
 router.delete('/brands/:id', deleteBrand);
+router.patch('/categories/:id/status', toggleCategoryStatus);
+router.patch('/subcategories/:id/status', toggleSubCategoryStatus);
 
 export default router;
