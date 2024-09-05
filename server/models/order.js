@@ -35,7 +35,7 @@ const orderSchema = new mongoose.Schema({
         enum: ['new', 'pending', 'pendingPayment', 'confirm', 'hold',
           'processing', 'sendToCourier', 'courierProcessing',
           'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-          'return', 'exchange', 'cancel']
+          'return', 'exchange', 'cancel', 'doubleOrderCancel']
         ,
         default: 'new'
       },
@@ -62,7 +62,8 @@ const orderSchema = new mongoose.Schema({
     timestamp: {
       type: Date
     }
-  }
+  },
+  isPrint:{type: Boolean, default:false}
 
 }, { timestamps: true });
 

@@ -15,24 +15,40 @@ export const createProduct = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
     console.log(error);
-    
+
   }
 };
 
 // Get all products(admin)
 export const getAllProducts = async (req, res) => {
+  const page = parseInt(req.query.page) || 0;
+  const size = parseInt(req.query.size) || 10;
+  const text = req.query.search || '';
+
+  console.log(text);
+  
+
   try {
-    const products = await Product.find().sort({_id: -1}).populate('charts');
-    res.status(200).json(products);
+
+    let query = { SKU: { $regex: text, $options: "i" } };
+
+    const totalProducts = await Product.countDocuments(query);
+
+    const products = await Product.find(query).sort({ _id: -1 })
+      .skip((page-1) * size)
+      .limit(size)
+      .populate('charts');
+      const totalPages = Math.ceil(totalProducts / size); 
+    res.status(200).json({ products, totalProducts,currentPage: parseInt(page), totalPages });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
 // for serial
-export const getAllStatusOnProduct = async (req, res)=>{
+export const getAllStatusOnProduct = async (req, res) => {
   try {
-    const products = await Product.find({productStatus:true}).sort({serialNo: 1}).populate('charts');
+    const products = await Product.find({ productStatus: true }).sort({ serialNo: 1 }).populate('charts');
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -61,7 +77,7 @@ export const getAllProductsByType = async (req, res) => {
     }
 
     // Build the query condition
-    let query = { selectedType: type, productStatus:true };
+    let query = { selectedType: type, productStatus: true };
 
     // Add category filter if provided
     if (parsedCategories.length > 0) {
@@ -279,10 +295,10 @@ export const getAllProductsByCategoryNameStatusOn = async (req, res) => {
     const decodedCategoryName = decodeURIComponent(categoryName).trim();
 
     // Build the query condition
-    let query = { selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') }, productStatus:true};
-    
+    let query = { selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') }, productStatus: true };
+
     // Fetch products based on the constructed query and sort order
-    const products = await Product.find(query).sort({catSerialNo:1}).populate('charts');
+    const products = await Product.find(query).sort({ catSerialNo: 1 }).populate('charts');
     res.json(products);
   } catch (err) {
     console.error("Error fetching products:", err);
@@ -291,28 +307,28 @@ export const getAllProductsByCategoryNameStatusOn = async (req, res) => {
 };
 
 // get Product By subcategoryName
-export const getAllProductsBySubcategoryName = async (req, res)=>{
+export const getAllProductsBySubcategoryName = async (req, res) => {
   const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
 
   try {
-      const products = await Product.find({ selectedSubCategory:subcategoryName, serialNo: { $gt: 0 } });
-      const subcategory = await SubCategory.findOne({name:subcategoryName}).populate('category')
-      res.status(200).json({products,subcategory});
+    const products = await Product.find({ selectedSubCategory: subcategoryName, serialNo: { $gt: 0 } });
+    const subcategory = await SubCategory.findOne({ name: subcategoryName }).populate('category')
+    res.status(200).json({ products, subcategory });
   } catch (error) {
-      res.status(500).json({ message: 'Error fetching products', error });
+    res.status(500).json({ message: 'Error fetching products', error });
   }
 }
 
 // for serial admin site
-export const getAllProductsBySubcategoryNameStatusOn = async (req, res)=>{
+export const getAllProductsBySubcategoryNameStatusOn = async (req, res) => {
   const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
 
   try {
-      const products = await Product.find({ selectedSubCategory:subcategoryName,productStatus:true }).sort({SubcatSerialNo:1});
-      
-      res.status(200).json({products});
+    const products = await Product.find({ selectedSubCategory: subcategoryName, productStatus: true }).sort({ SubcatSerialNo: 1 });
+
+    res.status(200).json({ products });
   } catch (error) {
-      res.status(500).json({ message: 'Error fetching products', error });
+    res.status(500).json({ message: 'Error fetching products', error });
   }
 }
 
@@ -409,9 +425,9 @@ export const getAllNewArrivalProduct = async (req, res) => {
 };
 
 
-export const getHomePageNewArrival = async (req, res)=>{
+export const getHomePageNewArrival = async (req, res) => {
   try {
-    const newArrival = await Product.find({serialNo: { $gt: 0 }}).limit(10)
+    const newArrival = await Product.find({ serialNo: { $gt: 0 } }).limit(10)
     res.send(newArrival)
   } catch (error) {
     res.send(error)
@@ -516,7 +532,7 @@ export const getAllFeatureProduct = async (req, res) => {
 export const getNewArrival = async (req, res) => {
   try {
     // Fetch the latest 10 products sorted by the createdAt field in descending order
-    const latestProducts = await Product.find({serialNo: { $gt: 0 }}).populate('charts')
+    const latestProducts = await Product.find({ serialNo: { $gt: 0 } }).populate('charts')
       .sort({ serialNo: 1 }) // Sort by createdAt in descending order
       .limit(10); // Limit to 10 products
 
@@ -531,7 +547,7 @@ export const getNewArrival = async (req, res) => {
 export const getFeaturedProducts = async (req, res) => {
   try {
     // Fetch the latest 10 featured products sorted by the createdAt field in descending order
-    const latestFeaturedProducts = await Product.find({ featureProduct: true,serialNo: { $gt: 0 } }) // Filter for featured products
+    const latestFeaturedProducts = await Product.find({ featureProduct: true, serialNo: { $gt: 0 } }) // Filter for featured products
       .sort({ serialNo: 1 }).populate('charts').limit(10) // Sort by createdAt in descending order
 
     res.json(latestFeaturedProducts);
@@ -543,7 +559,7 @@ export const getFeaturedProducts = async (req, res) => {
 
 
 // (this is deprecated)
- export const getProductById = async (req, res) => {
+export const getProductById = async (req, res) => {
   // console.log(`Fetching product with ID: ${req.params.id}`); // Log the ID
   try {
     const product = await Product.findById(req.params.id)
@@ -562,14 +578,14 @@ export const getFeaturedProducts = async (req, res) => {
 // get single product by productName (Fahim)
 export const getProductByName = async (req, res) => {
   const { productName } = req.params;
-  const {sku} = req.params
+  const { sku } = req.params
 
   try {
     // Decode and trim productName
     const decodedProductName = decodeURIComponent(productName).trim();
 
     // Query for the product by name
-    const product = await Product.findOne({ SKU: sku,serialNo: { $gt: 0 } })
+    const product = await Product.findOne({ SKU: sku, serialNo: { $gt: 0 } })
       .populate('charts')
       .populate('relatedProducts.product'); // Populate related products
 
@@ -589,7 +605,7 @@ export const getProductByName = async (req, res) => {
 
 // Update a product
 export const updateProduct = async (req, res) => {
-  
+
   try {
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedProduct) {
@@ -764,7 +780,7 @@ export const searchProductListsByName = async (req, res) => {
   try {
     // Using a case-insensitive search
     const productLists = await Product.find({
-      productName: { $regex: productName, $options: 'i' },productStatus:true
+      productName: { $regex: productName, $options: 'i' }, productStatus: true
     });
 
     if (productLists.length === 0) {
@@ -820,32 +836,32 @@ export const toggleBooleanField = async (req, res) => {
   const allowedFields = ['showSize', 'freeDelevary', 'featureProduct', 'productStatus', 'posSuggestion'];
 
   if (!allowedFields.includes(fieldName)) {
-      return res.status(400).json({ message: 'Invalid field name' });
+    return res.status(400).json({ message: 'Invalid field name' });
   }
 
   try {
-      // Find the product by ID
-      const product = await Product.findById(productId);
+    // Find the product by ID
+    const product = await Product.findById(productId);
 
-      if (!product) {
-          return res.status(404).json({ message: 'Product not found' });
-      }
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
 
-      // Toggle the value of the specified field
-      product[fieldName] = !product[fieldName];
+    // Toggle the value of the specified field
+    product[fieldName] = !product[fieldName];
 
-      // Check if the field is 'productStatus' and update 'serialNo' accordingly
-      if (fieldName === 'productStatus') {
-          product.serialNo = 0;
-      }
+    // Check if the field is 'productStatus' and update 'serialNo' accordingly
+    if (fieldName === 'productStatus') {
+      product.serialNo = 0;
+    }
 
-      // Save the updated product
-      await product.save();
+    // Save the updated product
+    await product.save();
 
-      return res.status(200).json({ message: `${fieldName} updated successfully`, product });
+    return res.status(200).json({ message: `${fieldName} updated successfully`, product });
   } catch (error) {
-      console.log(error);
-      return res.status(500).json({ message: 'Server error', error });
+    console.log(error);
+    return res.status(500).json({ message: 'Server error', error });
   }
 };
 
@@ -855,45 +871,45 @@ export const searchProductByBarcode = async (req, res) => {
   const { barcode } = req.params;
 
   try {
-      // Search for the product in the database by barcode within sizeDetails array
-      const product = await Product.findOne(
-          { 'sizeDetails.barcode': barcode },
-          { 
-              'sizeDetails.$': 1, // Include only the matching size detail
-              productName: 1,
-              showSize: 1,
-              freeDelevary: 1,
-              featureProduct: 1,
-              productStatus: 1,
-              posSuggestion: 1,
-              images: 1,
-              videoUrl: 1,
-              content: 1,
-              guideContent: 1,
-              selectedCategoryName: 1,
-              selectedSubCategory: 1,
-              selectedCategory: 1,
-              selectedBrand: 1,
-              selectedType: 1,
-              discount: 1,
-              regularPrice: 1,
-              salePrice: 1,
-              SKU: 1,
-              charts: 1,
-              serialNo: 1,
-              relatedProducts: 1,
-              // Add any other fields you want to include
-          }
-      );
-
-      if (product) {
-          return res.status(200).json(product);
-      } else {
-          return res.status(404).json({ message: 'Product not found' });
+    // Search for the product in the database by barcode within sizeDetails array
+    const product = await Product.findOne(
+      { 'sizeDetails.barcode': barcode },
+      {
+        'sizeDetails.$': 1, // Include only the matching size detail
+        productName: 1,
+        showSize: 1,
+        freeDelevary: 1,
+        featureProduct: 1,
+        productStatus: 1,
+        posSuggestion: 1,
+        images: 1,
+        videoUrl: 1,
+        content: 1,
+        guideContent: 1,
+        selectedCategoryName: 1,
+        selectedSubCategory: 1,
+        selectedCategory: 1,
+        selectedBrand: 1,
+        selectedType: 1,
+        discount: 1,
+        regularPrice: 1,
+        salePrice: 1,
+        SKU: 1,
+        charts: 1,
+        serialNo: 1,
+        relatedProducts: 1,
+        // Add any other fields you want to include
       }
+    );
+
+    if (product) {
+      return res.status(200).json(product);
+    } else {
+      return res.status(404).json({ message: 'Product not found' });
+    }
   } catch (error) {
-      console.error('Error fetching product:', error.message);
-      return res.status(500).json({ message: 'Internal server error' });
+    console.error('Error fetching product:', error.message);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -918,7 +934,7 @@ export const getProductByBarcode = async (req, res) => {
       price: sizeDetail.salePrice,
       quantity: 1,
       title: product.productName,
-      discountAmount:sizeDetail.discountAmount
+      discountAmount: sizeDetail.discountAmount
     };
 
     return res.status(200).json(response);
