@@ -17,7 +17,6 @@ import {
     getAllStatusByOrderId,
     getAllOrdersWithLastStatus,
     manageOrder
-    
 } from '../controllers/orderController.js';
 
 const router = express.Router();

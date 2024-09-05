@@ -952,3 +952,47 @@ export const updatePurchasePriceToRatio = async (req, res) => {
     res.status(500).json({ message: 'Error updating products', error });
   }
 };
+
+
+
+export const getProductByBarcodeForPos = async (req, res) => {
+  try {
+    const { barcode } = req.params;
+    const product = await Product.findOne({ "sizeDetails.barcode": barcode }).lean();
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    const sizeDetail = product.sizeDetails.find(detail => detail.barcode === barcode);
+
+    if (!sizeDetail) {
+      return res.status(404).json({ message: "Size details not found" });
+    }
+    const response = {
+      SKU: product.SKU,
+      afterDiscount: sizeDetail.salePrice || 0,
+      barcode: sizeDetail.barcode,
+      discount: product.discount,
+      discountAmount: sizeDetail.discountAmount,
+      discountPercent: sizeDetail.discountPercent,
+      images: product.images,
+      openingStock: sizeDetail.openingStock,
+      ospPrice: sizeDetail.ospPrice,
+      productName: product.productName,
+      quantity: 1, 
+      regularPrice: sizeDetail.regularPrice,
+      salePrice: sizeDetail.salePrice,
+      serialNo: product.serialNo,
+      size: sizeDetail.size,
+      sizeDetails: product.sizeDetails,
+      totalStock: product.sizeDetails.reduce((total, detail) => total + detail.openingStock, 0),
+      wholesalePrice: sizeDetail.wholesalePrice,
+      _id: product._id
+    };
+
+    return res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

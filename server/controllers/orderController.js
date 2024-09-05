@@ -22,7 +22,6 @@ export const getAllNotesController = async (req, res) => {
   }
 };
 
-// Add a note to a specific order
 export const addNoteController = async (req, res) => {
   try {
     const { orderId } = req.params; // Get order ID from URL parameters
@@ -766,5 +765,4 @@ export const manageOrder = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 
