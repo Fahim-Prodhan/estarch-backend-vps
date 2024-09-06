@@ -32,6 +32,7 @@ const productSchema = new mongoose.Schema({
     regularPrice: Number,
     discountPercent: Number,
     discountAmount: Number,
+    purchasePrice: Number,
     salePrice: Number,
     wholesalePrice: Number,
     openingStock: Number,
