@@ -1029,42 +1029,22 @@ export const getBestSellingProducts = async (req, res) => {
       { $limit: 10 }, // Limit the results to top 10 best-selling products
     ]);
 
-    // Get product IDs from the best-selling products
-    const productIds = bestSellingProducts.map(p => p._id);
-
     // Populate product details
-    const products = await Product.find({ _id: { $in: productIds } })
-      .populate({
-        path: 'selectedCategory',
-        populate: {
-          path: 'type', // Assuming type is a field in Category schema
-          model: 'Type'
-        }
-      })
-      .populate('selectedSubCategory');
+    const products = await Product.find({
+      _id: { $in: bestSellingProducts.map(p => p._id) }
+    });
 
-    // Filter out inactive categories, subcategories, and types
+    // Merge product details with the quantity sold data, and filter out products with serialNo < 1
     const result = bestSellingProducts
       .map(salesData => {
         const product = products.find(p => p._id.toString() === salesData._id.toString());
         if (product && product.serialNo >= 1) {
-          const category = product.selectedCategory;
-          const subCategory = product.selectedSubCategory;
-          const type = category ? category.type : null;
-
-          // Check if the category, subcategory, or type is inactive
-          if (
-            category && category.active !== false &&
-            subCategory && subCategory.active !== false &&
-            type && type.active !== false
-          ) {
-            return {
-              ...product._doc, // Spread product details if all checks pass
-              totalQuantitySold: salesData.totalQuantitySold // Add totalQuantitySold
-            };
-          }
+          return {
+            ...product._doc,  // Spread product details if product is found and serialNo >= 1
+            totalQuantitySold: salesData.totalQuantitySold // Add totalQuantitySold
+          };
         }
-        return null; // Return null if product does not meet all conditions
+        return null;  // Return null if product not found or serialNo < 1
       })
       .filter(item => item !== null); // Filter out null values
 
