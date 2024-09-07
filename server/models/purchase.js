@@ -12,6 +12,7 @@ const purchaseSchema = new mongoose.Schema({
         purchasePrice: { type: Number, required: true },
         subtotal: { type: Number, required: true },
         total: { type: Number, required: true },
+        barcode:{ type: String, required: true },
     }],
     paymentTypes: [
         {
