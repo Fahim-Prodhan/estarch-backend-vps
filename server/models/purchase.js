@@ -7,7 +7,7 @@ const purchaseSchema = new mongoose.Schema({
     reference: { type: String },
     note: { type: String },
     items: [{
-         
+        product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
         quantity: { type: Number, required: true },
         purchasePrice: { type: Number, required: true },
         subtotal: { type: Number, required: true },

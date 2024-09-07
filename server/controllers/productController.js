@@ -223,7 +223,8 @@ export const getAllProductsByCategoryName = async (req, res) => {
     // Build the query condition
     let query = {
       selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') },
-      serialNo: { $gt: 0 }
+      // serialNo: { $gt: 0 },
+      catSerialNo: { $gt: 0 },
     };
     let andConditions = [];
 
@@ -309,7 +310,7 @@ export const getAllProductsBySubcategoryName = async (req, res) => {
   const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
 
   try {
-    const products = await Product.find({ selectedSubCategory: subcategoryName, serialNo: { $gt: 0 } });
+    const products = await Product.find({ selectedSubCategory: subcategoryName, SubcatSerialNo: { $gt: 0 } });
     const subcategory = await SubCategory.findOne({ name: subcategoryName }).populate('category')
     res.status(200).json({ products, subcategory });
   } catch (error) {
