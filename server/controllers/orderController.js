@@ -1,5 +1,5 @@
 // controllers/orderController.js
-
+import fetch from 'node-fetch';
 import mongoose from 'mongoose';
 import Order from '../models/order.js'; // Adjust the import path based on your file structure
 import Product from "../models/product.js";
@@ -159,7 +159,7 @@ export const getAllOrders = async (req, res) => {
       totalOrders,
       totalPages,
       currentPage: page,
-  
+
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
@@ -218,40 +218,81 @@ export const getCountOfStatus = async (req, res) => {
       doubleOrderCancel
     })
   } catch (error) {
-    console.log(error);   
+    console.log(error);
   }
 }
 
 
 
 
-// Create a new order
-// export const createOrder = async (req, res) => {
-//     try {
-//         const newOrder = new Order(req.body);
-//         console.log(newOrder);
-//         await newOrder.save();
-//         res.status(201).json(newOrder);
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ error: 'Failed to create order' });
-//     }
-// };
 
+
+// Utility function to delay execution for a given number of milliseconds
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function sendSMS(primaryUrl, fallbackUrls) {
+  let smsSent = false;
+  let retryCount = 0;
+  const maxRetries = 5; // Set a limit for retries
+  const retryDelay = 200; // Delay between retries in milliseconds (2 seconds)
+
+  while (!smsSent && retryCount < maxRetries) {
+    try {
+      // Attempt to send SMS with the primary URL
+      const response = await fetch(primaryUrl, { method: 'GET' });
+      const data = await response.json();
+
+      if (data.Status === "0" && data.Text === "ACCEPTD") {
+        console.log('SMS sent successfully with primary URL:', data);
+        smsSent = true; // Exit the loop when SMS is sent successfully
+        return data;
+      } else {
+        // Try fallback URLs if the primary URL fails
+        for (const url of fallbackUrls) {
+          try {
+            const fallbackResponse = await fetch(url, { method: 'GET' });
+            const fallbackData = await fallbackResponse.json();
+
+            if (fallbackData.Status === "0" && fallbackData.Text === "ACCEPTD") {
+              console.log('SMS sent successfully with fallback URL:', fallbackData);
+              smsSent = true; // Exit the loop when SMS is sent successfully
+              return fallbackData;
+            }
+          } catch (fallbackError) {
+            console.error('Error sending SMS with fallback URL:', url, fallbackError);
+          }
+        }
+      }
+
+      // If no successful SMS was sent, log and retry
+      retryCount++;
+      console.error(`Retry ${retryCount}/${maxRetries}... SMS could not be sent with any of the URLs. Retrying in ${retryDelay / 1000} seconds...`);
+      await delay(retryDelay); // Wait before retrying
+    } catch (error) {
+      console.error('Error sending SMS with primary URL:', error);
+      retryCount++;
+      console.error(`Retry ${retryCount}/${maxRetries}... Retrying in ${retryDelay / 1000} seconds...`);
+      await delay(retryDelay); // Wait before retrying
+    }
+  }
+
+  if (!smsSent) {
+    throw new Error('SMS could not be sent after maximum retries.');
+  }
+}
+
+// Example of how to use sendSMS in your createOrder function
 export const createOrder = async (req, res) => {
   try {
+    // Extract order data from request
     const {
       serialId, orderNotes, name, address, area, phone, altPhone, notes,
       totalAmount, deliveryCharge, discount, grandTotal, advanced,
-      condition, cartItems, paymentMethod, courier, employee, userId
+      condition, cartItems, paymentMethod, courier, employee, userId, manager, payments, exchangeDetails,exchangeAmount
     } = req.body;
 
-
     const invoice = generateInvoiceNumber();
-    // console.log("invoice:", invoice);
-
     const initialStatus = [{ name: 'new', user: null }];
-
 
     // Create the order with the given data
     const order = new Order({
@@ -275,17 +316,36 @@ export const createOrder = async (req, res) => {
       courier,
       employee,
       userId,
-      status: initialStatus
+      manager,
+      status: initialStatus,
+      payments ,exchangeDetails,exchangeAmount
     });
+    // Define primary and fallback SMS URLs
+    const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+
+    const fallbackUrls = [
+      `http://smpp.revesms.com:7788/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`,
+      `http://103.177.125.106:7788/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`
+    ];
+
+    // Send SMS only if serialId is 'showroom'
+    if (serialId === 'showroom') {
+      try {
+        const response = await sendSMS(primaryUrl, fallbackUrls);
+        console.log('Final Response:', response);
+      } catch (error) {
+        console.error('Failed to send SMS after maximum retries:', error);
+      }
+    }
 
     await order.save();
-
     return res.status(201).json({ message: 'Order placed successfully', order });
   } catch (error) {
     console.error('Error placing order:', error);
     return res.status(500).json({ message: 'Server error', error });
   }
 };
+
 
 // Update an order's status
 // Update an order's courier
@@ -642,38 +702,71 @@ export const getOrderProducts = async (req, res) => {
 
 export const getOrderById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const orderId = req.params.id;
 
-    // Fetch the order by ID
-    const order = await Order.findById(id)
-      .populate('cartItems.productId') // Populate the product details in the cartItems array
-      .populate('status.user', 'name') // Populate the user's name for the status history
-      .populate('employee', 'name') // Populate the employee's name
-      .populate('userId', 'name'); // Populate the user's name who created the order
-
-    if (!order) {
+    // Find the order by ID and populate related fields
+    const orderWithDetails = await Order.findById(orderId)
+      .populate('userId', 'name email')
+      .populate('cartItems.productId', 'productName SKU sizeDetails')
+      .populate('exchangeDetails.items.productId','productName SKU sizeDetails') // Populate sizeDetails for exchange items
+      .populate('manager', 'fullName')
+      .populate('employee', 'name');
+    if (!orderWithDetails) {
       return res.status(404).json({ message: 'Order not found' });
     }
-
     // Fetch all orders to determine the index
-    const allOrders = await Order.find().sort({ createdAt: 1 }); // Sort orders by creation date
+    const allOrders = await Order.find().sort({ createdAt: 1 });
 
     // Calculate the order number as the index + 1
-    const orderIndex = allOrders.findIndex(o => o._id.toString() === id);
+    const orderIndex = allOrders.findIndex(o => o._id.toString() === orderId);
     const orderNumber = orderIndex + 1;
 
-    // Add the order number to the response
-    const orderWithNumber = {
-      ...order.toObject(), // Convert the order document to a plain JavaScript object
-      orderNumber, // Add the calculated order number
+    // Modify cartItems to include barcode and SKU
+    const modifiedCartItems = orderWithDetails.cartItems.map((item) => {
+      const product = item.productId;
+      const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+
+      return {
+        ...item.toObject(),  // Convert Mongoose document to plain JS object
+        barcode: sizeDetail ? sizeDetail.barcode : '',  // Add barcode from sizeDetails
+        SKU: product.SKU  // Add SKU from productId
+      };
+    });
+
+    let modifiedExchangeItems = [];
+
+    // Check if exchangeAmount is not null and modify exchangeDetails items
+    if (orderWithDetails.exchangeAmount !== null && orderWithDetails.exchangeDetails && orderWithDetails.exchangeDetails.items) {
+      modifiedExchangeItems = orderWithDetails.exchangeDetails.items.map((item) => {
+        const product = item.productId;
+        const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+
+        return {
+          ...item.toObject(),  // Convert Mongoose document to plain JS object
+          barcode: sizeDetail ? sizeDetail.barcode : '',  // Add barcode from sizeDetails
+          SKU: product.SKU  // Add SKU from productId
+        };
+      });
+    }
+
+    // Prepare the final response
+    const orderWithNumberAndModifiedItems = {
+      ...orderWithDetails.toObject(),  // Convert Mongoose document to plain JS object
+      orderNumber,
+      cartItems: modifiedCartItems,  // Add modified cartItems
+      exchangeDetails: {
+        ...orderWithDetails.exchangeDetails.toObject(),  // Convert exchangeDetails to plain JS object
+        items: modifiedExchangeItems  // Add modified exchangeDetails items
+      }
     };
 
-    res.status(200).json(orderWithNumber);
+    res.status(200).json(orderWithNumberAndModifiedItems);
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching order:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 export const getUserOrderByMobile = async (req, res) => {
   const { phone } = req.params; // Assuming the phone number is passed as a URL parameter
@@ -748,8 +841,6 @@ export const getTotalOrderCountOfUser = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-
 export const getOrderByInvoice = async (req, res) => {
   try {
     const { invoice } = req.params;
@@ -879,3 +970,94 @@ export const manageOrder = async (req, res) => {
   }
 };
 
+export const getManagerSalesStats = async (req, res) => {
+  try {
+    const {  startDate, endDate } = req.query;
+    const { managerId } = req.params;
+
+    // Validate managerId
+    if (!mongoose.Types.ObjectId.isValid(managerId)) {
+      return res.status(400).json({ message: 'Invalid managerId' });
+    }
+
+    // Create date filter
+    const dateFilter = {};
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    if (startDate) {
+      dateFilter.$gte = new Date(startDate);
+    } else {
+      dateFilter.$gte = startOfDay;
+    }
+
+    if (endDate) {
+      dateFilter.$lte = new Date(endDate);
+    } else {
+      dateFilter.$lte = endOfDay;
+    }
+
+    // Fetch orders with managerId and date range filter
+    const orders = await Order.find({
+      manager: new mongoose.Types.ObjectId(managerId),
+      createdAt: dateFilter,
+    });
+
+    // Initialize counters
+    let totalSellCount = 0;
+    let totalSellAmount = 0;
+    let totalExchangeAmount = 0;
+    let totalCashAmount = 0;
+    let totalCardAmount = 0;
+    let totalOnlineAmount = 0;
+
+    orders.forEach(order => {
+      totalSellCount += order.cartItems.length;
+      totalSellAmount += order.grandTotal;
+      totalExchangeAmount += order.exchangeAmount || 0;
+
+      // Calculate the total cash amount
+      let totalPayments = 0;
+      order.payments.forEach(payment => {
+        totalPayments += parseFloat(payment.amount);
+        switch (payment.type) {
+          case 'Card':
+            totalCardAmount += parseFloat(payment.amount);
+            break;
+          case 'Online':
+            totalOnlineAmount += parseFloat(payment.amount);
+            break;
+          default:
+            break;
+        }
+      });
+
+      // Cash amount is total order amount minus total payments
+      const orderCashAmount = order.grandTotal - totalPayments;
+      totalCashAmount += orderCashAmount;
+    });
+
+    res.status(200).json({
+      totalSellCount,
+      totalSellAmount,
+      totalExchangeAmount,
+      totalCashAmount,
+      totalCardAmount,
+      totalOnlineAmount,
+    });
+  } catch (error) {
+    console.error('Error fetching manager sales stats:', error);
+    res.status(500).json({ message: 'An error occurred', error: error.message || error });
+  }
+};
+
+
+export const getShowroomOrders = async (req, res) => {
+  try {
+    const showroomOrders = await Order.find({ serialId: 'showroom' });
+    res.status(200).json(showroomOrders);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching showroom orders', error });
+  }
+};

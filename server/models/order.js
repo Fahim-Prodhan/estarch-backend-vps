@@ -17,9 +17,10 @@ const orderSchema = new mongoose.Schema({
   advanced: { type: Number, default: 0 },
   dueAmount: { type: Number, default: 0 },
   condition: { type: Number, default: 0 },
+  manager: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   cartItems: [
     {
-      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+      productId: {type: mongoose.Schema.Types.ObjectId, ref: 'Product' , require: true},
       title: { type: String, required: true },
       quantity: { type: Number, required: true },
       discountAmount: { type: Number },
@@ -63,7 +64,20 @@ const orderSchema = new mongoose.Schema({
       type: Date
     }
   },
-  isPrint:{type: Boolean, default:false}
+  isPrint:{type: Boolean, default:false},
+  payments:[],
+  exchangeDetails:{
+    invoiceNo: { type: String},
+    items: [{
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+      title: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      discountAmount: { type: Number, required: true },
+      price: { type: Number, required: true },
+      size: { type: String, required: true },
+    }]
+  },
+  exchangeAmount:{ type: Number, default: null }
 
 }, { timestamps: true });
 
