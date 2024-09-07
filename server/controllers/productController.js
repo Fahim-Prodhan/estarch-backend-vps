@@ -1,6 +1,4 @@
-import { Try } from "@mui/icons-material";
 import Product from "../models/product.js";
-import Chart from '../models/sizeChart.js';
 import SubCategory from '../models/subCategory.js';
 
 
