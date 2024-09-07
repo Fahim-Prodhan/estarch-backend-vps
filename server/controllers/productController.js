@@ -1,6 +1,6 @@
 import Product from "../models/product.js";
 import SubCategory from '../models/subCategory.js';
-
+import Order from '../models/order.js'; 
 
 // Create a new product
 export const createProduct = async (req, res) => {
@@ -1001,12 +1001,58 @@ export const getProductByBarcodeForPos = async (req, res) => {
       sizeDetails: product.sizeDetails,
       totalStock: product.sizeDetails.reduce((total, detail) => total + detail.openingStock, 0),
       wholesalePrice: sizeDetail.wholesalePrice,
-      _id: product._id
+      _id: product._id,
+      productId:product._id
     };
 
     return res.status(200).json(response);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+export const getBestSellingProducts = async (req, res) => {
+  try {
+    // Aggregate the order data to calculate total quantity sold for each product
+    const bestSellingProducts = await Order.aggregate([
+      { $unwind: '$cartItems' }, // Deconstruct the cartItems array
+      {
+        $group: {
+          _id: '$cartItems.productId', // Group by productId
+          totalQuantitySold: { $sum: '$cartItems.quantity' }, // Sum the quantities sold
+        },
+      },
+      { $sort: { totalQuantitySold: -1 } }, // Sort by totalQuantitySold in descending order
+      { $limit: 10 }, // Limit the results to top 10 best-selling products
+    ]);
+
+    // Populate product details
+    const products = await Product.find({
+      _id: { $in: bestSellingProducts.map(p => p._id) }
+    });
+
+    // Merge product details with the quantity sold data, and filter out products with serialNo < 1
+    const result = bestSellingProducts
+      .map(salesData => {
+        const product = products.find(p => p._id.toString() === salesData._id.toString());
+        if (product && product.serialNo >= 1) {
+          return {
+            ...product._doc,  // Spread product details if product is found and serialNo >= 1
+            totalQuantitySold: salesData.totalQuantitySold // Add totalQuantitySold
+          };
+        }
+        return null;  // Return null if product not found or serialNo < 1
+      })
+      .filter(item => item !== null); // Filter out null values
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error fetching best-selling products:', error); // Log the error to the console
+    res.status(500).json({
+      message: 'Failed to fetch best-selling products',
+      error: error.message || error
+    });
   }
 };

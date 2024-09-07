@@ -18,7 +18,9 @@ import {
     getAllOrdersWithLastStatus,
     manageOrder,
     updateOrderIsPrint,
-    getCountOfStatus
+    getCountOfStatus,
+    getManagerSalesStats,
+    getShowroomOrders
     
 } from '../controllers/orderController.js';
 
@@ -43,5 +45,7 @@ router.get('/orders/all/laststatus', getAllOrdersWithLastStatus);
 router.patch('/manage-order/:orderId', manageOrder);
 router.put('/update-print/:orderId', updateOrderIsPrint);
 router.get('/status-count', getCountOfStatus);
+router.get('/manager/:managerId/stats', getManagerSalesStats);
+router.get('/oders/showrooms', getShowroomOrders);
 
 export default router;

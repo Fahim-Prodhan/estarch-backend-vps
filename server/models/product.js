@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema({
   productStatus: { type: Boolean, default: false },
   posSuggestion: { type: Boolean, default: false },
   images: [String], 
-  videoUrl: { type: String, default: '' },
+  videoUrl: { type: String, default: '' }, 
   content: { type: String, default: '' },
   guideContent: { type: String, default: '' },
   selectedCategoryName: { type: String, default: '' },
