@@ -200,6 +200,8 @@ export const getAllProductsByCategoryName = async (req, res) => {
   try {
     // Decode the categoryName and trim spaces
     const decodedCategoryName = decodeURIComponent(categoryName).trim();
+    console.log(categoryName);
+    
 
     // Parse query parameters
     let parsedRanges = [];
@@ -306,7 +308,7 @@ export const getAllProductsByCategoryNameStatusOn = async (req, res) => {
 };
 
 // get Product By subcategoryName
-export const getAllProductsBySubcategoryName = async (req, res) => {
+export const getAllProductsBySubcategoryNameHome = async (req, res) => {
   const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
 
   try {
@@ -317,6 +319,93 @@ export const getAllProductsBySubcategoryName = async (req, res) => {
     res.status(500).json({ message: 'Error fetching products', error });
   }
 }
+
+// getAllProductsByCategoryName with filter main one (fahim)
+export const getAllProductsBySubcategoryName = async (req, res) => {
+  const { subcategoryName } = req.params;
+  const { ranges, sizes, sortBy } = req.query;
+
+  
+
+  try {
+    // Decode the categoryName and trim spaces
+    const decodedSubCategoryName = decodeURIComponent(subcategoryName).trim();
+    console.log(decodedSubCategoryName);
+    
+
+    // Parse query parameters
+    let parsedRanges = [];
+    if (ranges) {
+      parsedRanges = JSON.parse(ranges).map((range) => ({
+        min: Number(range.min),
+        max: Number(range.max),
+      }));
+    }
+
+
+    let parsedSizes = [];
+    if (sizes) {
+      parsedSizes = JSON.parse(sizes);
+    }
+
+    // Build the query condition
+    let query = {
+      selectedSubCategory: { $regex: new RegExp(`^${decodedSubCategoryName}$`, 'i') },
+      // serialNo: { $gt: 0 },
+      SubcatSerialNo: { $gt: 0 },
+    };
+
+    let andConditions = [];
+
+    if (parsedRanges.length > 0) {
+      andConditions.push({
+        $or: parsedRanges.map((range) => ({
+          salePrice: { $gte: range.min, $lte: range.max },
+        })),
+      });
+    }
+
+    if (parsedSizes.length > 0) {
+      andConditions.push({
+        selectedSizes: { $in: parsedSizes },
+      });
+    }
+
+    if (andConditions.length > 0) {
+      query = {
+        ...query,
+        $and: andConditions,
+      };
+    }
+
+    // Determine the sort order
+    let sortOptions = {};
+    switch (sortBy) {
+      case 'Price High to Low':
+        sortOptions = { salePrice: -1 };
+        break;
+      case 'Price Low to High':
+        sortOptions = { salePrice: 1 };
+        break;
+      case 'Sort by Latest':
+        sortOptions = { createdAt: -1 };
+        break;
+      case 'Sort by Serial':
+        sortOptions = { catSerialNo: 1 }; // Sorting by serial number in ascending order
+        break;
+      default:
+        sortOptions = { catSerialNo: 1 }; // Default sorting
+        break;
+    }
+
+    // Fetch products based on the constructed query and sort order
+    const products = await Product.find(query).sort(sortOptions).populate('charts');
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 // for serial admin site
 export const getAllProductsBySubcategoryNameStatusOn = async (req, res) => {
@@ -584,7 +673,7 @@ export const getProductByName = async (req, res) => {
     const decodedProductName = decodeURIComponent(productName).trim();
 
     // Query for the product by name
-    const product = await Product.findOne({ SKU: sku, serialNo: { $gt: 0 } })
+    const product = await Product.findOne({ SKU: sku })
       .populate('charts')
       .populate('relatedProducts.product'); // Populate related products
 

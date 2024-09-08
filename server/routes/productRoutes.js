@@ -1,5 +1,5 @@
 import express from 'express';
-import {getBestSellingProducts,updatePurchasePriceToRatio,getProductByBarcodeForPos, getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival,getAllStatusOnProduct, updateProductCategorySerials,updateProductSubcategorySerials, getAllProductsByCategoryNameStatusOn,getAllProductsBySubcategoryNameStatusOn} from '../controllers/productController.js';
+import {getBestSellingProducts,updatePurchasePriceToRatio,getProductByBarcodeForPos, getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival,getAllStatusOnProduct, updateProductCategorySerials,updateProductSubcategorySerials, getAllProductsByCategoryNameStatusOn,getAllProductsBySubcategoryNameStatusOn, getAllProductsBySubcategoryNameHome} from '../controllers/productController.js';
 
 const router = express.Router();
 
@@ -19,6 +19,7 @@ router.get('/products/category/products/:categoryName', getAllProductsByCategory
 router.get('/products/category-status-on/products/:categoryName', getAllProductsByCategoryNameStatusOn);
 router.get('/products/subcategory-status-on/products/:subcategoryName', getAllProductsBySubcategoryNameStatusOn);
 router.get('/products/subcategory/:subcategoryName', getAllProductsBySubcategoryName);
+router.get('/products/subcategory/home/:subcategoryName', getAllProductsBySubcategoryNameHome);
 router.get('/products/:type', getAllProductsByType);
 router.get('/products/product/:id', getProductById); 
 router.get('/products/product-details/:productName/:sku', getProductByName); 
