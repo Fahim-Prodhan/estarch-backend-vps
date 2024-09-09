@@ -515,7 +515,7 @@ export const getAllNewArrivalProduct = async (req, res) => {
 
 export const getHomePageNewArrival = async (req, res) => {
   try {
-    const newArrival = await Product.find({ serialNo: { $gt: 0 } }).limit(10)
+    const newArrival = await Product.find({ serialNo: { $gt: 0 } }).sort({serialNo: 1}).limit(10)
     res.send(newArrival)
   } catch (error) {
     res.send(error)
