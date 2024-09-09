@@ -2,7 +2,7 @@ import ExtraSection from '../models/extraSection.js';
 
 export const getExtraSection = async (req, res) => {
   try {
-    const data = await ExtraSection.findById('66ca261a292762cc6d825692');
+    const data = await ExtraSection.findById('66ddcabb75f0e0b05c7aef38');
     res.send(data)
   } catch (error) {
     console.log(error)
