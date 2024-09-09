@@ -28,7 +28,7 @@ const productSchema = new mongoose.Schema({
     size: String,
     available: {type:Boolean , default: true},
     barcode: String,
-    ratio: Number,
+    ratio: { type: Number, default: 0 },
     regularPrice: Number,
     discountPercent: Number,
     discountAmount: Number,
@@ -38,7 +38,7 @@ const productSchema = new mongoose.Schema({
     openingStock: Number,
     ospPrice: Number
   }],
-  charts: { type: mongoose.Schema.Types.ObjectId, ref: 'Chart' },
+  charts: { type: mongoose.Schema.Types.ObjectId, ref: 'Chart' , default: null },
   serialNo: { type: Number, default: 0 },
   catSerialNo: { type: Number, default: 0 },
   SubcatSerialNo: { type: Number, default: 0 },

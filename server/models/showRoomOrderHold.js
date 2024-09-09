@@ -8,15 +8,12 @@ const showroomOrderHoldSchema = new mongoose.Schema({
   userInfo: {
     name: {
       type: String,
-      // Optional
     },
     phone: {
       type: String,
-      // Optional
     },
     address: {
       type: String,
-      // Optional
     },
   },
   note: {

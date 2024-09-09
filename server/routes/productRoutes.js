@@ -38,4 +38,5 @@ router.get('/product/pos/:barcode', getProductByBarcodeForPos);
 router.get('/product/best-selling', getBestSellingProducts);
 
 
+
 export default router;

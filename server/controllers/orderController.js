@@ -24,21 +24,16 @@ export const getAllNotesController = async (req, res) => {
 
 export const addNoteController = async (req, res) => {
   try {
-    const { orderId } = req.params; // Get order ID from URL parameters
-    const { adminName, noteContent } = req.body; // Get adminName and noteContent from request body
-
-    // Validate that both adminName and noteContent are provided
+    const { orderId } = req.params; 
+    const { adminName, noteContent } = req.body; 
+    console.log(orderId , adminName ,noteContent );
     if (!adminName || !noteContent) {
       return res.status(400).json({ message: 'Both adminName and noteContent are required' });
     }
-
-    // Find the order by its ID and handle cases where the order is not found
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-
-    // Ensure notes is initialized as an array if not already
     if (!Array.isArray(order.notes)) {
       order.notes = [];
     }
