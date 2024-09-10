@@ -220,7 +220,7 @@ export const getCountOfStatus = async (req, res) => {
 // Utility function to delay execution for a given number of milliseconds
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-async function sendSMS(primaryUrl, fallbackUrls) {
+async function sendSMS(primaryUrl) {
   let smsSent = false;
   let retryCount = 0;
   const maxRetries = 5; // Set a limit for retries
@@ -236,24 +236,7 @@ async function sendSMS(primaryUrl, fallbackUrls) {
         console.log('SMS sent successfully with primary URL:', data);
         smsSent = true; // Exit the loop when SMS is sent successfully
         return data;
-      } else {
-        // Try fallback URLs if the primary URL fails
-        for (const url of fallbackUrls) {
-          try {
-            const fallbackResponse = await fetch(url, { method: 'GET' });
-            const fallbackData = await fallbackResponse.json();
-
-            if (fallbackData.Status === "0" && fallbackData.Text === "ACCEPTD") {
-              console.log('SMS sent successfully with fallback URL:', fallbackData);
-              smsSent = true; // Exit the loop when SMS is sent successfully
-              return fallbackData;
-            }
-          } catch (fallbackError) {
-            console.error('Error sending SMS with fallback URL:', url, fallbackError);
-          }
-        }
-      }
-
+      } 
       // If no successful SMS was sent, log and retry
       retryCount++;
       console.error(`Retry ${retryCount}/${maxRetries}... SMS could not be sent with any of the URLs. Retrying in ${retryDelay / 1000} seconds...`);
@@ -312,16 +295,10 @@ export const createOrder = async (req, res) => {
     });
     // Define primary and fallback SMS URLs
     const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
-
-    const fallbackUrls = [
-      `http://smpp.revesms.com:7788/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`,
-      `http://103.177.125.106:7788/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`
-    ];
-
     // Send SMS only if serialId is 'showroom'
-    if (serialId === 'showroom') {
+    if (serialId === 'showroom' && phone !== '') {
       try {
-        const response = await sendSMS(primaryUrl, fallbackUrls);
+        const response = await sendSMS(primaryUrl);
         console.log('Final Response:', response);
       } catch (error) {
         console.error('Failed to send SMS after maximum retries:', error);
@@ -919,9 +896,15 @@ export const getAllOrdersWithLastStatus = async (req, res) => {
 export const manageOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { cartItems, advanced, discount, adminDiscount, totalAmount, grandTotal, dueAmount } = req.body;
+    const {name,address,phone,orderNotes, deliveryCharge, cartItems, advanced, discount, adminDiscount, totalAmount, grandTotal, dueAmount } = req.body;
 
+    // Check if at least one field is provided
     if (
+      name === undefined &&
+      address === undefined &&
+      phone === undefined &&
+      orderNotes === undefined &&
+      deliveryCharge === undefined &&
       cartItems === undefined &&
       advanced === undefined &&
       discount === undefined &&
@@ -933,8 +916,32 @@ export const manageOrder = async (req, res) => {
       return res.status(400).json({ error: 'At least one field must be provided' });
     }
 
-    // Update fields
+    // Validate orderId
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ error: 'Invalid order ID' });
+    }
+
+    // Convert productId in cartItems to ObjectId if it's a string
+    if (cartItems && Array.isArray(cartItems)) {
+      cartItems.forEach(item => {
+        if (item.productId && typeof item.productId === 'string') {
+          try {
+            item.productId = mongoose.Types.ObjectId(item.productId);
+          } catch (err) {
+            console.error('Invalid productId:', item.productId);
+            return res.status(400).json({ error: 'Invalid productId in cart items' });
+          }
+        }
+      });
+    }
+
+    // Prepare fields to update
     const updateFields = {};
+    if (deliveryCharge !== undefined) updateFields.deliveryCharge = deliveryCharge;
+    if (orderNotes !== undefined) updateFields.orderNotes = orderNotes;
+    if (phone !== undefined) updateFields.phone = phone;
+    if (address !== undefined) updateFields.address = address;
+    if (name !== undefined) updateFields.name = name;
     if (cartItems !== undefined) updateFields.cartItems = cartItems;
     if (advanced !== undefined) updateFields.advanced = advanced;
     if (discount !== undefined) updateFields.discount = discount;
@@ -943,23 +950,28 @@ export const manageOrder = async (req, res) => {
     if (grandTotal !== undefined) updateFields.grandTotal = grandTotal;
     if (dueAmount !== undefined) updateFields.dueAmount = dueAmount;
 
+    console.log('Update fields:', updateFields);
+
+    // Update the order in the database
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
       { $set: updateFields },
       { new: true, runValidators: true }
     );
 
+    // Check if the order was found and updated
     if (!updatedOrder) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
+    // Return the updated order
     res.json(updatedOrder);
+
   } catch (error) {
-    console.error('Error updating order:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error updating order:', error.message);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
-
 export const getManagerSalesStats = async (req, res) => {
   try {
     const {  startDate, endDate } = req.query;
