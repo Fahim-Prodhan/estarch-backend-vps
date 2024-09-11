@@ -72,7 +72,7 @@ const orderSchema = new mongoose.Schema({
       productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
       title: { type: String, required: true },
       quantity: { type: Number, required: true },
-      discountAmount: { type: Number, required: true },
+      discountAmount: { type: Number, default:0 },
       price: { type: Number, required: true },
       size: { type: String, required: true },
     }]

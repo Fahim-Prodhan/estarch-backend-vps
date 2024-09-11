@@ -95,9 +95,17 @@ export const getAllOrders = async (req, res) => {
             { phone: { $regex: text, $options: "i" } }
           ]
         },
-        { serialId: "E-commerce" }
+        {
+          $or: [
+            { serialId: "E-commerce" },
+            { serialId: "Store" },
+            { serialId: "Facebook" },
+            { serialId: "WhatsApp" }
+          ]
+        }
       ]
     };
+    
     
     if (status) {
       query['lastStatus.name'] = status;
@@ -171,26 +179,87 @@ export const updateOrderIsPrint = async (req, res) => {
 
 export const getCountOfStatus = async (req, res) => {
   try {
+    // Define the list of serialIds
+    const serialIds = ["E-commerce", "Store", "Facebook", "WhatsApp"];
+
+    // Fetch counts for each status using Order.countDocuments
     const new_orders = await Order.countDocuments({
       'lastStatus.name': 'new',
-      serialId: 'E-commerce'
+      serialId: { $in: serialIds }
     });
-    
-    const pending = await Order.countDocuments({ 'lastStatus.name': 'pending',serialId: 'E-commerce' });
-    const pendingPayment = await Order.countDocuments({ 'lastStatus.name': 'pendingPayment',serialId: 'E-commerce' });
-    const confirm = await Order.countDocuments({ 'lastStatus.name': 'confirm',serialId: 'E-commerce' });
-    const hold = await Order.countDocuments({ 'lastStatus.name': 'hold',serialId: 'E-commerce' });
-    const processing = await Order.countDocuments({ 'lastStatus.name': 'processing',serialId: 'E-commerce' });
-    const sendToCourier = await Order.countDocuments({ 'lastStatus.name': 'sendToCourier',serialId: 'E-commerce' });
-    const courierProcessing = await Order.countDocuments({ 'lastStatus.name': 'courierProcessing',serialId: 'E-commerce' });
-    const delivered = await Order.countDocuments({ 'lastStatus.name': 'delivered',serialId: 'E-commerce' });
-    const partialReturn = await Order.countDocuments({ 'lastStatus.name': 'partialReturn',serialId: 'E-commerce' });
-    const returnWithDeliveryCharge = await Order.countDocuments({ 'lastStatus.name': 'returnWithDeliveryCharge',serialId: 'E-commerce' });
-    const return_delivery = await Order.countDocuments({ 'lastStatus.name': 'return',serialId: 'E-commerce' });
-    const exchange = await Order.countDocuments({ 'lastStatus.name': 'exchange',serialId: 'E-commerce' });
-    const cancel = await Order.countDocuments({ 'lastStatus.name': 'cancel',serialId: 'E-commerce' });
-    const doubleOrderCancel = await Order.countDocuments({ 'lastStatus.name': 'doubleOrderCancel',serialId: 'E-commerce' });
-    res.send({
+
+    const pending = await Order.countDocuments({
+      'lastStatus.name': 'pending',
+      serialId: { $in: serialIds }
+    });
+
+    const pendingPayment = await Order.countDocuments({
+      'lastStatus.name': 'pendingPayment',
+      serialId: { $in: serialIds }
+    });
+
+    const confirm = await Order.countDocuments({
+      'lastStatus.name': 'confirm',
+      serialId: { $in: serialIds }
+    });
+
+    const hold = await Order.countDocuments({
+      'lastStatus.name': 'hold',
+      serialId: { $in: serialIds }
+    });
+
+    const processing = await Order.countDocuments({
+      'lastStatus.name': 'processing',
+      serialId: { $in: serialIds }
+    });
+
+    const sendToCourier = await Order.countDocuments({
+      'lastStatus.name': 'sendToCourier',
+      serialId: { $in: serialIds }
+    });
+
+    const courierProcessing = await Order.countDocuments({
+      'lastStatus.name': 'courierProcessing',
+      serialId: { $in: serialIds }
+    });
+
+    const delivered = await Order.countDocuments({
+      'lastStatus.name': 'delivered',
+      serialId: { $in: serialIds }
+    });
+
+    const partialReturn = await Order.countDocuments({
+      'lastStatus.name': 'partialReturn',
+      serialId: { $in: serialIds }
+    });
+
+    const returnWithDeliveryCharge = await Order.countDocuments({
+      'lastStatus.name': 'returnWithDeliveryCharge',
+      serialId: { $in: serialIds }
+    });
+
+    const return_delivery = await Order.countDocuments({
+      'lastStatus.name': 'return',
+      serialId: { $in: serialIds }
+    });
+
+    const exchange = await Order.countDocuments({
+      'lastStatus.name': 'exchange',
+      serialId: { $in: serialIds }
+    });
+
+    const cancel = await Order.countDocuments({
+      'lastStatus.name': 'cancel',
+      serialId: { $in: serialIds }
+    });
+
+    const doubleOrderCancel = await Order.countDocuments({
+      'lastStatus.name': 'doubleOrderCancel',
+      serialId: { $in: serialIds }
+    });
+
+    // Send the results as a response
+    res.status(200).send({
       new_orders,
       pending,
       pendingPayment,
@@ -206,11 +275,13 @@ export const getCountOfStatus = async (req, res) => {
       exchange,
       cancel,
       doubleOrderCancel
-    })
+    });
   } catch (error) {
     console.log(error);
+    res.status(500).send({ error: 'An error occurred while fetching order status counts' });
   }
-}
+};
+
 
 
 
@@ -543,7 +614,7 @@ export const updateOrderStatus = async (req, res) => {
       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
       'return', 'exchange'
     ];
-    const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel'];
+    const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel','confirm','doubleOrderCancel'];
 
     const isConfirmed = order.status.some(s => s.name === 'confirm');
     const isCancelled = order.status.some(s => s.name === 'cancel');
