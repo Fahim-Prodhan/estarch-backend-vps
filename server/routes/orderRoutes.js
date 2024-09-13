@@ -20,7 +20,8 @@ import {
     updateOrderIsPrint,
     getCountOfStatus,
     getManagerSalesStats,
-    getShowroomOrders
+    getShowroomOrders,
+    createPOSOrder
     
 } from '../controllers/orderController.js';
 
@@ -29,6 +30,7 @@ const router = express.Router();
 router.get('/', getAllOrders);
 // Create a new order
 router.post('/', createOrder);
+router.post('/pos-order', createPOSOrder);
 // Update an order's status
 router.patch('/status/:orderId', updateOrderStatus);
 // Add cart items to an order

@@ -293,18 +293,6 @@ export const createOrder = async (req, res) => {
       status: initialStatus,
       payments ,exchangeDetails,exchangeAmount
     });
-    // Define primary and fallback SMS URLs
-    const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
-    // Send SMS only if serialId is 'showroom'
-    if (serialId === 'showroom' && phone !== '') {
-      try {
-        const response = await sendSMS(primaryUrl);
-        console.log('Final Response:', response);
-      } catch (error) {
-        console.error('Failed to send SMS after maximum retries:', error);
-      }
-    }
-
     await order.save();
     return res.status(201).json({ message: 'Order placed successfully', order });
   } catch (error) {
@@ -1063,3 +1051,95 @@ export const getShowroomOrders = async (req, res) => {
     res.status(500).json({ message: 'Error fetching showroom orders', error });
   }
 };
+
+
+export const createPOSOrder = async (req, res) => {
+  try {
+    // Extract order data from request
+    const {
+      serialId, orderNotes, name, address, area, phone, altPhone, notes,
+      totalAmount, deliveryCharge, discount, grandTotal, advanced,
+      condition, cartItems, paymentMethod, courier, employee, userId, manager, payments,
+      exchangeDetails, exchangeAmount
+    } = req.body;
+
+    const invoice = generateInvoiceNumber();
+    const initialStatus = [{ name: 'new', user: null }];
+
+    // Create the order with the given data
+    const order = new Order({
+      serialId,
+      invoice,
+      orderNotes,
+      name,
+      address,
+      area,
+      phone,
+      altPhone,
+      notes,
+      totalAmount,
+      deliveryCharge,
+      discount,
+      grandTotal,
+      advanced,
+      condition,
+      cartItems,
+      paymentMethod,
+      courier,
+      employee,
+      userId,
+      manager,
+      status: initialStatus,
+      payments,
+      exchangeDetails,
+      exchangeAmount
+    });
+
+    // Update stock for each cart item (reduce stock)
+    for (const item of cartItems) {
+      const product = await Product.findById(item.productId);
+
+      if (product) {
+        const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+        if (sizeDetail && sizeDetail.openingStock >= item.quantity) {
+          sizeDetail.openingStock -= item.quantity; // Reduce stock
+          await product.save(); // Save updated product
+        } else {
+          return res.status(400).json({ message: `Not enough stock for product: ${item.title} - ${item.size}` });
+        }
+      }
+    }
+    // Update stock for each exchange item (increase stock)
+    if (exchangeDetails && exchangeDetails.items) {
+      for (const exchangeItem of exchangeDetails.items) {
+        const product = await Product.findById(exchangeItem.productId);
+
+        if (product) {
+          const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
+          if (sizeDetail) {
+            sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
+            await product.save(); // Save updated product
+          }
+        }
+      }
+    }
+    // Send SMS only if serialId is 'showroom' and phone is provided
+    if (serialId === 'showroom' && phone !== '') {
+      try {
+        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+        const response = await sendSMS(primaryUrl);
+        console.log('SMS sent:', response);
+      } catch (error) {
+        console.error('Failed to send SMS:', error);
+      }
+    }
+
+    // Save the order after processing stock updates
+    await order.save();
+    return res.status(201).json({ message: 'Order placed successfully', order });
+  } catch (error) {
+    console.error('Error placing order:', error);
+    return res.status(500).json({ message: 'Server error', error });
+  }
+};
+
