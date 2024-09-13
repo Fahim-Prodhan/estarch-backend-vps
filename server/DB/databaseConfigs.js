@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const connectDB = async () => {
-  const DATABASE_URL = "mongodb+srv://estarch:JAe2lmx1r3o9rzTK@cluster0.djweinm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  const DATABASE_URL = "mongodb+srv://estarchbd:aT3GHiNSqKOS9XCt@cluster0.nhgop.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
   try {
     const DB_OPTIONS = {
       dbName: "ClothingStore",
