@@ -325,44 +325,66 @@ async function sendSMS(primaryUrl) {
   }
 }
 
-// Example of how to use sendSMS in your createOrder function
 export const createOrder = async (req, res) => {
   try {
-    // Extract order data from request
     const {
-      serialId, orderNotes, name, address, area, phone, altPhone, notes,
-      totalAmount, deliveryCharge, discount, grandTotal, advanced,
-      condition, cartItems, paymentMethod, courier, employee, userId, manager, payments, exchangeDetails,exchangeAmount
+      orderNotes, name, address, area, phone,  notes,
+      advanced, condition, cartItems, paymentMethod,  
+      userId
     } = req.body;
 
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'new', user: null }];
 
-    // Create the order with the given data
+    let totalDiscount = 0;
+    let totalAmount = 0;
+    let deliveryCharge = 0;
+
+    if (area === 'Inside Dhaka') {
+      deliveryCharge = 60; 
+    } else if (area === 'Outside Dhaka') {
+      deliveryCharge = 130;
+    }
+    const updatedCartItems = await Promise.all(cartItems.map(async (item) => {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        throw new Error(`Product with ID ${item.productId} not found`);
+      }
+      const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+      const price = sizeDetail ? sizeDetail.salePrice : product.salePrice;
+      const discountAmount = sizeDetail ? sizeDetail.discountAmount : (product.discount?.amount || 0);
+
+    
+      totalAmount += price * item.quantity;
+      totalDiscount += discountAmount * item.quantity;
+
+      return {
+        ...item,
+        price,
+        discountAmount
+      };
+    }));
+    const grandTotal = totalAmount + deliveryCharge;
     const order = new Order({
-      serialId,
+      serialId: 'E-commerce',
       invoice,
       orderNotes,
       name,
       address,
       area,
       phone,
-      altPhone,
       notes,
-      totalAmount,
-      deliveryCharge,
-      discount,
+      totalAmount, 
+      deliveryCharge, 
+      discount: totalDiscount,
       grandTotal,
+      dueAmount:grandTotal,
       advanced,
       condition,
-      cartItems,
+      cartItems: updatedCartItems, 
       paymentMethod,
-      courier,
-      employee,
       userId,
-      manager,
       status: initialStatus,
-      payments ,exchangeDetails,exchangeAmount
     });
     await order.save();
     return res.status(201).json({ message: 'Order placed successfully', order });
@@ -1197,7 +1219,7 @@ export const createPOSOrder = async (req, res) => {
     // Send SMS only if serialId is 'showroom' and phone is provided
     if (serialId === 'showroom' && phone !== '') {
       try {
-        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID= &toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
         const response = await sendSMS(primaryUrl);
         console.log('SMS sent:', response);
       } catch (error) {
