@@ -1172,12 +1172,10 @@ export const createPOSOrder = async (req, res) => {
 
       if (product) {
         const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
-        if (sizeDetail && sizeDetail.openingStock >= item.quantity) {
+       
           sizeDetail.openingStock -= item.quantity; // Reduce stock
           await product.save(); // Save updated product
-        } else {
-          return res.status(400).json({ message: `Not enough stock for product: ${item.title} - ${item.size}` });
-        }
+        
       }
     }
     // Update stock for each exchange item (increase stock)

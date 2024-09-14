@@ -7,7 +7,7 @@ const orderSchema = new mongoose.Schema({
   name: { type: String,  default: 'guest' },
   address: { type: String , default: ''},
   area: { type: String  , default: ''},
-  phone: { type: String ,  default:null},
+  phone: { type: String ,  default:'guest'},
   altPhone: { type: String, default: '' },
   totalAmount: { type: Number, required: true },
   deliveryCharge: { type: Number, required: true },
