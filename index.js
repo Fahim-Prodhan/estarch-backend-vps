@@ -27,6 +27,7 @@ import uploader from './server/middleware/uploader.js';
 import { uploadSingle } from './server/middleware/uploadSingle.js';
 import extraSectionRoutes from './server/routes/extraSectionRoutes.js';
 import showroomOrderHoldRoutes from './server/routes/showRoomOrderHoldRoutes.js'; 
+import brandRoutes from './server/routes/brandRoutes.js'; 
 dotenv.config();
 
 const app = express();
@@ -99,6 +100,7 @@ app.use('/api/sizes', sizeRoutes);
 app.use('/api/charts', chartRoutes);
 app.use('/api/showroomOrderHold', showroomOrderHoldRoutes);
 app.use('/api/purchase', purchaseRoutes);
+app.use('/api/brands',brandRoutes );
 
 // Upload route
 app.post('/upload', uploadSingle, (req, res) => {

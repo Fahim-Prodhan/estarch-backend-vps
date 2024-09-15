@@ -1,5 +1,5 @@
 import express from 'express';
-import {getBestSellingProducts,updatePurchasePriceToRatio,getProductByBarcodeForPos, getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival,getAllStatusOnProduct, updateProductCategorySerials,updateProductSubcategorySerials, getAllProductsByCategoryNameStatusOn,getAllProductsBySubcategoryNameStatusOn, getAllProductsBySubcategoryNameHome} from '../controllers/productController.js';
+import {getBestSellingProducts,updatePurchasePriceToRatio,getProductByBarcodeForPos, getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival,getAllStatusOnProduct, updateProductCategorySerials,updateProductSubcategorySerials, getAllProductsByCategoryNameStatusOn,getAllProductsBySubcategoryNameStatusOn, getAllProductsBySubcategoryNameHome,calculateTotalStockAndPrices} from '../controllers/productController.js';
 
 const router = express.Router();
 
@@ -37,6 +37,7 @@ router.get('/home-new-arrival', getHomePageNewArrival);
 router.put('/update-ratio', updatePurchasePriceToRatio);
 router.get('/product/pos/:barcode', getProductByBarcodeForPos);
 router.get('/product/best-selling', getBestSellingProducts);
+router.get('/total-stock', calculateTotalStockAndPrices);
 
 
 
