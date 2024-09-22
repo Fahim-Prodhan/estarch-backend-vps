@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const orderSchema = new mongoose.Schema({
   serialId: { type: String, required: true },
   invoice: { type: String, default: '' },
+  orderNo: { type: Number, unique: true },
   orderNotes: { type: String, default: '' },
   name: { type: String,  default: 'guest' },
   address: { type: String , default: ''},

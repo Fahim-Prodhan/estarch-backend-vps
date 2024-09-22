@@ -24,9 +24,9 @@ export const getAllNotesController = async (req, res) => {
 
 export const addNoteController = async (req, res) => {
   try {
-    const { orderId } = req.params; 
-    const { adminName, noteContent } = req.body; 
-    console.log(orderId , adminName ,noteContent );
+    const { orderId } = req.params;
+    const { adminName, noteContent } = req.body;
+    console.log(orderId, adminName, noteContent);
     if (!adminName || !noteContent) {
       return res.status(400).json({ message: 'Both adminName and noteContent are required' });
     }
@@ -79,65 +79,73 @@ const generateInvoiceNumber = () => {
 export const getAllOrders = async (req, res) => {
   const page = parseInt(req.query.page) || 1; // Default to 1 if page is not provided
   const size = parseInt(req.query.size) || 10;
-  const text = req.query.search || '';
-  const status = req.query.status;
-  const date = req.query.date; // Local date in 'YYYY-MM-DD' format
-
-  console.log(date);
+  let text = req.query.search || '';
+  let searchOrderNo = req.query.searchOrderNo || '';
+  let status = req.query.status;
+  let date = req.query.date; // Local date in 'YYYY-MM-DD' format
 
   try {
+    let query = { $and: [] };
 
-    let query = {
-      $and: [
-        {
-          $or: [
-            { invoice: { $regex: text, $options: "i" } },
-            { phone: { $regex: text, $options: "i" } }
-          ]
-        },
-        {
-          $or: [
-            { serialId: "E-commerce" },
-            { serialId: "Store" },
-            { serialId: "Facebook" },
-            { serialId: "WhatsApp" }
-          ]
-        }
-      ]
-    };
-    
-    
-    if (status) {
-      query['lastStatus.name'] = status;
+
+
+    if (text) {
+      status = ''
+      date = ''
+      searchOrderNo = ''
+      query['$and'].push({
+        $or: [
+          { invoice: { $regex: text, $options: "i" } },
+          { phone: { $regex: text, $options: "i" } },
+        ]
+      });
     }
 
+
+
+    if (searchOrderNo) {
+      status = ''
+      date = ''
+      text = ''
+      query['$and'].push({
+        $or: [
+          { orderNo: searchOrderNo },
+        ]
+      });
+    }
+
+    // Filter by serialId
+    query['$and'].push({
+      serialId: { $in: ["E-commerce", "Store", "Facebook", "WhatsApp"] }
+    });
+
+    // Filter by status if provided
+    if (status) {
+      query['$and'].push({
+        'lastStatus.name': status
+      });
+    }
+
+    // Filter by date if provided
     if (date) {
-      // Convert the local date to the start and end of the UTC day
-      const localDate = new Date(date);
+      const startDateLocal = new Date(`${date}T00:00:00`);
+      const endDateLocal = new Date(`${date}T23:59:59`);
 
-      // Start of the day in local time
-      const startDateLocal = new Date(
-        localDate.getFullYear(),
-        localDate.getMonth(),
-        localDate.getDate(),
-        0, 0, 0, 0
-      );
+      query['$and'].push({
+        createdAt: {
+          $gte: startDateLocal.toISOString(),
+          $lt: endDateLocal.toISOString()
+        }
+      });
+    }
 
-      // Convert to UTC
-      const startDateUTC = new Date(startDateLocal.toUTCString());
-
-      // End of the day in local time (start of the next day)
-      const endDateLocal = new Date(startDateLocal);
-      endDateLocal.setDate(startDateLocal.getDate() + 1);
-
-      // Convert to UTC
-      const endDateUTC = new Date(endDateLocal.toUTCString());
-
-      query['createdAt'] = { $gte: startDateUTC, $lt: endDateUTC };
+    // If no conditions were pushed to $and, use an empty object (fetch all orders)
+    if (query['$and'].length === 0) {
+      query = {};
     }
 
     const orders = await Order.find(query)
-      .sort({ _id: -1 })
+      .sort({ createdAt: -1 })
       .skip((page - 1) * size) // Apply skip based on page number
       .limit(size) // Limit the number of results
       .populate({
@@ -147,16 +155,15 @@ export const getAllOrders = async (req, res) => {
 
     const totalOrders = await Order.countDocuments(query); // Total number of orders matching the filters
     const totalPages = Math.ceil(totalOrders / size); // Calculate total pages
- 
+
     res.json({
       orders,
       totalOrders,
       totalPages,
       currentPage: page,
-
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch orders' });
+    res.status(500).json({ error: 'Failed to fetch orders', details: error.message });
     console.log(error);
   }
 };
@@ -307,7 +314,7 @@ async function sendSMS(primaryUrl) {
         console.log('SMS sent successfully with primary URL:', data);
         smsSent = true; // Exit the loop when SMS is sent successfully
         return data;
-      } 
+      }
       // If no successful SMS was sent, log and retry
       retryCount++;
       console.error(`Retry ${retryCount}/${maxRetries}... SMS could not be sent with any of the URLs. Retrying in ${retryDelay / 1000} seconds...`);
@@ -328,22 +335,28 @@ async function sendSMS(primaryUrl) {
 export const createOrder = async (req, res) => {
   try {
     const {
-      orderNotes, name, address, area, phone,  notes,
-      advanced, condition, cartItems, paymentMethod,  
+      orderNotes, name, address, area, phone, notes,
+      condition, cartItems, paymentMethod,
       userId
     } = req.body;
 
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'new', user: null }];
 
+    // Find the last order and get the highest orderNo
+    const lastOrder = await Order.countDocuments({});
+    // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
+    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+
+
     let totalDiscount = 0;
     let totalAmount = 0;
     let deliveryCharge = 0;
 
     if (area === 'Inside Dhaka') {
-      deliveryCharge = 60; 
+      deliveryCharge = 60;
     } else if (area === 'Outside Dhaka') {
-      deliveryCharge = 130;
+      deliveryCharge = 120;
     }
     const updatedCartItems = await Promise.all(cartItems.map(async (item) => {
       const product = await Product.findById(item.productId);
@@ -354,7 +367,7 @@ export const createOrder = async (req, res) => {
       const price = sizeDetail ? sizeDetail.salePrice : product.salePrice;
       const discountAmount = sizeDetail ? sizeDetail.discountAmount : (product.discount?.amount || 0);
 
-    
+
       totalAmount += price * item.quantity;
       totalDiscount += discountAmount * item.quantity;
 
@@ -374,17 +387,17 @@ export const createOrder = async (req, res) => {
       area,
       phone,
       notes,
-      totalAmount, 
-      deliveryCharge, 
+      totalAmount,
+      deliveryCharge,
       discount: totalDiscount,
       grandTotal,
-      dueAmount:grandTotal,
-      advanced,
+      dueAmount: grandTotal,
       condition,
-      cartItems: updatedCartItems, 
+      cartItems: updatedCartItems,
       paymentMethod,
       userId,
       status: initialStatus,
+      orderNo: newOrderNo
     });
     await order.save();
     return res.status(201).json({ message: 'Order placed successfully', order });
@@ -395,6 +408,59 @@ export const createOrder = async (req, res) => {
 };
 
 
+export const createOnlinePosOrder = async (req, res) => {
+  try {
+    const {
+      serialId, orderNotes, name, address, area, phone, altPhone, notes,
+      totalAmount, deliveryCharge, discount, grandTotal, advanced,
+      condition, cartItems, paymentMethod, courier, employee, userId
+    } = req.body;
+
+    // Find the last order and get the highest orderNo
+    const lastOrder = await Order.countDocuments({});
+    // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
+    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+
+    const invoice = generateInvoiceNumber();
+    // console.log("invoice:", invoice);
+
+    const initialStatus = [{ name: 'new', user: null }];
+
+
+    // Create the order with the given data
+    const order = new Order({
+      serialId,
+      invoice,
+      orderNotes,
+      name,
+      address,
+      area,
+      phone,
+      altPhone,
+      notes,
+      totalAmount,
+      deliveryCharge,
+      discount,
+      grandTotal,
+      advanced,
+      condition,
+      cartItems,
+      paymentMethod,
+      courier,
+      employee,
+      userId,
+      status: initialStatus,
+      orderNo: newOrderNo
+    });
+
+    await order.save();
+
+    return res.status(201).json({ message: 'Order placed successfully', order });
+  } catch (error) {
+    console.error('Error placing order:', error);
+    return res.status(500).json({ message: 'Server error', error });
+  }
+};
 // Update an order's status
 // Update an order's courier
 // export const updateOrderStatus = async (req, res) => {
@@ -624,7 +690,7 @@ export const updateOrderStatus = async (req, res) => {
       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
       'return', 'exchange'
     ];
-    const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel','confirm','doubleOrderCancel'];
+    const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
 
     const isConfirmed = order.status.some(s => s.name === 'confirm');
     const isCancelled = order.status.some(s => s.name === 'cancel');
@@ -756,7 +822,7 @@ export const getOrderById = async (req, res) => {
     const orderWithDetails = await Order.findById(orderId)
       .populate('userId', 'name email')
       .populate('cartItems.productId', 'productName SKU sizeDetails')
-      .populate('exchangeDetails.items.productId','productName SKU sizeDetails') // Populate sizeDetails for exchange items
+      .populate('exchangeDetails.items.productId', 'productName SKU sizeDetails') // Populate sizeDetails for exchange items
       .populate('manager', 'fullName')
       .populate('employee', 'name');
     if (!orderWithDetails) {
@@ -977,7 +1043,7 @@ export const getAllOrdersWithLastStatus = async (req, res) => {
 export const manageOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const {name,address,phone,orderNotes, deliveryCharge, cartItems, advanced, discount, adminDiscount, totalAmount, grandTotal, dueAmount } = req.body;
+    const { name, address, phone, orderNotes, deliveryCharge, cartItems, advanced, discount, adminDiscount, totalAmount, grandTotal, dueAmount } = req.body;
 
     // Check if at least one field is provided
     if (
@@ -1055,7 +1121,7 @@ export const manageOrder = async (req, res) => {
 };
 export const getManagerSalesStats = async (req, res) => {
   try {
-    const {  startDate, endDate } = req.query;
+    const { startDate, endDate } = req.query;
     const { managerId } = req.params;
 
     // Validate managerId
@@ -1156,6 +1222,12 @@ export const createPOSOrder = async (req, res) => {
       exchangeDetails, exchangeAmount
     } = req.body;
 
+    // Find the last order and get the highest orderNo
+    const lastOrder = await Order.countDocuments({});
+    // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
+    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+
+
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'new', user: null }];
 
@@ -1185,7 +1257,8 @@ export const createPOSOrder = async (req, res) => {
       status: initialStatus,
       payments,
       exchangeDetails,
-      exchangeAmount
+      exchangeAmount,
+      orderNo: newOrderNo
     });
 
     // Update stock for each cart item (reduce stock)
@@ -1194,10 +1267,10 @@ export const createPOSOrder = async (req, res) => {
 
       if (product) {
         const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
-       
-          sizeDetail.openingStock -= item.quantity; // Reduce stock
-          await product.save(); // Save updated product
-        
+
+        sizeDetail.openingStock -= item.quantity; // Reduce stock
+        await product.save(); // Save updated product
+
       }
     }
     // Update stock for each exchange item (increase stock)
