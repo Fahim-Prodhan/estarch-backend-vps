@@ -1184,18 +1184,21 @@ export const calculateTotalStockAndPrices = async (req, res) => {
     let totalWholesalePrice = 0;
     let totalOspPrice = 0;
 
-    // Loop through each product and calculate totals
-    products.forEach((product) => {
-      // Sum up stock and prices for each product's sizeDetails
-      product.sizeDetails.forEach((sizeDetail) => {
-        totalStock += sizeDetail.openingStock || 0;
-        totalRegularPrice += sizeDetail.regularPrice || 0;
-        totalSalePrice += sizeDetail.salePrice || 0;
-        totalWholesalePrice += sizeDetail.wholesalePrice || 0;
-        totalOspPrice += sizeDetail.ospPrice || 0;
-        totalPurchasePrice += sizeDetail?.purchasePrice || 0;
-      });
-    });
+// Loop through each product and calculate totals
+products.forEach((product) => {
+  // Sum up stock and prices for each product's sizeDetails
+  product.sizeDetails.forEach((sizeDetail) => {
+    const stock = sizeDetail.openingStock || 0;
+    totalStock += stock;
+    
+    // Multiply each price by its corresponding openingStock
+    totalRegularPrice += (sizeDetail.regularPrice || 0) * stock;
+    totalSalePrice += (sizeDetail.salePrice || 0) * stock;
+    totalWholesalePrice += (sizeDetail.wholesalePrice || 0) * stock;
+    totalOspPrice += (sizeDetail.ospPrice || 0) * stock;
+    totalPurchasePrice += (sizeDetail.purchasePrice || 0) * stock;
+  });
+});
 
     // Send the totals as a response
     res.status(200).json({
