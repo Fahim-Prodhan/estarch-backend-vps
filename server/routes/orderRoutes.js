@@ -22,7 +22,9 @@ import {
     getManagerSalesStats,
     getShowroomOrders,
     createPOSOrder,
-    createOnlinePosOrder
+    createOnlinePosOrder,
+    getSentToCourierOrders,
+    getCourierProcessingOrders
     
 } from '../controllers/orderController.js';
 
@@ -51,5 +53,7 @@ router.put('/update-print/:orderId', updateOrderIsPrint);
 router.get('/status-count', getCountOfStatus);
 router.get('/manager/:managerId/stats', getManagerSalesStats);
 router.get('/oders/showrooms', getShowroomOrders);
+router.get('/get-sent-courier-orders', getSentToCourierOrders);
+router.get('/get-courier-processing-orders', getCourierProcessingOrders);
 
 export default router;

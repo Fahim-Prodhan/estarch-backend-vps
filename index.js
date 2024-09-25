@@ -28,6 +28,9 @@ import { uploadSingle } from './server/middleware/uploadSingle.js';
 import extraSectionRoutes from './server/routes/extraSectionRoutes.js';
 import showroomOrderHoldRoutes from './server/routes/showRoomOrderHoldRoutes.js'; 
 import brandRoutes from './server/routes/brandRoutes.js'; 
+import courierApi from './server/routes/courierApiRoutes.js'
+import accountRoutes from './server/routes/accountRoutes.js'
+import transactionRoutes from './server/routes/transactionRoutes.js'
 dotenv.config();
 
 const app = express();
@@ -101,6 +104,9 @@ app.use('/api/charts', chartRoutes);
 app.use('/api/showroomOrderHold', showroomOrderHoldRoutes);
 app.use('/api/purchase', purchaseRoutes);
 app.use('/api/brands',brandRoutes );
+app.use('/api/courier',courierApi );
+app.use('/api/account',accountRoutes)
+app.use('/api/transaction',transactionRoutes)
 
 // Upload route
 app.post('/upload', uploadSingle, (req, res) => {

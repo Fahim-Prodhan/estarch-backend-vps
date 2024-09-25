@@ -145,13 +145,14 @@ export const getAllOrders = async (req, res) => {
     }
 
     const orders = await Order.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * size) // Apply skip based on page number
-      .limit(size) // Limit the number of results
-      .populate({
-        path: 'cartItems.productId',
-      })
-      .populate('userId');
+    .sort({ updatedAt: -1, createdAt: -1 }) // Prioritize updatedAt, fallback to createdAt
+    .skip((page - 1) * size)
+    .limit(size)
+    .populate({
+      path: 'cartItems.productId',
+    })
+    .populate('userId');
+  
 
     const totalOrders = await Order.countDocuments(query); // Total number of orders matching the filters
     const totalPages = Math.ceil(totalOrders / size); // Calculate total pages
@@ -461,7 +462,7 @@ export const createOnlinePosOrder = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error });
   }
 };
-// Update an order's status
+
 // Update an order's courier
 // export const updateOrderStatus = async (req, res) => {
 //   try {
@@ -661,11 +662,99 @@ export const createOnlinePosOrder = async (req, res) => {
 // };
 
 // Update an order's status
+// export const updateOrderStatus = async (req, res) => {
+//   try {
+//     const { orderId } = req.params;
+//     const { status, userId } = req.body;
+
+
+//     if (!mongoose.Types.ObjectId.isValid(userId)) {
+//       return res.status(400).json({ error: 'Invalid userId format' });
+//     }
+
+//     // Find the order by ID
+//     const order = await Order.findById(orderId);
+//     if (!order) {
+//       return res.status(404).json({ error: 'Order not found' });
+//     }
+
+//     // Define status groups based on the rules
+//     const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel', 'doubleOrderCancel'];
+//     const beforeConfirmRestricted = [
+//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
+//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
+//       'return', 'exchange'
+//     ];
+
+//     const afterConfirmAllowed = [
+//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
+//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
+//       'return', 'exchange'
+//     ];
+
+//     const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
+//     const isConfirmed = order.status.some(s => s.name === 'confirm');
+//     const isCancelled = order.status.some(s => s.name === 'cancel');
+//     const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
+
+//     // Restrict all statuses if the order is already canceled
+//     if (isCancelled || isDoubleOrderCancel) {
+//       return res.status(400).json({
+//         error: `Order is already canceled. No further status updates are allowed.`
+//       });
+//     }
+
+//     if (!isConfirmed) {
+//       // Before confirmation logic
+//       if (beforeConfirmRestricted.includes(status)) {
+//         return res.status(400).json({
+//           error: `Cannot move to ${status} before the order is confirmed.`
+//         });
+//       }
+//     } else {
+//       // After confirmation logic
+//       if (afterConfirmRestricted.includes(status)) {
+//         return res.status(400).json({
+//           error: `Cannot move to ${status} after the order is confirmed.`
+//         });
+//       }
+//     }
+
+//     // Update the lastStatus field
+//     order.lastStatus = {
+//       name: status,
+//       timestamp: new Date()
+//     };
+
+//     // Update product size details if the status is 'confirm'
+//     if (status === 'confirm') {
+//       for (const item of order.cartItems) {
+//         const product = await Product.findById(item.productId);
+//         if (product) {
+//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
+//           if (sizeDetail) {
+//             sizeDetail.openingStock -= item.quantity;
+//             await product.save();
+//           }
+//         }
+//       }
+//     }
+
+//     // Update the status
+//     order.status.push({ name: status, user: userId, timestamp: new Date() });
+//     await order.save();
+
+//     return res.json(order);
+//   } catch (error) {
+//     console.error('Failed to update order status:', error);
+//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
+//   }
+// };
+
 export const updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status, userId } = req.body;
-
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ error: 'Invalid userId format' });
@@ -695,6 +784,8 @@ export const updateOrderStatus = async (req, res) => {
     const isConfirmed = order.status.some(s => s.name === 'confirm');
     const isCancelled = order.status.some(s => s.name === 'cancel');
     const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
+    
+    const currentStatus = order.lastStatus?.name;
 
     // Restrict all statuses if the order is already canceled
     if (isCancelled || isDoubleOrderCancel) {
@@ -703,6 +794,7 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
+    // Restriction based on confirmation status
     if (!isConfirmed) {
       // Before confirmation logic
       if (beforeConfirmRestricted.includes(status)) {
@@ -716,6 +808,24 @@ export const updateOrderStatus = async (req, res) => {
         return res.status(400).json({
           error: `Cannot move to ${status} after the order is confirmed.`
         });
+      }
+
+      // Additional condition after 'confirm' status
+      const allowedAfterConfirm = ['hold', 'processing', 'sendToCourier'];
+      if (!allowedAfterConfirm.includes(status) && currentStatus === 'confirm') {
+        return res.status(400).json({
+          error: `After 'confirm', status can only be updated to 'hold', 'processing', or 'sendToCourier' directly. Cannot skip to ${status}.`
+        });
+      }
+
+      // Restriction on transitioning from 'hold' or 'processing'
+      if (currentStatus === 'hold' || currentStatus === 'processing') {
+        const notAllowedFromHoldOrProcessing = ['courierProcessing', 'delivered'];
+        if (notAllowedFromHoldOrProcessing.includes(status)) {
+          return res.status(400).json({
+            error: `Cannot move to ${status} directly from '${currentStatus}'.`
+          });
+        }
       }
     }
 
@@ -749,8 +859,6 @@ export const updateOrderStatus = async (req, res) => {
     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
   }
 };
-
-
 
 
 // Filter Orders Dynamically Based on Query Parameters
@@ -1304,6 +1412,42 @@ export const createPOSOrder = async (req, res) => {
   } catch (error) {
     console.error('Error placing order:', error);
     return res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const getSentToCourierOrders = async (req, res) => {
+  try {
+    // Find orders where lastStatus.name is either 'sendToCourier' or 'courierProcessing'
+    const orders = await Order.find({
+      $or: [
+        { 'lastStatus.name': 'sendToCourier' },
+
+      ]
+    });
+
+    // Return the orders in the response
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error. Unable to retrieve orders.' });
+  }
+};
+
+
+export const getCourierProcessingOrders = async (req, res) => {
+  try {
+    // Find orders where lastStatus.name is either 'sendToCourier' or 'courierProcessing'
+    const orders = await Order.find({
+      $or: [
+        { 'lastStatus.name': 'courierProcessing' }
+      ]
+    });
+
+    // Return the orders in the response
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error. Unable to retrieve orders.' });
   }
 };
 
