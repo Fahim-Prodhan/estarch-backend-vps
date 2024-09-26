@@ -1,4 +1,6 @@
 import User from '../models/user.js';
+import PaymentOption from '../models/PaymentOption.js';
+import UserPaymentOption from '../models/UserPaymentOption.js';
 import generateTokenAndSetCookie from "../utils/generateToken.js";
 import crypto from 'crypto';
 import axios from 'axios';
@@ -179,7 +181,7 @@ export const getUserByMobile = async (req, res) => {
 // Controller for logout
 export const logout = (req, res) => {
   try {
-  res.cookie("jwt", "", { maxAge: 0 });
+    res.cookie("jwt", "", { maxAge: 0 });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.log("Error in logout controller", error.message);
@@ -216,48 +218,70 @@ export const getUserById = async (req, res) => {
 
 // register admin
 export const registerAdmin = async (req, res) => {
-  const { fullName, mobile, email, password, gender } = req.body;
-  console.log(mobile);
-
   try {
-    // Check if the user already exists by mobile number
-    let user = await User.findOne({ mobile });
+    const { fullName, mobile, email, gender, password, role } = req.body;
 
-    if (user) {
-      return res.status(400).json({ msg: 'User already exists with this mobile number' });
+    // Map role to account name
+    const roleToAccountNameMap = {
+      admin: 'online',
+      showroom_manager: 'showroom',
+      wholesale: 'wholesale'
+    };
+
+    // Find the corresponding payment option for the role
+    const accountName = roleToAccountNameMap[role];
+
+    if (!accountName) {
+      return res.status(400).json({ message: 'Invalid role specified' });
     }
 
-    // Hash the password before saving to the database
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    // Fetch the PaymentOption from the database based on accountName
+    const existingPaymentOption = await PaymentOption.findOne({ accountName });
 
-    // Create a new user with the admin role
-    user = new User({
+    if (!existingPaymentOption) {
+      return res.status(404).json({ message: `Payment option not found for role: ${role}` });
+    }
+
+    // Create a new UserPaymentOption with the found PaymentOption
+    const userPaymentOption = new UserPaymentOption({
+      userId: null, // Will be updated after creating the user
+      paymentOption: existingPaymentOption
+    });
+
+    const savedUserPaymentOption = await userPaymentOption.save();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create the new user and associate the UserPaymentOption
+    const newUser = new User({
       fullName,
       mobile,
       email,
       gender,
-      password: hashedPassword,
-      role: 'admin',  // Set role to admin
-      isActive: true  // Optionally set the account as active
+      password:hashedPassword,
+      role, // Set the role from req.body
+      userPaymentOption: savedUserPaymentOption._id // Link the UserPaymentOption
     });
 
-    // Save the user to the database
-    await user.save();
+    // Save the new user and update the userId in UserPaymentOption
+    const savedUser = await newUser.save();
+    
+    savedUserPaymentOption.userId = savedUser._id;
+    await savedUserPaymentOption.save();
 
-    // Respond with success message
-    res.status(201).json({ msg: 'Admin registered successfully' });
-
+    res.status(201).json({
+      message: 'User and associated Payment Option created successfully',
+      user: savedUser
+    });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ msg: 'Server error' });
+    console.log(error);
+    
+    res.status(500).json({ error: error.message });
   }
 };
 
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
   console.log(email, password);
-  
+
   try {
     // Find user by email
     const user = await User.findOne({ email: email });
@@ -297,7 +321,7 @@ export const loginAdmin = async (req, res) => {
 export const loginShowroomManager = async (req, res) => {
   const { email, password } = req.body;
   console.log(email, password);
-  
+
   try {
     // Find user by email
     const user = await User.findOne({ email: email });

@@ -21,7 +21,8 @@ import {
     getCountOfStatus,
     getManagerSalesStats,
     getShowroomOrders,
-    createPOSOrder
+    createPOSOrder,
+    updateOrderNoForAllOrders
     
 } from '../controllers/orderController.js';
 
@@ -49,5 +50,7 @@ router.put('/update-print/:orderId', updateOrderIsPrint);
 router.get('/status-count', getCountOfStatus);
 router.get('/manager/:managerId/stats', getManagerSalesStats);
 router.get('/oders/showrooms', getShowroomOrders);
+router.put('/update-order-numbers', updateOrderNoForAllOrders);
+
 
 export default router;

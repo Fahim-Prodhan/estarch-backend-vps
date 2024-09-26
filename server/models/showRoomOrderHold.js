@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const showroomOrderHoldSchema = new mongoose.Schema({
   orderItems: {
-    type: [mongoose.Schema.Types.Mixed],  // Allows pushing any type of data into the array
-    default: [],  // Initializes the array as empty by default
+    type: [mongoose.Schema.Types.Mixed],
+    default: [],  
   },
   userInfo: {
     name: {
@@ -20,9 +20,13 @@ const showroomOrderHoldSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', 
+    required: true,  
+  },
 }, {
   timestamps: true,
 });
 
 export default mongoose.model('ShowroomOrderHold', showroomOrderHoldSchema);
-

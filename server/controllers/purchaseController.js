@@ -1,9 +1,10 @@
 import Purchase from '../models/purchase.js'; // Adjust path to where your model is located
 import Product from '../models/product.js';
+import Supplier from '../models/supplier.js';
 // Create a new purchase
 export const createPurchase = async (req, res) => {
     try {
-        const { items } = req.body;
+        const { items, supplier, totalAmount } = req.body;
 
         // Loop through each item to update product stock and price
         for (const item of items) {
@@ -29,7 +30,19 @@ export const createPurchase = async (req, res) => {
             await product.save();
         }
 
-        // Create a new purchase after updating products
+        // Find the supplier and update purchaseTotal
+        const foundSupplier = await Supplier.findById(supplier);
+        if (!foundSupplier) {
+            return res.status(404).json({ error: `Supplier not found for ID ${supplier}` });
+        }
+
+        // Add totalAmount to supplier's purchaseTotal
+        foundSupplier.purchaseTotal += totalAmount;
+
+        // Save the updated supplier
+        await foundSupplier.save();
+
+        // Create a new purchase after updating products and supplier
         const newPurchase = new Purchase(req.body);
         const savedPurchase = await newPurchase.save();
 

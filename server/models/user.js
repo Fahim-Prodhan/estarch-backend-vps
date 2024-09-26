@@ -50,6 +50,10 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  userPaymentOption: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserPaymentOption'
   }
 });
 

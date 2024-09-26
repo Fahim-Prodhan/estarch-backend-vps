@@ -1,5 +1,3 @@
-// models/Supplier.js
-
 import mongoose from 'mongoose';
 
 const SupplierSchema = new mongoose.Schema({
@@ -10,6 +8,11 @@ const SupplierSchema = new mongoose.Schema({
     area: { type: String },
     address: { type: String },
     due: { type: Number, default: 0 },
+    purchaseTotal: { type: Number, default: 0 },
+    returnTotal: { type: Number, default: 0 },
+    purchasePay: { type: Number, default: 0 },
+    returnPay: { type: Number, default: 0 },
+    advance: { type: Number, default: 0 },
     date: { type: Date, default: Date.now },
     note: { type: String },
 });
