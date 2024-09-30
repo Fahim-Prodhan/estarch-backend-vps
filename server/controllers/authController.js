@@ -193,7 +193,7 @@ export const logout = (req, res) => {
 
 export const getUserById = async (req, res) => {
   try {
-    const userId = req.params.id; // Assuming the ID is passed as a URL parameter
+    const userId = req.params.id; 
     const user = await User.findById(userId);
 
     if (!user) {
@@ -278,9 +278,10 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
+
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
-  console.log(email, password);
+
 
   try {
     // Find user by email
@@ -296,8 +297,8 @@ export const loginAdmin = async (req, res) => {
     }
 
     // Check if the user has the admin role
-    if (user.role !== 'admin') {
-      return res.status(403).json({ message: 'Unauthorized: Admins only' });
+    if (user.role !== 'admin' && user.role !== 'accountant' && user.role !== 'investor') {
+      return res.status(403).json({ message: 'Unauthorized: Admins and accountant only' });
     }
 
     // Check if the password matches

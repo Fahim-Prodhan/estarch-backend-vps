@@ -22,7 +22,10 @@ import {
     getManagerSalesStats,
     getShowroomOrders,
     createPOSOrder,
-    updateOrderNoForAllOrders
+    updateOrderNoForAllOrders,
+    createOnlinePosOrder,
+    getSentToCourierOrders,
+    getCourierProcessingOrders
     
 } from '../controllers/orderController.js';
 
@@ -31,6 +34,7 @@ const router = express.Router();
 router.get('/', getAllOrders);
 // Create a new order
 router.post('/', createOrder);
+router.post('/online-pos-order', createOnlinePosOrder);
 router.post('/pos-order', createPOSOrder);
 // Update an order's status
 router.patch('/status/:orderId', updateOrderStatus);
@@ -52,5 +56,7 @@ router.get('/manager/:managerId/stats', getManagerSalesStats);
 router.get('/oders/showrooms', getShowroomOrders);
 router.put('/update-order-numbers', updateOrderNoForAllOrders);
 
+router.get('/get-sent-courier-orders', getSentToCourierOrders);
+router.get('/get-courier-processing-orders', getCourierProcessingOrders);
 
 export default router;

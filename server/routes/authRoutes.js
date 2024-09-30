@@ -1,5 +1,6 @@
 import express from 'express';
 import {getUserByMobile, loginUser, registerUser, verifyOtp, setPassword,getUserById,logout,registerAdmin,loginAdmin,loginShowroomManager } from '../controllers/authController.js';
+import { registerInvestor } from '../controllers/accountController.js';
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.post('/login', loginUser);
 router.get('/user/:id', getUserById);
 router.post("/logout", logout);
 router.post('/register-admin',registerAdmin)
+router.post('/register-investor',registerInvestor)
 router.post('/login-admin',loginAdmin)
 router.post('/login-showroom-manager',loginShowroomManager)
 

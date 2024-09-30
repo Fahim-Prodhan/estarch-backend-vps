@@ -8,7 +8,7 @@ import {
   getShowroomAccounts,
   getOnlineAccounts
 } from '../controllers/paymentOptionController.js';
-
+import { getUserPaymentOptionByUserId } from '../controllers/userPaymentController.js'; 
 const router = express.Router();
 
 // Create a new payment option
@@ -27,5 +27,6 @@ router.put('/payment-options/:id', updatePaymentOption);
 router.delete('/payment-options/:id', deletePaymentOption);
 router.get('/showroom-accounts', getShowroomAccounts);
 router.get('/online-accounts', getOnlineAccounts);
+router.get('/user-payment-options/:userId', getUserPaymentOptionByUserId);
 
 export default router;

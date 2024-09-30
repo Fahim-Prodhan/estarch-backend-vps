@@ -17,27 +17,47 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// Get all products(admin)
+// Get all products (admin)
 export const getAllProducts = async (req, res) => {
   const page = parseInt(req.query.page) || 0;
   const size = parseInt(req.query.size) || 10;
   const text = req.query.search || '';
+  const category = req.query.category || '';
+  const subcategory = req.query.subcategory || '';
+  const brand = req.query.brand || '';
 
-  console.log(text);
-  
+
 
   try {
-
+    // Base query to match SKU with search text
     let query = { SKU: { $regex: text, $options: "i" } };
 
+    // Extend query to match category, subcategory, and brand
+    if (category) {
+      query.selectedCategoryName = category;
+    }
+    if (subcategory) {
+      query.selectedSubCategory = subcategory;
+    }
+    if (brand) {
+      query.selectedBrand = brand;
+    }
+
+    // Count total products matching the query
     const totalProducts = await Product.countDocuments(query);
 
-    const products = await Product.find(query).sort({ _id: -1 })
-      .skip((page-1) * size)
+    // Fetch the products with pagination and populate 'charts'
+    const products = await Product.find(query)
+      .sort({ _id: -1 })
+      .skip((page - 1) * size)
       .limit(size)
       .populate('charts');
-      const totalPages = Math.ceil(totalProducts / size); 
-    res.status(200).json({ products, totalProducts,currentPage: parseInt(page), totalPages });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalProducts / size);
+
+    // Send response with products, pagination info, and total count
+    res.status(200).json({ products, totalProducts, currentPage: parseInt(page), totalPages });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -1148,6 +1168,59 @@ export const getBestSellingProducts = async (req, res) => {
 };
 
 
+
+
+// Controller function to calculate the total stock and other prices for all products
+export const calculateTotalStockAndPrices = async (req, res) => {
+  try {
+    // Fetch all products from the database
+    const products = await Product.find();
+
+    // Initialize variables to hold the total stock and prices
+    let totalStock = 0;
+    let totalPurchasePrice = 0;
+    let totalRegularPrice = 0;
+    let totalSalePrice = 0;
+    let totalWholesalePrice = 0;
+    let totalOspPrice = 0;
+
+// Loop through each product and calculate totals
+products.forEach((product) => {
+  // Sum up stock and prices for each product's sizeDetails
+  product.sizeDetails.forEach((sizeDetail) => {
+    const stock = sizeDetail.openingStock || 0;
+    totalStock += stock;
+    
+    // Multiply each price by its corresponding openingStock
+    totalRegularPrice += (sizeDetail.regularPrice || 0) * stock;
+    totalSalePrice += (sizeDetail.salePrice || 0) * stock;
+    totalWholesalePrice += (sizeDetail.wholesalePrice || 0) * stock;
+    totalOspPrice += (sizeDetail.ospPrice || 0) * stock;
+    totalPurchasePrice += (sizeDetail.purchasePrice || 0) * stock;
+  });
+});
+
+    // Send the totals as a response
+    res.status(200).json({
+      totalStock,
+      totalRegularPrice,
+      totalSalePrice,
+      totalWholesalePrice,
+      totalOspPrice,
+      totalPurchasePrice
+    });
+  } catch (error) {
+    // Handle any errors
+    console.error("Error calculating total stock and prices:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to calculate total stock and prices",
+      error: error.message,
+    });
+  }
+};
+
+
 export const getProductForSearch = async (req, res) => {
   try {
     // Find products where serialNo, catSerialNo, or SubcatSerialNo are greater than 0
@@ -1172,6 +1245,3 @@ export const getProductForSearch = async (req, res) => {
     res.status(500).json({ message: 'Server error. Please try again later.' });
   }
 };
-
-
-
