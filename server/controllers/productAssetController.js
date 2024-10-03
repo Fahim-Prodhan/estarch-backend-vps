@@ -21,14 +21,28 @@ export const createProductAsset = async (req, res) => {
 
 // Controller to get all product assets
 export const getAllProductAssets = async (req, res) => {
+    const { name } = req.query; // Assuming the search term is passed as a query parameter
+
     try {
-        const assets = await ProductAsset.find(); // Fetch all assets
-        res.status(200).json(assets); // Send the assets as a JSON response
+        let assets;
+
+        // Check if name is provided and apply the regex search accordingly
+        if (name) {
+            assets = await ProductAsset.find({
+                assetName: { $regex: name, $options: 'i' } // Case-insensitive search
+            });
+        } else {
+            // If no name is provided, fetch all assets
+            assets = await ProductAsset.find();
+        }
+
+        res.status(200).json(assets);
     } catch (error) {
         console.error('Error fetching product assets:', error);
-        res.status(500).json({ message: 'Error fetching product assets' });
+        res.status(500).json({ message: 'Server error' });
     }
 };
+
 
 // Controller to update a product asset
 export const updateProductAsset = async (req, res) => {
