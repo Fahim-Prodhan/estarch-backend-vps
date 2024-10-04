@@ -4,14 +4,15 @@ import {
     getAllPurchases,
     getPurchaseById,
     updatePurchase,
-    deletePurchase
+    deletePurchase,
+    createAssetPurchase
 } from '../controllers/purchaseController.js'; // Adjust the path according to your file structure
 
 const router = express.Router();
 
 // Create a new purchase
 router.post('/', createPurchase);
-
+router.post('/create-asset-purchase', createAssetPurchase);
 // Get all purchases
 router.get('/', getAllPurchases);
 

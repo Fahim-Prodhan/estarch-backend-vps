@@ -13,15 +13,18 @@ export const createSupplier = async (req, res) => {
     }
 };
 
-// Get all suppliers
+// Get all suppliers with optional filtering by type
 export const getSuppliers = async (req, res) => {
     try {
-        const suppliers = await Supplier.find();
+        const { type } = req.query; // Get the type from query parameters     
+        const query = type ? { supplierType: type } : {}; // Create a query object
+        const suppliers = await Supplier.find(query); // Use the query object
         res.status(200).json(suppliers);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 // Get supplier by ID
 export const getSupplierById = async (req, res) => {
