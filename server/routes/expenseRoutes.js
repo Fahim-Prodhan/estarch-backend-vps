@@ -1,18 +1,13 @@
 import express from 'express';
-import { createExpense, getExpenses, updateExpense, deleteExpense } from '../controllers/expenseController.js';
+import {handleApprove, createExpense, getAllExpenses, getExpenseById, updateExpense, deleteExpense } from '../controllers/expenseController.js';
 
 const router = express.Router();
 
-// Create a new expense
-router.post('/', createExpense);
-
-// Get all expenses
-router.get('/', getExpenses);
-
-// Update an expense
-router.put('/:id', updateExpense);
-
-// Delete an expense
-router.delete('/:id', deleteExpense);
+router.post('/expenses', createExpense); 
+router.get('/expenses', getAllExpenses); 
+router.get('/expenses/:id', getExpenseById); 
+router.put('/expenses/:id', updateExpense); 
+router.delete('/expenses/:id', deleteExpense); 
+router.put('/expenses/approve/:id', handleApprove);
 
 export default router;

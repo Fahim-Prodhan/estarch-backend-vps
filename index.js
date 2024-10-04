@@ -32,6 +32,7 @@ import brandRoutes from './server/routes/brandRoutes.js';
 import courierApi from './server/routes/courierApiRoutes.js'
 import accountRoutes from './server/routes/accountRoutes.js'
 import transactionRoutes from './server/routes/transactionRoutes.js'
+import expenseHeadRoutes from './server/routes/ExpenseHeadRoutes.js';
 dotenv.config();
 
 const app = express();
@@ -108,6 +109,8 @@ app.use('/api/brands',brandRoutes );
 app.use('/api/courier',courierApi );
 app.use('/api/account',accountRoutes)
 app.use('/api/transaction',transactionRoutes)
+app.use('/api/expense-heads', expenseHeadRoutes);
+
 
 // Upload route
 app.post('/upload', uploadSingle, (req, res) => {
