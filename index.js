@@ -34,6 +34,7 @@ import accountRoutes from './server/routes/accountRoutes.js'
 import transactionRoutes from './server/routes/transactionRoutes.js'
 import expenseHeadRoutes from './server/routes/ExpenseHeadRoutes.js';
 import productAssetRoutes from './server/routes/productAssetRoutes.js'
+import assetRoutes from './server/routes/assetsRoutes.js'
 import manufactureProduct from './server/routes/manufactureProductRoutes.js'
 dotenv.config();
 
@@ -114,6 +115,7 @@ app.use('/api/transaction',transactionRoutes)
 app.use('/api/expense-heads', expenseHeadRoutes);
 
 app.use('/api/product-asset',productAssetRoutes)
+app.use('/api/others-asset',assetRoutes)
 app.use('/api/manufacture-product',manufactureProduct)
 
 // Upload route
