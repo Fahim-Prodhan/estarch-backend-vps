@@ -220,12 +220,14 @@ export const getUserById = async (req, res) => {
 export const registerAdmin = async (req, res) => {
   try {
     const { fullName, mobile, email, gender, password, role } = req.body;
-
+    console.log(role);
+    
     // Map role to account name
     const roleToAccountNameMap = {
       admin: 'online',
       showroom_manager: 'showroom',
-      wholesale: 'wholesale'
+      wholesale: 'wholesale',
+      main:'main'
     };
 
     // Find the corresponding payment option for the role
@@ -297,7 +299,7 @@ export const loginAdmin = async (req, res) => {
     }
 
     // Check if the user has the admin role
-    if (user.role !== 'admin' && user.role !== 'accountant' && user.role !== 'investor') {
+    if (user.role !== 'admin' && user.role !== 'accountant' && user.role !== 'investor' && user.role !== 'main') {
       return res.status(403).json({ message: 'Unauthorized: Admins and accountant only' });
     }
 

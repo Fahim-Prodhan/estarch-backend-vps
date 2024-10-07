@@ -1,5 +1,6 @@
 import PaymentOption from '../models/PaymentOption.js';
 import UserPaymentOption from '../models/UserPaymentOption.js';
+
 // Create a new payment option
 export const createPaymentOption = async (req, res) => {
   try {

@@ -145,14 +145,14 @@ export const getAllOrders = async (req, res) => {
     }
 
     const orders = await Order.find(query)
-    .sort({ updatedAt: -1, createdAt: -1 }) // Prioritize updatedAt, fallback to createdAt
-    .skip((page - 1) * size)
-    .limit(size)
-    .populate({
-      path: 'cartItems.productId',
-    })
-    .populate('userId');
-  
+      .sort({ updatedAt: -1, createdAt: -1 }) // Prioritize updatedAt, fallback to createdAt
+      .skip((page - 1) * size)
+      .limit(size)
+      .populate({
+        path: 'cartItems.productId',
+      })
+      .populate('userId');
+
 
     const totalOrders = await Order.countDocuments(query); // Total number of orders matching the filters
     const totalPages = Math.ceil(totalOrders / size); // Calculate total pages
@@ -787,7 +787,7 @@ export const updateOrderStatus = async (req, res) => {
     const isConfirmed = order.status.some(s => s.name === 'confirm');
     const isCancelled = order.status.some(s => s.name === 'cancel');
     const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
-    
+
     const currentStatus = order.lastStatus?.name;
 
     // Restrict all statuses if the order is already canceled
@@ -1281,7 +1281,7 @@ export const manageOrder = async (req, res) => {
 
 export const getManagerSalesStats = async (req, res) => {
   try {
-    const { singleDate, startDate, endDate } = req.query; 
+    const { singleDate, startDate, endDate } = req.query;
     const { managerId } = req.params;
 
     // Validate managerId
@@ -1415,31 +1415,28 @@ export const createPOSOrder = async (req, res) => {
 
       return res.status(404).json({ message: 'User Payment Options or accounts not found for this manager' });
     }
-
-    // Validate payments before processing
+   // Validate payments before processing
     if (!payments || !Array.isArray(payments) || payments.length === 0) {
-      return res.status(400).json({ message: 'No payment information provided' });
+      // Validate and update payment details
+      for (const payment of payments) {
+        const account = userPaymentOptions.paymentOption.accounts.find(acc => acc.accountType === payment.accountType);
+        if (!account) {
+          return res.status(400).json({ message: `Account type ${payment.accountType} not found` });
+        }
+        const paymentOption = account.payments.find(p => p.paymentOption === payment.paymentOption);
+        if (!paymentOption) {
+          return res.status(400).json({ message: `Payment option ${payment.paymentOption} not found for account type ${payment.accountType}` });
+        }
+
+        // Assign accountNumber and update the amount
+        payment.accountNumber = paymentOption.accountNumber;
+        paymentOption.amount += Number(payment.amount); // Ensure this is a number
+      }
+      // Save updated user payment options after modifying payment amounts
+      await userPaymentOptions.save();
     }
 
-    // Validate and update payment details
-    for (const payment of payments) {
-      const account = userPaymentOptions.paymentOption.accounts.find(acc => acc.accountType === payment.accountType);
-      if (!account) {
-        return res.status(400).json({ message: `Account type ${payment.accountType} not found` });
-      }
 
-      const paymentOption = account.payments.find(p => p.paymentOption === payment.paymentOption);
-      if (!paymentOption) {
-        return res.status(400).json({ message: `Payment option ${payment.paymentOption} not found for account type ${payment.accountType}` });
-      }
-
-      // Assign accountNumber and update the amount
-      payment.accountNumber = paymentOption.accountNumber;
-      paymentOption.amount += Number(payment.amount); // Ensure this is a number
-    }
-
-    // Save updated user payment options after modifying payment amounts
-    await userPaymentOptions.save();
 
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'new', user: null }];

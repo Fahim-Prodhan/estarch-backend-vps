@@ -49,40 +49,78 @@ export const approveTransaction = async (req, res) => {
         if (transaction.isApprove) {
             return res.status(400).json({ message: "Transaction is already approved" });
         }
-
-
-
-
         if (transaction.type == 'invest') {
             // Update sender's and receiver's balances
-            const sender = await User.findOne({ userId: transaction.senderId });
-            const receiver = await MainAccount.findOne({ userId: transaction.receiverId });
-
+            const sender = await Investor.findOne({ userId: transaction.senderId });
+            const receiver = await User.findOne({ _id: transaction.receiverId });
             if (sender && receiver) {
                 // Deduct from sender's balance
                 sender.investedAmount += transaction.amount; // Assuming spendAmount tracks outgoings
-                // Add to receiver's balance
-                receiver.earnAmount += transaction.amount; // Assuming earnAmount tracks incomings
+                const accountPayment = await UserPaymentOption.findOne({ userId: transaction.receiverId });
+
+                for (const payment of transaction.payments) {
+                    const { accountType, paymentOption, amount } = payment;
+
+                    // Find the matching account based on accountType
+                    const account = accountPayment.paymentOption.accounts.find(acc => acc.accountType === accountType);
+
+                    if (account) {
+                        // Find the payment option inside the account that matches the paymentOption
+                        const paymentDetails = account.payments.find(p => p.paymentOption === paymentOption);
+
+                        if (paymentDetails) {
+                            // Subtract the amount from the user's payment balance
+                            paymentDetails.amount += parseInt(amount, 10);
+                        } else {
+                            return res.status(404).json({ message: `Payment option ${paymentOption} not found` });
+                        }
+                    } else {
+                        return res.status(404).json({ message: `Account type ${accountType} not found` });
+                    }
+                }
 
                 await sender.save();
-                await receiver.save();
+                await accountPayment.save();
 
                 res.status(200).json({ message: "Transaction approved and accounts updated", transaction });
             } else {
                 return res.status(404).json({ message: "Sender or receiver not found" });
             }
-
         } else if (transaction.type == 'withdraw') {
             // Update sender's and receiver's balances
-            const sender = await MainAccount.findOne({ userId: transaction.senderId });
+            const sender = await User.findOne({ _id: transaction.senderId });
             const receiver = await Investor.findOne({ userId: transaction.receiverId });
 
             if (sender && receiver) {
-                // Deduct from sender's balance
-                sender.spendAmount += transaction.amount;
+                const accountPayment = await UserPaymentOption.findOne({ userId: transaction.senderId });
+                for (const payment of transaction.payments) {
+                    const { accountType, paymentOption, amount } = payment;
+
+                    // Find the matching account based on accountType
+                    const account = accountPayment.paymentOption.accounts.find(acc => acc.accountType === accountType);
+
+                    if (account) {
+                        // Find the payment option inside the account that matches the paymentOption
+                        const paymentDetails = account.payments.find(p => p.paymentOption === paymentOption);
+
+                        if (paymentDetails) {
+                            // Subtract the amount from the user's payment balance
+                            paymentDetails.amount -= amount;
+
+                            if (paymentDetails.amount < 0) {
+                                return res.status(400).json({ message: "Insufficient funds in account" });
+                            }
+
+                            console.log(`Updated balance for ${paymentOption}: ${paymentDetails.amount}`);
+                        } else {
+                            return res.status(404).json({ message: `Payment option ${paymentOption} not found` });
+                        }
+                    } else {
+                        return res.status(404).json({ message: `Account type ${accountType} not found` });
+                    }
+                }
                 // Add to receiver's balance
                 receiver.withdrawAmount += transaction.amount;
-
                 await sender.save();
                 await receiver.save();
 
@@ -94,10 +132,11 @@ export const approveTransaction = async (req, res) => {
         else if (transaction.type === 'showroom-Withdraw') {
             // Update sender's and receiver's balances
             const sender = await User.findOne({ _id: transaction.senderId });
-            const receiver = await MainAccount.findOne({ userId: transaction.receiverId });
+            const receiver = await User.findOne({ _id: transaction.receiverId });
 
             if (sender && receiver) {
                 const userPayment = await UserPaymentOption.findOne({ userId: transaction.senderId });
+                const accountPayment = await UserPaymentOption.findOne({ userId: transaction.receiverId });
                 // Iterate over transaction payments
                 for (const payment of transaction.payments) {
                     const { accountType, paymentOption, amount } = payment;
@@ -125,13 +164,30 @@ export const approveTransaction = async (req, res) => {
                         return res.status(404).json({ message: `Account type ${accountType} not found` });
                     }
                 }
+                for (const payment of transaction.payments) {
+                    const { accountType, paymentOption, amount } = payment;
 
-                // Add the transaction amount to the receiver's earnings
-                receiver.earnAmount += transaction.amount;
+                    // Find the matching account based on accountType
+                    const account = accountPayment.paymentOption.accounts.find(acc => acc.accountType === accountType);
+
+                    if (account) {
+                        // Find the payment option inside the account that matches the paymentOption
+                        const paymentDetails = account.payments.find(p => p.paymentOption === paymentOption);
+
+                        if (paymentDetails) {
+                            // Subtract the amount from the user's payment balance
+                            paymentDetails.amount += amount;
+                        } else {
+                            return res.status(404).json({ message: `Payment option ${paymentOption} not found` });
+                        }
+                    } else {
+                        return res.status(404).json({ message: `Account type ${accountType} not found` });
+                    }
+                }
 
                 // Save the updated balances for both the sender and receiver
                 await userPayment.save();
-                await receiver.save();
+                await accountPayment.save();
 
                 res.status(200).json({ message: "Transaction approved and accounts updated", transaction });
             } else {

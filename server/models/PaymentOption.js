@@ -27,7 +27,7 @@ const AccountSchema = new mongoose.Schema({
 const PaymentOptionSchema = new mongoose.Schema({
   accountName: {
     type: String,
-    enum: ['showroom', 'online', 'wholesale'],
+    enum: ['showroom', 'online', 'wholesale','main'],
   },
   accounts: [AccountSchema],
 }, { timestamps: true });
