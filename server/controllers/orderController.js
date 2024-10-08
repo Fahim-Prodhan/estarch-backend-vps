@@ -1390,12 +1390,37 @@ export const getManagerSalesStats = async (req, res) => {
 
 export const getShowroomOrders = async (req, res) => {
   try {
-    const showroomOrders = await Order.find({ serialId: 'showroom' });
+    const { phone, invoice, date } = req.query;
+
+    // Build the filter object
+    const filters = { serialId: 'showroom' };
+
+    // Add filters based on the provided query parameters
+    if (phone) {
+      filters.phone = phone;
+    }
+    if (invoice) {
+      filters.invoice = invoice;
+    }
+    // Only apply the date filter if neither phone nor invoice is provided
+    if (!phone && !invoice && date) {
+      const targetDate = new Date(date);
+      filters.createdAt = {
+        $gte: new Date(targetDate.setHours(0, 0, 0, 0)), // Start of the day
+        $lte: new Date(targetDate.setHours(23, 59, 59, 999)) // End of the day
+      };
+    }
+
+    // Fetch showroom orders with the applied filters
+    const showroomOrders = await Order.find(filters);
     res.status(200).json(showroomOrders);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching showroom orders', error });
   }
 };
+
+
+
 
 
 export const createPOSOrder = async (req, res) => {

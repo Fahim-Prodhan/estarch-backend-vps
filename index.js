@@ -35,6 +35,7 @@ import transactionRoutes from './server/routes/transactionRoutes.js'
 import expenseHeadRoutes from './server/routes/ExpenseHeadRoutes.js';
 import productAssetRoutes from './server/routes/productAssetRoutes.js'
 import manufactureProduct from './server/routes/manufactureProductRoutes.js'
+import cashRoutes from './server/routes/cashRoutes.js';
 dotenv.config();
 
 const app = express();
@@ -112,7 +113,7 @@ app.use('/api/courier',courierApi );
 app.use('/api/account',accountRoutes)
 app.use('/api/transaction',transactionRoutes)
 app.use('/api/expense-heads', expenseHeadRoutes);
-
+app.use('/api/cash', cashRoutes);
 app.use('/api/product-asset',productAssetRoutes)
 app.use('/api/manufacture-product',manufactureProduct)
 
