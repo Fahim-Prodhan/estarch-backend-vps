@@ -444,10 +444,10 @@ export const getAllProductsBySubcategoryNameStatusOn = async (req, res) => {
 
 // get all the products of new arrival(fahim)
 export const getAllNewArrivalProduct = async (req, res) => {
-  const { ranges, subcategories, sizes, sortBy } = req.query;
-
+  const { ranges, subcategories, sizes, sortBy, page = 1, limit = 8 } = req.query;
+  let limitForProduct = page * limit;
   try {
-    // Parse the ranges parameter into an array of objects with min and max properties
+    // Parse the ranges, subcategories, and sizes parameters (same as before)
     let parsedRanges = [];
     if (ranges) {
       parsedRanges = JSON.parse(ranges).map((range) => ({
@@ -456,30 +456,26 @@ export const getAllNewArrivalProduct = async (req, res) => {
       }));
     }
 
-    // Parse the subcategories parameter into an array
     let parsedSubcategories = [];
     if (subcategories) {
       parsedSubcategories = JSON.parse(subcategories);
     }
 
-    // Parse the sizes parameter into an array
     let parsedSizes = [];
     if (sizes) {
       parsedSizes = JSON.parse(sizes);
     }
 
-    // Build the query condition
+    // Build the query condition (same as before)
     let query = { serialNo: { $gt: 0 } };
     let andConditions = [];
 
-    // If subcategories are provided, add the subcategory filtering condition
     if (parsedSubcategories.length > 0) {
       andConditions.push({
         selectedSubCategory: { $in: parsedSubcategories },
       });
     }
 
-    // If ranges are provided, add the price filtering condition
     if (parsedRanges.length > 0) {
       andConditions.push({
         $or: parsedRanges.map((range) => ({
@@ -488,14 +484,12 @@ export const getAllNewArrivalProduct = async (req, res) => {
       });
     }
 
-    // If sizes are provided, add the size filtering condition
     if (parsedSizes.length > 0) {
       andConditions.push({
         selectedSizes: { $in: parsedSizes },
       });
     }
 
-    // If there are any conditions, add them to the query
     if (andConditions.length > 0) {
       query = {
         ...query,
@@ -503,7 +497,7 @@ export const getAllNewArrivalProduct = async (req, res) => {
       };
     }
 
-    // Determine the sort order
+    // Determine the sort order (same as before)
     let sortOptions = {};
     switch (sortBy) {
       case 'Price High to Low':
@@ -516,18 +510,23 @@ export const getAllNewArrivalProduct = async (req, res) => {
         sortOptions = { createdAt: -1 };
         break;
       case 'Sort by Serial':
-        sortOptions = { serialNo: 1 }; // Sorting by serial number in ascending order
+        sortOptions = { serialNo: 1 };
         break;
       default:
-        sortOptions = { serialNo: 1 }; // Default sorting
+        sortOptions = { serialNo: 1 };
         break;
     }
 
-    // Fetch products based on the constructed query and sort order
-    const products = await Product.find(query).sort(sortOptions).populate('charts');
-    res.json(products);
+    // Fetch products with pagination
+    const products = await Product.find(query)
+      .sort(sortOptions)
+      .limit(Number(limitForProduct))
+      .populate('charts');
+    res.json({
+      products
+    });
   } catch (err) {
-    console.error("Error fetching products:", err);
+    console.error('Error fetching products:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
