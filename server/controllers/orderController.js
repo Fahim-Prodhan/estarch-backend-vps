@@ -267,6 +267,11 @@ export const getCountOfStatus = async (req, res) => {
       'lastStatus.name': 'doubleOrderCancel',
       serialId: { $in: serialIds }
     });
+    
+    const courierReturn = await Order.countDocuments({
+      'lastStatus.name': 'courierReturn',
+      serialId: { $in: serialIds }
+    });
 
     // Send the results as a response
     res.status(200).send({
@@ -284,7 +289,8 @@ export const getCountOfStatus = async (req, res) => {
       return_delivery,
       exchange,
       cancel,
-      doubleOrderCancel
+      doubleOrderCancel,
+      courierReturn
     });
   } catch (error) {
     console.log(error);
@@ -774,13 +780,13 @@ export const updateOrderStatus = async (req, res) => {
     const beforeConfirmRestricted = [
       'hold', 'processing', 'sendToCourier', 'courierProcessing',
       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-      'return', 'exchange'
+      'return', 'exchange','courierReturn'
     ];
 
     const afterConfirmAllowed = [
       'hold', 'processing', 'sendToCourier', 'courierProcessing',
       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-      'return', 'exchange'
+      'return', 'exchange','courierReturn'
     ];
     const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
 
@@ -823,7 +829,7 @@ export const updateOrderStatus = async (req, res) => {
 
       // Restriction on transitioning from 'hold' or 'processing'
       if (currentStatus === 'hold' || currentStatus === 'processing') {
-        const notAllowedFromHoldOrProcessing = ['courierProcessing', 'delivered'];
+        const notAllowedFromHoldOrProcessing = ['courierProcessing', 'delivered','courierReturn'];
         if (notAllowedFromHoldOrProcessing.includes(status)) {
           return res.status(400).json({
             error: `Cannot move to ${status} directly from '${currentStatus}'.`

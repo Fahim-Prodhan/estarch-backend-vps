@@ -38,7 +38,7 @@ const orderSchema = new mongoose.Schema({
         enum: ['new', 'pending', 'pendingPayment', 'confirm', 'hold',
           'processing', 'sendToCourier', 'courierProcessing',
           'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-          'return', 'exchange', 'cancel', 'doubleOrderCancel']
+          'return', 'exchange', 'cancel', 'doubleOrderCancel','courierReturn']
         ,
         default: 'new'
       },
