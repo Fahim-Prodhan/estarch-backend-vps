@@ -25,7 +25,8 @@ import {
     updateOrderNoForAllOrders,
     createOnlinePosOrder,
     getSentToCourierOrders,
-    getCourierProcessingOrders
+    getCourierProcessingOrders,
+    profitCountForShowroom
     
 } from '../controllers/orderController.js';
 
@@ -58,5 +59,6 @@ router.put('/update-order-numbers', updateOrderNoForAllOrders);
 
 router.get('/get-sent-courier-orders', getSentToCourierOrders);
 router.get('/get-courier-processing-orders', getCourierProcessingOrders);
+router.get('/showroom-profit', profitCountForShowroom);
 
 export default router;

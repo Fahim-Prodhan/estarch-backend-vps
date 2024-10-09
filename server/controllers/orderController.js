@@ -1630,3 +1630,36 @@ export const getCourierProcessingOrders = async (req, res) => {
   }
 };
 
+
+// Profit calculation for showroom orders for today
+export const profitCountForShowroom = async (req, res) => {
+  try {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+    // Construct start and end dates from today's date
+    const startDateLocal = new Date(`${dateStr}T00:00:00`);
+    const endDateLocal = new Date(`${dateStr}T23:59:59`);
+
+    // Fetch all orders with serialId = "showroom" created today
+    const orders = await Order.find({
+      serialId: "showroom",
+      createdAt: {
+        $gte: startDateLocal,
+        $lte: endDateLocal
+      }
+    });
+
+    // Calculate total sales
+    const totalSell = orders.reduce((acc, order) => {
+      return acc + order.totalAmount;
+    }, 0);
+
+    // Send response with the calculated total sales
+    return res.status(200).json({ totalSell });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return res.status(500).json({ message: "Error fetching orders", error: error.message });
+  }
+};
