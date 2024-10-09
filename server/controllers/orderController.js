@@ -1300,12 +1300,10 @@ export const getManagerSalesStats = async (req, res) => {
 
     if (singleDate && !isNaN(new Date(singleDate).getTime())) {
       // If a single date is provided, set the filter for the whole day
-      const selectedDate = new Date(singleDate);
-      const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
-      const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
-
-      dateFilter.$gte = startOfDay;
-      dateFilter.$lte = endOfDay;
+      const startDateLocal = new Date(`${singleDate}T00:00:00`);
+      const endDateLocal = new Date(`${singleDate}T23:59:59`);
+      dateFilter.$gte = startDateLocal;
+      dateFilter.$lte = endDateLocal;
     } else {
       // Create date range filter if startDate and endDate are provided or fallback to today
       const today = new Date();
@@ -1410,10 +1408,11 @@ export const getShowroomOrders = async (req, res) => {
     }
     // Only apply the date filter if neither phone nor invoice is provided
     if (!phone && !invoice && date) {
-      const targetDate = new Date(date);
+      const startDateLocal = new Date(`${date}T00:00:00`);
+      const endDateLocal = new Date(`${date}T23:59:59`);
       filters.createdAt = {
-        $gte: new Date(targetDate.setHours(0, 0, 0, 0)), // Start of the day
-        $lte: new Date(targetDate.setHours(23, 59, 59, 999)) // End of the day
+        $gte: startDateLocal.toISOString(),
+        $lt: endDateLocal.toISOString()
       };
     }
 
@@ -1446,7 +1445,7 @@ export const createPOSOrder = async (req, res) => {
 
       return res.status(404).json({ message: 'User Payment Options or accounts not found for this manager' });
     }
-   // Validate payments before processing
+    // Validate payments before processing
     if (!payments || !Array.isArray(payments) || payments.length === 0) {
       // Validate and update payment details
       for (const payment of payments) {
