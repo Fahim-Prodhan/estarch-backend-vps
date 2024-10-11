@@ -1440,13 +1440,14 @@ export const createPOSOrder = async (req, res) => {
 
     // Fetch the UserPaymentOption based on the manager/userId
     const userPaymentOptions = await UserPaymentOption.findOne({ userId: manager });
+    
     if (!userPaymentOptions || !userPaymentOptions.paymentOption) {
       console.log('User Payment Options or accounts not found for this manager');
 
       return res.status(404).json({ message: 'User Payment Options or accounts not found for this manager' });
     }
     // Validate payments before processing
-    if (!payments || !Array.isArray(payments) || payments.length === 0) {
+    if (!payments || !Array.isArray(payments) || payments.length !== 0) {
       // Validate and update payment details
       for (const payment of payments) {
         const account = userPaymentOptions.paymentOption.accounts.find(acc => acc.accountType === payment.accountType);
@@ -1463,107 +1464,109 @@ export const createPOSOrder = async (req, res) => {
         paymentOption.amount += Number(payment.amount); // Ensure this is a number
       }
       // Save updated user payment options after modifying payment amounts
+      console.log(userPaymentOptions);
+      
       await userPaymentOptions.save();
     }
 
 
 
-    const invoice = generateInvoiceNumber();
-    const initialStatus = [{ name: 'new', user: null }];
-    // Find the last order and get the highest orderNo
-    const lastOrder = await Order.countDocuments({});
-    // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
-    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
-    // Create the order with the given data
-    const order = new Order({
-      serialId,
-      invoice,
-      orderNotes,
-      orderNo: newOrderNo,
-      name,
-      address,
-      area,
-      phone,
-      altPhone,
-      notes,
-      totalAmount,
-      deliveryCharge,
-      discount,
-      grandTotal,
-      advanced,
-      condition,
-      cartItems,
-      paymentMethod,
-      courier,
-      employee,
-      userId,
-      manager,
-      status: initialStatus,
-      payments, // Include the updated payments
-      exchangeDetails,
-      exchangeAmount,
-      adminDiscount,
-      orderNo: newOrderNo
-    });
+    // const invoice = generateInvoiceNumber();
+    // const initialStatus = [{ name: 'new', user: null }];
+    // // Find the last order and get the highest orderNo
+    // const lastOrder = await Order.countDocuments({});
+    // // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
+    // const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+    // // Create the order with the given data
+    // const order = new Order({
+    //   serialId,
+    //   invoice,
+    //   orderNotes,
+    //   orderNo: newOrderNo,
+    //   name,
+    //   address,
+    //   area,
+    //   phone,
+    //   altPhone,
+    //   notes,
+    //   totalAmount,
+    //   deliveryCharge,
+    //   discount,
+    //   grandTotal,
+    //   advanced,
+    //   condition,
+    //   cartItems,
+    //   paymentMethod,
+    //   courier,
+    //   employee,
+    //   userId,
+    //   manager,
+    //   status: initialStatus,
+    //   payments, // Include the updated payments
+    //   exchangeDetails,
+    //   exchangeAmount,
+    //   adminDiscount,
+    //   orderNo: newOrderNo
+    // });
 
     // Update stock for each cart item (reduce stock)
-    for (const item of cartItems) {
-      console.log(item.productId);
-      const product = await Product.findById(item.productId);
-      console.log(product);
-      if (product) {
-        const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
-        if (sizeDetail) {
-          sizeDetail.openingStock -= item.quantity; // Reduce stock
-          await product.save(); // Save updated product
-        }
-      }
-    }
+    // for (const item of cartItems) {
+    //   console.log(item.productId);
+    //   const product = await Product.findById(item.productId);
+    //   console.log(product);
+    //   if (product) {
+    //     const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+    //     if (sizeDetail) {
+    //       sizeDetail.openingStock -= item.quantity; // Reduce stock
+    //       await product.save(); // Save updated product
+    //     }
+    //   }
+    // }
 
     // Update stock for each exchange item (increase stock)
-    if (exchangeDetails && exchangeDetails.items) {
-      // Loop through the exchanged items
-      for (const exchangeItem of exchangeDetails.items) {
-        const product = await Product.findById(exchangeItem.productId);
-        if (product) {
-          const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
-          if (sizeDetail) {
-            sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
-            await product.save(); // Save updated product
-          }
-        }
-      }
+    // if (exchangeDetails && exchangeDetails.items) {
+    //   // Loop through the exchanged items
+    //   for (const exchangeItem of exchangeDetails.items) {
+    //     const product = await Product.findById(exchangeItem.productId);
+    //     if (product) {
+    //       const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
+    //       if (sizeDetail) {
+    //         sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
+    //         await product.save(); // Save updated product
+    //       }
+    //     }
+    //   }
 
-      // Find the order by the exchangeDetails invoiceNo
-      const order = await Order.findOne({ "invoice": exchangeDetails.invoiceNo });
-      if (order) {
-        // Update the lastStatus to 'exchange'
-        order.lastStatus = {
-          name: 'exchange',
-          timestamp: new Date()
-        };
+    //   // Find the order by the exchangeDetails invoiceNo
+    //   const order = await Order.findOne({ "invoice": exchangeDetails.invoiceNo });
+    //   if (order) {
+    //     // Update the lastStatus to 'exchange'
+    //     order.lastStatus = {
+    //       name: 'exchange',
+    //       timestamp: new Date()
+    //     };
 
-        // Save the updated order
-        await order.save();
-      } else {
-        console.log('Order with this invoice number not found.');
-      }
-    }
+    //     // Save the updated order
+    //     await order.save();
+    //   } else {
+    //     console.log('Order with this invoice number not found.');
+    //   }
+    // }
 
 
     // Send SMS only if serialId is 'showroom' and phone is provided
-    if (serialId === 'showroom' && phone) {
-      try {
-        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
-        const response = await sendSMS(primaryUrl);
-        console.log('SMS sent:', response);
-      } catch (error) {
-        console.error('Failed to send SMS:', error);
-      }
-    }
-    await order.save();
+    // if (serialId === 'showroom' && phone) {
+    //   try {
+    //     const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+    //     const response = await sendSMS(primaryUrl);
+    //     console.log('SMS sent:', response);
+    //   } catch (error) {
+    //     console.error('Failed to send SMS:', error);
+    //   }
+    // }
+    // await order.save();
 
-    return res.status(201).json({ message: 'Order placed successfully', order });
+    return res.status(201).json({ message: 'Order placed successfully'});
   } catch (error) {
     console.error('Error placing order:', error);
     return res.status(500).json({ message: 'Server error', error });
