@@ -26,6 +26,7 @@ export const createPurchase = async (req, res) => {
             // Update openingStock and purchasePrice
             sizeDetail.openingStock += item.quantity;
             sizeDetail.purchasePrice = item.purchasePrice;
+            sizeDetail.ospPrice = item.purchasePrice;
 
             // Save the updated product
             await product.save();

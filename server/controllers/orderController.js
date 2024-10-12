@@ -349,6 +349,9 @@ export const createOrder = async (req, res) => {
       userId
     } = req.body;
 
+    console.log(cartItems);
+    
+
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'new', user: null }];
 
@@ -472,293 +475,6 @@ export const createOnlinePosOrder = async (req, res) => {
   }
 };
 
-// Update an order's courier
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { status, userId } = req.body;
-
-//     console.log(orderId, status, userId);
-
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ error: 'Invalid userId format' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     const statusHierarchy = ['new', 'pending', 'pendingPayment', 'confirm', 'hold',
-//       'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange', 'cancel'];
-
-
-//     // Update the lastStatus field
-//     order.lastStatus = {
-//       name: status,
-//       timestamp: new Date()
-//     };
-
-//     // Update product size details if the status is 'confirm'
-//     if (status === 'confirm') {
-//       for (const item of order.cartItems) {
-//         const product = await Product.findById(item.productId);
-//         if (product) {
-//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-//           if (sizeDetail) {
-//             sizeDetail.openingStock -= item.quantity;
-//             await product.save();
-//           }
-//         }
-//       }
-//     }
-//     // Update the status
-//     order.status.push({ name: status, user: userId, timestamp: new Date() });
-//     await order.save();
-//     return res.json(order);
-//   } catch (error) {
-//     console.error('Failed to update order status:', error);
-//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
-//   }
-// };
-
-// Update an order's status
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { status, userId } = req.body;
-
-//     console.log(orderId, status, userId);
-
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ error: 'Invalid userId format' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     const statusHierarchy = [
-//       'new', 'pending', 'pendingPayment', 'confirm', 'hold',
-//       'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange', 'cancel'
-//     ];
-
-//     // Check if the new status is allowed according to the status hierarchy
-//     const currentStatusIndex = statusHierarchy.indexOf(order.lastStatus.name);
-//     const newStatusIndex = statusHierarchy.indexOf(status);
-
-//     if (newStatusIndex < currentStatusIndex) {
-//       return res.status(400).json({ error: `Cannot move from ${order.lastStatus.name} to ${status}` });
-//     }
-
-//     // Update the lastStatus field
-//     order.lastStatus = {
-//       name: status,
-//       timestamp: new Date()
-//     };
-
-//     // Update product size details if the status is 'confirm'
-//     if (status === 'confirm') {
-//       for (const item of order.cartItems) {
-//         const product = await Product.findById(item.productId);
-//         if (product) {
-//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-//           if (sizeDetail) {
-//             sizeDetail.openingStock -= item.quantity;
-//             await product.save();
-//           }
-//         }
-//       }
-//     }
-
-//     // Update the status
-//     order.status.push({ name: status, user: userId, timestamp: new Date() });
-//     await order.save();
-
-//     return res.json(order);
-//   } catch (error) {
-//     console.error('Failed to update order status:', error);
-//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
-//   }
-// };
-// Update an order's status
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { status, userId } = req.body;
-
-//     console.log(orderId, status, userId);
-
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ error: 'Invalid userId format' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     // Define status groups based on the rules
-//     const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel'];
-//     const beforeConfirmRestricted = [
-//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange'
-//     ];
-
-//     const afterConfirmAllowed = [
-//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange'
-//     ];
-//     const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel'];
-
-//     const isConfirmed = order.status.some(s => s.name === 'confirm');
-
-//     if (!isConfirmed) {
-//       // Before confirmation logic
-//       if (beforeConfirmRestricted.includes(status)) {
-//         return res.status(400).json({
-//           error: `Cannot move to ${status} before the order is confirmed. Allowed statuses: ${beforeConfirmAllowed.join(', ')}.`
-//         });
-//       }
-//     } else {
-//       // After confirmation logic
-//       if (afterConfirmRestricted.includes(status)) {
-//         return res.status(400).json({
-//           error: `Cannot move to ${status} after the order is confirmed. Allowed statuses: ${afterConfirmAllowed.join(', ')}.`
-//         });
-//       }
-//     }
-
-//     // Update the lastStatus field
-//     order.lastStatus = {
-//       name: status,
-//       timestamp: new Date()
-//     };
-
-//     // Update product size details if the status is 'confirm'
-//     if (status === 'confirm') {
-//       for (const item of order.cartItems) {
-//         const product = await Product.findById(item.productId);
-//         if (product) {
-//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-//           if (sizeDetail) {
-//             sizeDetail.openingStock -= item.quantity;
-//             await product.save();
-//           }
-//         }
-//       }
-//     }
-
-//     // Update the status
-//     order.status.push({ name: status, user: userId, timestamp: new Date() });
-//     await order.save();
-
-//     return res.json(order);
-//   } catch (error) {
-//     console.error('Failed to update order status:', error);
-//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
-//   }
-// };
-
-// Update an order's status
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { status, userId } = req.body;
-
-
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ error: 'Invalid userId format' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     // Define status groups based on the rules
-//     const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel', 'doubleOrderCancel'];
-//     const beforeConfirmRestricted = [
-//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange'
-//     ];
-
-//     const afterConfirmAllowed = [
-//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange'
-//     ];
-
-//     const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
-//     const isConfirmed = order.status.some(s => s.name === 'confirm');
-//     const isCancelled = order.status.some(s => s.name === 'cancel');
-//     const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
-
-//     // Restrict all statuses if the order is already canceled
-//     if (isCancelled || isDoubleOrderCancel) {
-//       return res.status(400).json({
-//         error: `Order is already canceled. No further status updates are allowed.`
-//       });
-//     }
-
-//     if (!isConfirmed) {
-//       // Before confirmation logic
-//       if (beforeConfirmRestricted.includes(status)) {
-//         return res.status(400).json({
-//           error: `Cannot move to ${status} before the order is confirmed.`
-//         });
-//       }
-//     } else {
-//       // After confirmation logic
-//       if (afterConfirmRestricted.includes(status)) {
-//         return res.status(400).json({
-//           error: `Cannot move to ${status} after the order is confirmed.`
-//         });
-//       }
-//     }
-
-//     // Update the lastStatus field
-//     order.lastStatus = {
-//       name: status,
-//       timestamp: new Date()
-//     };
-
-//     // Update product size details if the status is 'confirm'
-//     if (status === 'confirm') {
-//       for (const item of order.cartItems) {
-//         const product = await Product.findById(item.productId);
-//         if (product) {
-//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-//           if (sizeDetail) {
-//             sizeDetail.openingStock -= item.quantity;
-//             await product.save();
-//           }
-//         }
-//       }
-//     }
-
-//     // Update the status
-//     order.status.push({ name: status, user: userId, timestamp: new Date() });
-//     await order.save();
-
-//     return res.json(order);
-//   } catch (error) {
-//     console.error('Failed to update order status:', error);
-//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
-//   }
-// };
 
 export const updateOrderStatus = async (req, res) => {
   try {
@@ -1630,99 +1346,99 @@ export const createPOSOrder = async (req, res) => {
 
 
 
-    // const invoice = generateInvoiceNumber();
-    // const initialStatus = [{ name: 'new', user: null }];
-    // // Find the last order and get the highest orderNo
-    // const lastOrder = await Order.countDocuments({});
-    // // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
-    // const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
-    // // Create the order with the given data
-    // const order = new Order({
-    //   serialId,
-    //   invoice,
-    //   orderNotes,
-    //   orderNo: newOrderNo,
-    //   name,
-    //   address,
-    //   area,
-    //   phone,
-    //   altPhone,
-    //   notes,
-    //   totalAmount,
-    //   deliveryCharge,
-    //   discount,
-    //   grandTotal,
-    //   advanced,
-    //   condition,
-    //   cartItems,
-    //   paymentMethod,
-    //   courier,
-    //   employee,
-    //   userId,
-    //   manager,
-    //   status: initialStatus,
-    //   payments, // Include the updated payments
-    //   exchangeDetails,
-    //   exchangeAmount,
-    //   adminDiscount,
-    //   orderNo: newOrderNo
-    // });
+    const invoice = generateInvoiceNumber();
+    const initialStatus = [{ name: 'new', user: null }];
+    // Find the last order and get the highest orderNo
+    const lastOrder = await Order.countDocuments({});
+    // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
+    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+    // Create the order with the given data
+    const order = new Order({
+      serialId,
+      invoice,
+      orderNotes,
+      orderNo: newOrderNo,
+      name,
+      address,
+      area,
+      phone,
+      altPhone,
+      notes,
+      totalAmount,
+      deliveryCharge,
+      discount,
+      grandTotal,
+      advanced,
+      condition,
+      cartItems,
+      paymentMethod,
+      courier,
+      employee,
+      userId,
+      manager,
+      status: initialStatus,
+      payments, // Include the updated payments
+      exchangeDetails,
+      exchangeAmount,
+      adminDiscount,
+      orderNo: newOrderNo
+    });
 
     // Update stock for each cart item (reduce stock)
-    // for (const item of cartItems) {
-    //   console.log(item.productId);
-    //   const product = await Product.findById(item.productId);
-    //   console.log(product);
-    //   if (product) {
-    //     const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
-    //     if (sizeDetail) {
-    //       sizeDetail.openingStock -= item.quantity; // Reduce stock
-    //       await product.save(); // Save updated product
-    //     }
-    //   }
-    // }
+    for (const item of cartItems) {
+      console.log(item.productId);
+      const product = await Product.findById(item.productId);
+      console.log(product);
+      if (product) {
+        const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+        if (sizeDetail) {
+          sizeDetail.openingStock -= item.quantity; // Reduce stock
+          await product.save(); // Save updated product
+        }
+      }
+    }
 
     // Update stock for each exchange item (increase stock)
-    // if (exchangeDetails && exchangeDetails.items) {
-    //   // Loop through the exchanged items
-    //   for (const exchangeItem of exchangeDetails.items) {
-    //     const product = await Product.findById(exchangeItem.productId);
-    //     if (product) {
-    //       const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
-    //       if (sizeDetail) {
-    //         sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
-    //         await product.save(); // Save updated product
-    //       }
-    //     }
-    //   }
+    if (exchangeDetails && exchangeDetails.items) {
+      // Loop through the exchanged items
+      for (const exchangeItem of exchangeDetails.items) {
+        const product = await Product.findById(exchangeItem.productId);
+        if (product) {
+          const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
+          if (sizeDetail) {
+            sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
+            await product.save(); // Save updated product
+          }
+        }
+      }
 
-    //   // Find the order by the exchangeDetails invoiceNo
-    //   const order = await Order.findOne({ "invoice": exchangeDetails.invoiceNo });
-    //   if (order) {
-    //     // Update the lastStatus to 'exchange'
-    //     order.lastStatus = {
-    //       name: 'exchange',
-    //       timestamp: new Date()
-    //     };
+      // Find the order by the exchangeDetails invoiceNo
+      const order = await Order.findOne({ "invoice": exchangeDetails.invoiceNo });
+      if (order) {
+        // Update the lastStatus to 'exchange'
+        order.lastStatus = {
+          name: 'exchange',
+          timestamp: new Date()
+        };
 
-    //     // Save the updated order
-    //     await order.save();
-    //   } else {
-    //     console.log('Order with this invoice number not found.');
-    //   }
-    // }
+        // Save the updated order
+        await order.save();
+      } else {
+        console.log('Order with this invoice number not found.');
+      }
+    }
 
 
     // Send SMS only if serialId is 'showroom' and phone is provided
-    // if (serialId === 'showroom' && phone) {
-    //   try {
-    //     const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
-    //     const response = await sendSMS(primaryUrl);
-    //     console.log('SMS sent:', response);
-    //   } catch (error) {
-    //     console.error('Failed to send SMS:', error);
-    //   }
-    // }
+    if (serialId === 'showroom' && phone) {
+      try {
+        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+        const response = await sendSMS(primaryUrl);
+        console.log('SMS sent:', response);
+      } catch (error) {
+        console.error('Failed to send SMS:', error);
+      }
+    }
     await order.save();
 
     return res.status(201).json({ message: 'Order placed successfully'});
@@ -1791,106 +1507,6 @@ export const getCourierProcessingOrders = async (req, res) => {
   }
 };
 
-
-// export const profitCountForShowroom = async (req, res) => {
-//   try {
-//     const { singleDate, startDate, endDate } = req.query;
-//     console.log({ singleDate, startDate, endDate } );
-
-
-//     // Initialize date filter
-//     const dateFilter = {};
-
-//     if (singleDate && !isNaN(new Date(singleDate).getTime())) {
-//       // If a single date is provided, set the filter for the whole day
-//       const startDateLocal = new Date(`${singleDate}T00:00:00`);
-//       const endDateLocal = new Date(`${singleDate}T23:59:59`);
-//       dateFilter.$gte = startDateLocal;
-//       dateFilter.$lte = endDateLocal;
-//     } else {
-//       // Create date range filter if startDate and endDate are provided or fallback to today
-//       const today = new Date();
-//       const startOfToday = new Date(today.setHours(0, 0, 0, 0));
-//       const endOfToday = new Date(today.setHours(23, 59, 59, 999));
-
-//       if (startDate && !isNaN(new Date(startDate).getTime())) {
-//         dateFilter.$gte = new Date(startDate);
-//       } else {
-//         dateFilter.$gte = startOfToday;
-//       }
-
-//       if (endDate && !isNaN(new Date(endDate).getTime())) {
-//         dateFilter.$lte = new Date(endDate);
-//       } else {
-//         dateFilter.$lte = endOfToday;
-//       }
-//     }
-
-//     // Fetch orders with managerId, date filter, and serialId 'showroom'
-//     const orders = await Order.find({
-//       // manager: new mongoose.Types.ObjectId(managerId),
-//       createdAt: dateFilter,
-//       serialId: 'showroom',
-//     }).lean();
-
-//     // Initialize counters
-//     let totalSellCount = 0;
-//     let totalSellAmount = 0;
-//     let totalExchangeAmount = 0;
-//     let totalCashAmount = 0;
-//     let totalCardAmount = 0;
-//     let totalOnlineAmount = 0;
-
-//     // Calculate totals
-//     orders.forEach(order => {
-//       totalSellCount += 1;  // Increment for each order
-//       totalSellAmount += order.grandTotal || 0;  // Add grand total of each order
-//       totalExchangeAmount += order.exchangeAmount || 0;  // Add exchange amount of each order
-
-//       // Calculate total payments and classify by payment type
-//       if (order.payments && Array.isArray(order.payments)) {
-//         let totalPayments = 0;
-//         order.payments.forEach(payment => {
-//           const paymentAmount = parseFloat(payment.amount) || 0;
-//           totalPayments += paymentAmount;
-//           switch (payment.type) {
-//             case 'Card':
-//               totalCardAmount += paymentAmount;
-//               break;
-//             case 'Online':
-//               totalOnlineAmount += paymentAmount;
-//               break;
-//             case 'Cash':
-//               totalCashAmount += paymentAmount;
-//               break;
-//             default:
-//               break;
-//           }
-//         });
-
-//         // Cash amount is total order amount minus total payments
-//         const orderCashAmount = order.grandTotal - totalPayments;
-//         totalCashAmount += orderCashAmount;
-//       } else {
-//         // Handle the case where payments array is not present
-//         totalCashAmount += order.grandTotal || 0;
-//       }
-//     });
-
-//     res.status(200).json({
-//       totalSellCount,
-//       totalSellAmount,
-//       totalExchangeAmount,
-//       totalCashAmount,
-//       totalCardAmount,
-//       totalOnlineAmount,
-//     });
-//   } catch (error) {
-//     console.error('Error fetching manager sales stats:', error);
-//     res.status(500).json({ message: 'An error occurred', error: error.message || error });
-//   }
-// };
-
 export const profitCountForShowroom = async (req, res) => {
   try {
     const { singleDate, startDate, endDate } = req.query;
@@ -1952,7 +1568,7 @@ export const profitCountForShowroom = async (req, res) => {
       return cartItems.reduce((total, item) => { 
         if (item && item.productId && Array.isArray(item.productId.sizeDetails)) {
           const sizeDetail = item.productId.sizeDetails.find(size => size.size === item.size);
-          return total + (sizeDetail ? (sizeDetail.purchasePrice || 0)* (item.quantity) : 0);
+          return total + (sizeDetail ? (sizeDetail.ospPrice || sizeDetail.sellPrice)* (item.quantity) : 0);
         }
         return total;
       }, 0);
@@ -2023,6 +1639,7 @@ export const profitCountForShowroom = async (req, res) => {
       return total + calculateTotalPurchasePrice(order.cartItems);
     }, 0);
 
+console.log(updatedOrders);
 
     // Calculate total profit
     totalProfit = totalSellAmount - totalPurchasePrice;
