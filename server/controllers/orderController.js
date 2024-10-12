@@ -350,6 +350,9 @@ export const createOrder = async (req, res) => {
       userId
     } = req.body;
 
+    console.log(cartItems);
+
+
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'new', user: null }];
 
@@ -473,293 +476,6 @@ export const createOnlinePosOrder = async (req, res) => {
   }
 };
 
-// Update an order's courier
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { status, userId } = req.body;
-
-//     console.log(orderId, status, userId);
-
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ error: 'Invalid userId format' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     const statusHierarchy = ['new', 'pending', 'pendingPayment', 'confirm', 'hold',
-//       'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange', 'cancel'];
-
-
-//     // Update the lastStatus field
-//     order.lastStatus = {
-//       name: status,
-//       timestamp: new Date()
-//     };
-
-//     // Update product size details if the status is 'confirm'
-//     if (status === 'confirm') {
-//       for (const item of order.cartItems) {
-//         const product = await Product.findById(item.productId);
-//         if (product) {
-//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-//           if (sizeDetail) {
-//             sizeDetail.openingStock -= item.quantity;
-//             await product.save();
-//           }
-//         }
-//       }
-//     }
-//     // Update the status
-//     order.status.push({ name: status, user: userId, timestamp: new Date() });
-//     await order.save();
-//     return res.json(order);
-//   } catch (error) {
-//     console.error('Failed to update order status:', error);
-//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
-//   }
-// };
-
-// Update an order's status
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { status, userId } = req.body;
-
-//     console.log(orderId, status, userId);
-
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ error: 'Invalid userId format' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     const statusHierarchy = [
-//       'new', 'pending', 'pendingPayment', 'confirm', 'hold',
-//       'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange', 'cancel'
-//     ];
-
-//     // Check if the new status is allowed according to the status hierarchy
-//     const currentStatusIndex = statusHierarchy.indexOf(order.lastStatus.name);
-//     const newStatusIndex = statusHierarchy.indexOf(status);
-
-//     if (newStatusIndex < currentStatusIndex) {
-//       return res.status(400).json({ error: `Cannot move from ${order.lastStatus.name} to ${status}` });
-//     }
-
-//     // Update the lastStatus field
-//     order.lastStatus = {
-//       name: status,
-//       timestamp: new Date()
-//     };
-
-//     // Update product size details if the status is 'confirm'
-//     if (status === 'confirm') {
-//       for (const item of order.cartItems) {
-//         const product = await Product.findById(item.productId);
-//         if (product) {
-//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-//           if (sizeDetail) {
-//             sizeDetail.openingStock -= item.quantity;
-//             await product.save();
-//           }
-//         }
-//       }
-//     }
-
-//     // Update the status
-//     order.status.push({ name: status, user: userId, timestamp: new Date() });
-//     await order.save();
-
-//     return res.json(order);
-//   } catch (error) {
-//     console.error('Failed to update order status:', error);
-//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
-//   }
-// };
-// Update an order's status
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { status, userId } = req.body;
-
-//     console.log(orderId, status, userId);
-
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ error: 'Invalid userId format' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     // Define status groups based on the rules
-//     const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel'];
-//     const beforeConfirmRestricted = [
-//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange'
-//     ];
-
-//     const afterConfirmAllowed = [
-//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange'
-//     ];
-//     const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel'];
-
-//     const isConfirmed = order.status.some(s => s.name === 'confirm');
-
-//     if (!isConfirmed) {
-//       // Before confirmation logic
-//       if (beforeConfirmRestricted.includes(status)) {
-//         return res.status(400).json({
-//           error: `Cannot move to ${status} before the order is confirmed. Allowed statuses: ${beforeConfirmAllowed.join(', ')}.`
-//         });
-//       }
-//     } else {
-//       // After confirmation logic
-//       if (afterConfirmRestricted.includes(status)) {
-//         return res.status(400).json({
-//           error: `Cannot move to ${status} after the order is confirmed. Allowed statuses: ${afterConfirmAllowed.join(', ')}.`
-//         });
-//       }
-//     }
-
-//     // Update the lastStatus field
-//     order.lastStatus = {
-//       name: status,
-//       timestamp: new Date()
-//     };
-
-//     // Update product size details if the status is 'confirm'
-//     if (status === 'confirm') {
-//       for (const item of order.cartItems) {
-//         const product = await Product.findById(item.productId);
-//         if (product) {
-//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-//           if (sizeDetail) {
-//             sizeDetail.openingStock -= item.quantity;
-//             await product.save();
-//           }
-//         }
-//       }
-//     }
-
-//     // Update the status
-//     order.status.push({ name: status, user: userId, timestamp: new Date() });
-//     await order.save();
-
-//     return res.json(order);
-//   } catch (error) {
-//     console.error('Failed to update order status:', error);
-//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
-//   }
-// };
-
-// Update an order's status
-// export const updateOrderStatus = async (req, res) => {
-//   try {
-//     const { orderId } = req.params;
-//     const { status, userId } = req.body;
-
-
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ error: 'Invalid userId format' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findById(orderId);
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     // Define status groups based on the rules
-//     const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel', 'doubleOrderCancel'];
-//     const beforeConfirmRestricted = [
-//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange'
-//     ];
-
-//     const afterConfirmAllowed = [
-//       'hold', 'processing', 'sendToCourier', 'courierProcessing',
-//       'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-//       'return', 'exchange'
-//     ];
-
-//     const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
-//     const isConfirmed = order.status.some(s => s.name === 'confirm');
-//     const isCancelled = order.status.some(s => s.name === 'cancel');
-//     const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
-
-//     // Restrict all statuses if the order is already canceled
-//     if (isCancelled || isDoubleOrderCancel) {
-//       return res.status(400).json({
-//         error: `Order is already canceled. No further status updates are allowed.`
-//       });
-//     }
-
-//     if (!isConfirmed) {
-//       // Before confirmation logic
-//       if (beforeConfirmRestricted.includes(status)) {
-//         return res.status(400).json({
-//           error: `Cannot move to ${status} before the order is confirmed.`
-//         });
-//       }
-//     } else {
-//       // After confirmation logic
-//       if (afterConfirmRestricted.includes(status)) {
-//         return res.status(400).json({
-//           error: `Cannot move to ${status} after the order is confirmed.`
-//         });
-//       }
-//     }
-
-//     // Update the lastStatus field
-//     order.lastStatus = {
-//       name: status,
-//       timestamp: new Date()
-//     };
-
-//     // Update product size details if the status is 'confirm'
-//     if (status === 'confirm') {
-//       for (const item of order.cartItems) {
-//         const product = await Product.findById(item.productId);
-//         if (product) {
-//           const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-//           if (sizeDetail) {
-//             sizeDetail.openingStock -= item.quantity;
-//             await product.save();
-//           }
-//         }
-//       }
-//     }
-
-//     // Update the status
-//     order.status.push({ name: status, user: userId, timestamp: new Date() });
-//     await order.save();
-
-//     return res.json(order);
-//   } catch (error) {
-//     console.error('Failed to update order status:', error);
-//     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
-//   }
-// };
 
 export const updateOrderStatus = async (req, res) => {
   try {
@@ -776,98 +492,98 @@ export const updateOrderStatus = async (req, res) => {
       console.log(order.grandTotal - order.advanced);
     }
 
-    // if (!order) {
-    //   return res.status(404).json({ error: 'Order not found' });
-    // }
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
 
-    // // Define status groups based on the rules
-    // const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel', 'doubleOrderCancel'];
-    // const beforeConfirmRestricted = [
-    //   'hold', 'processing', 'sendToCourier', 'courierProcessing',
-    //   'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-    //   'return', 'exchange', 'courierReturn'
-    // ];
+    // Define status groups based on the rules
+    const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel', 'doubleOrderCancel'];
+    const beforeConfirmRestricted = [
+      'hold', 'processing', 'sendToCourier', 'courierProcessing',
+      'delivered', 'partialReturn', 'returnWithDeliveryCharge',
+      'return', 'exchange', 'courierReturn'
+    ];
 
-    // const afterConfirmAllowed = [
-    //   'hold', 'processing', 'sendToCourier', 'courierProcessing',
-    //   'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-    //   'return', 'exchange', 'courierReturn'
-    // ];
-    // const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
+    const afterConfirmAllowed = [
+      'hold', 'processing', 'sendToCourier', 'courierProcessing',
+      'delivered', 'partialReturn', 'returnWithDeliveryCharge',
+      'return', 'exchange', 'courierReturn'
+    ];
+    const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
 
-    // const isConfirmed = order.status.some(s => s.name === 'confirm');
-    // const isCancelled = order.status.some(s => s.name === 'cancel');
-    // const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
+    const isConfirmed = order.status.some(s => s.name === 'confirm');
+    const isCancelled = order.status.some(s => s.name === 'cancel');
+    const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
 
-    // const currentStatus = order.lastStatus?.name;
+    const currentStatus = order.lastStatus?.name;
 
-    // // Restrict all statuses if the order is already canceled
-    // if (isCancelled || isDoubleOrderCancel) {
-    //   return res.status(400).json({
-    //     error: `Order is already canceled. No further status updates are allowed.`
-    //   });
-    // }
+    // Restrict all statuses if the order is already canceled
+    if (isCancelled || isDoubleOrderCancel) {
+      return res.status(400).json({
+        error: `Order is already canceled. No further status updates are allowed.`
+      });
+    }
 
-    // // Restriction based on confirmation status
-    // if (!isConfirmed) {
-    //   // Before confirmation logic
-    //   if (beforeConfirmRestricted.includes(status)) {
-    //     return res.status(400).json({
-    //       error: `Cannot move to ${status} before the order is confirmed.`
-    //     });
-    //   }
-    // } else {
-    //   // After confirmation logic
-    //   if (afterConfirmRestricted.includes(status)) {
-    //     return res.status(400).json({
-    //       error: `Cannot move to ${status} after the order is confirmed.`
-    //     });
-    //   }
+    // Restriction based on confirmation status
+    if (!isConfirmed) {
+      // Before confirmation logic
+      if (beforeConfirmRestricted.includes(status)) {
+        return res.status(400).json({
+          error: `Cannot move to ${status} before the order is confirmed.`
+        });
+      }
+    } else {
+      // After confirmation logic
+      if (afterConfirmRestricted.includes(status)) {
+        return res.status(400).json({
+          error: `Cannot move to ${status} after the order is confirmed.`
+        });
+      }
 
-    //   // Additional condition after 'confirm' status
-    //   const allowedAfterConfirm = ['hold', 'processing', 'sendToCourier'];
-    //   if (!allowedAfterConfirm.includes(status) && currentStatus === 'confirm') {
-    //     return res.status(400).json({
-    //       error: `After 'confirm', status can only be updated to 'hold', 'processing', or 'sendToCourier' directly. Cannot skip to ${status}.`
-    //     });
-    //   }
+      // Additional condition after 'confirm' status
+      const allowedAfterConfirm = ['hold', 'processing', 'sendToCourier'];
+      if (!allowedAfterConfirm.includes(status) && currentStatus === 'confirm') {
+        return res.status(400).json({
+          error: `After 'confirm', status can only be updated to 'hold', 'processing', or 'sendToCourier' directly. Cannot skip to ${status}.`
+        });
+      }
 
-    //   // Restriction on transitioning from 'hold' or 'processing'
-    //   if (currentStatus === 'hold' || currentStatus === 'processing') {
-    //     const notAllowedFromHoldOrProcessing = ['courierProcessing', 'delivered', 'courierReturn'];
-    //     if (notAllowedFromHoldOrProcessing.includes(status)) {
-    //       return res.status(400).json({
-    //         error: `Cannot move to ${status} directly from '${currentStatus}'.`
-    //       });
-    //     }
-    //   }
-    // }
+      // Restriction on transitioning from 'hold' or 'processing'
+      if (currentStatus === 'hold' || currentStatus === 'processing') {
+        const notAllowedFromHoldOrProcessing = ['courierProcessing', 'delivered', 'courierReturn'];
+        if (notAllowedFromHoldOrProcessing.includes(status)) {
+          return res.status(400).json({
+            error: `Cannot move to ${status} directly from '${currentStatus}'.`
+          });
+        }
+      }
+    }
 
-    // // Update the lastStatus field
-    // order.lastStatus = {
-    //   name: status,
-    //   timestamp: new Date()
-    // };
+    // Update the lastStatus field
+    order.lastStatus = {
+      name: status,
+      timestamp: new Date()
+    };
 
-    // // Update product size details if the status is 'confirm'
-    // if (status === 'confirm') {
-    //   for (const item of order.cartItems) {
-    //     const product = await Product.findById(item.productId);
-    //     if (product) {
-    //       const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-    //       if (sizeDetail) {
-    //         sizeDetail.openingStock -= item.quantity;
-    //         await product.save();
-    //       }
-    //     }
-    //   }
-    // }
+    // Update product size details if the status is 'confirm'
+    if (status === 'confirm') {
+      for (const item of order.cartItems) {
+        const product = await Product.findById(item.productId);
+        if (product) {
+          const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
+          if (sizeDetail) {
+            sizeDetail.openingStock -= item.quantity;
+            await product.save();
+          }
+        }
+      }
+    }
 
-    // // Update the status
-    // order.status.push({ name: status, user: userId, timestamp: new Date() });
-    // await order.save();
+    // Update the status
+    order.status.push({ name: status, user: userId, timestamp: new Date() });
+    await order.save();
 
-    // return res.json(order);
+    return res.json(order);
   } catch (error) {
     console.error('Failed to update order status:', error);
     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
@@ -1430,6 +1146,165 @@ export const getShowroomOrders = async (req, res) => {
 };
 
 
+// export const createPOSOrder = async (req, res) => {
+//   try {
+//     // Extract order data from request
+//     const {
+//       serialId, orderNotes, name, address, area, phone, altPhone, notes,
+//       totalAmount, deliveryCharge, discount, grandTotal, advanced,
+//       condition, cartItems, paymentMethod, courier, employee, userId, manager, payments,
+//       exchangeDetails, exchangeAmount, adminDiscount
+//     } = req.body;
+
+//     // Fetch the UserPaymentOption based on the manager/userId
+//     const userPaymentOptions = await UserPaymentOption.findOne({ userId: manager });
+//     if (!userPaymentOptions || !userPaymentOptions.paymentOption) {
+//       console.log('User Payment Options or accounts not found for this manager');
+//       return res.status(404).json({ message: 'User Payment Options or accounts not found for this manager' });
+//     }
+
+//     // Validate payments before processing
+//     if (!payments || !Array.isArray(payments) || payments.length === 0) {
+//       // Validate and update payment details
+//       for (const payment of payments) {
+//         const account = userPaymentOptions.paymentOption.accounts.find(acc => acc.accountType === payment.accountType);
+//         if (!account) {
+//           return res.status(400).json({ message: `Account type ${payment.accountType} not found` });
+//         }
+//         const paymentOption = account.payments.find(p => p.paymentOption === payment.paymentOption);
+//         if (!paymentOption) {
+//           return res.status(400).json({ message: `Payment option ${payment.paymentOption} not found for account type ${payment.accountType}` });
+//         }
+
+//         // Assign accountNumber and update the amount
+//         payment.accountNumber = paymentOption.accountNumber;
+//         paymentOption.amount += Number(payment.amount); // Ensure this is a number
+//       }
+//       // Save updated user payment options after modifying payment amounts
+//       await userPaymentOptions.save();
+//     }
+
+//     const invoice = generateInvoiceNumber();
+//     const initialStatus = [{ name: 'new', user: null }];
+//     const newOrderNo = await Order.countDocuments({}) + 1; // Get the new order number
+
+//     // If exchange details are provided, update the existing order
+//     if (exchangeDetails && exchangeDetails.invoiceNo) {
+//       const existingOrder = await Order.findOne({ invoice: exchangeDetails.invoiceNo });
+//       if (existingOrder) {
+//         // Update the existing order with new details
+//         existingOrder.serialId = serialId;
+//         existingOrder.orderNotes = orderNotes;
+//         existingOrder.totalAmount += totalAmount; // Adjust as needed
+//         existingOrder.deliveryCharge = deliveryCharge;
+//         existingOrder.discount = discount;
+//         existingOrder.grandTotal = grandTotal + existingOrder.grandTotal;
+//         existingOrder.advanced = advanced + existingOrder.advanced;
+//         existingOrder.condition = condition;
+//         existingOrder.cartItems.push(...cartItems); // Add new cart items
+//         existingOrder.payments = payments; // Include updated payments
+//         existingOrder.exchangeDetails = exchangeDetails; // Update exchange details if needed
+//         existingOrder.adminDiscount = adminDiscount;
+
+//         // Update stock for each cart item (reduce stock)
+//         for (const item of cartItems) {
+//           const product = await Product.findById(item.productId);
+//           if (product) {
+//             const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+//             if (sizeDetail) {
+//               sizeDetail.openingStock -= item.quantity; // Reduce stock
+//               await product.save(); // Save updated product
+//             }
+//           }
+//         }
+
+//         // Handle exchange items if provided
+//         if (exchangeDetails.items) {
+//           for (const exchangeItem of exchangeDetails.items) {
+//             const product = await Product.findById(exchangeItem.productId);
+//             if (product) {
+//               const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
+//               if (sizeDetail) {
+//                 sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
+//                 await product.save(); // Save updated product
+//               }
+//             }
+//           }
+//         }
+
+//         // Update the lastStatus to 'exchange'
+//         existingOrder.lastStatus = {
+//           name: 'exchange',
+//           timestamp: new Date()
+//         };
+
+//         // Save the updated existing order
+//         await existingOrder.save();
+
+//         // Optionally send SMS if applicable
+//         // if (serialId === 'showroom' && phone) {
+//         //   const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${existingOrder.invoice}%0APaid:${existingOrder.totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+//         //   const response = await sendSMS(primaryUrl);
+//         //   console.log('SMS sent:', response);
+//         // }
+
+//         return res.status(200).json({ message: 'Order updated successfully', order: existingOrder });
+//       } else {
+//         console.log('Order with this invoice number not found.');
+//         return res.status(404).json({ message: 'Order with this invoice number not found.' });
+//       }
+//     }
+
+//     // Create a new order if no exchange details provided
+//     const order = new Order({
+//       serialId,
+//       invoice,
+//       orderNotes,
+//       orderNo: newOrderNo,
+//       name,
+//       address,
+//       area,
+//       phone,
+//       altPhone,
+//       notes,
+//       totalAmount,
+//       deliveryCharge,
+//       discount,
+//       grandTotal,
+//       advanced,
+//       condition,
+//       cartItems,
+//       paymentMethod,
+//       courier,
+//       employee,
+//       userId,
+//       manager,
+//       status: initialStatus,
+//       payments,
+//       exchangeDetails,
+//       exchangeAmount,
+//       adminDiscount
+//     });
+
+//     // Update stock for each cart item (reduce stock)
+//     for (const item of cartItems) {
+//       const product = await Product.findById(item.productId);
+//       if (product) {
+//         const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+//         if (sizeDetail) {
+//           sizeDetail.openingStock -= item.quantity; // Reduce stock
+//           await product.save(); // Save updated product
+//         }
+//       }
+//     }
+
+//     await order.save();
+//     return res.status(201).json({ message: 'Order placed successfully', order });
+//   } catch (error) {
+//     console.error('Error placing order:', error);
+//     return res.status(500).json({ message: 'Server error', error });
+//   }
+// };
 
 
 
@@ -1697,5 +1572,156 @@ export const handleOrderReturns = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const profitCountForShowroom = async (req, res) => {
+  try {
+    const { singleDate, startDate, endDate } = req.query;
+    console.log({ singleDate, startDate, endDate });
+
+
+    // Initialize date filter
+    // Initialize date filter
+    const dateFilter = {};
+
+    if (singleDate && !isNaN(new Date(singleDate).getTime())) {
+      // If a single date is provided, set the filter for the whole day (local time)
+      const startDateLocal = new Date(`${singleDate}T00:00:00`);
+      const endDateLocal = new Date(`${singleDate}T23:59:59`);
+      dateFilter.$gte = startDateLocal;
+      dateFilter.$lte = endDateLocal;
+    } else {
+      // Handle date range for startDate and endDate with local time
+      if (startDate && !isNaN(new Date(startDate).getTime())) {
+        // Set startDate with local time at the start of the day
+        const startDateLocal = new Date(`${startDate}T00:00:00`);
+        dateFilter.$gte = startDateLocal;
+      }
+
+      if (endDate && !isNaN(new Date(endDate).getTime())) {
+        // Set endDate with local time at the end of the day
+        const endDateLocal = new Date(`${endDate}T23:59:59`);
+        dateFilter.$lte = endDateLocal;
+      }
+
+      // If neither startDate nor endDate is provided, fallback to today's date range (optional)
+      if (!startDate && !endDate) {
+        const today = new Date();
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+        dateFilter.$gte = startOfToday;
+        dateFilter.$lte = endOfToday;
+      }
+    }
+
+
+    // Fetch all orders with serialId 'showroom'
+    const orders = await Order.find({
+      createdAt: dateFilter,
+      serialId: 'showroom',
+    }).populate({
+      path: 'cartItems.productId',
+      select: 'title sizeDetails',
+    }).lean();
+
+    // Initialize counters
+    let totalSellCount = 0;
+    let totalSellAmount = 0;
+    let totalExchangeAmount = 0;
+    let totalProfit = 0;
+
+    // Helper function to calculate the total purchase price of cart items
+    const calculateTotalPurchasePrice = (cartItems) => {
+      return cartItems.reduce((total, item) => {
+        if (item && item.productId && Array.isArray(item.productId.sizeDetails)) {
+          const sizeDetail = item.productId.sizeDetails.find(size => size.size === item.size);
+          return total + (sizeDetail ? (sizeDetail.ospPrice || sizeDetail.sellPrice) * (item.quantity) : 0);
+        }
+        return total;
+      }, 0);
+    };
+
+    // Array to hold updated previous orders
+    const updatedOrders = [];
+
+    for (let order of orders) {
+      totalSellCount += 1;
+      totalSellAmount += order.grandTotal || 0;
+      totalExchangeAmount += order.exchangeAmount || 0;
+
+      updatedOrders.push(order)
+
+      // Check if exchangeDetails exist
+      if (order.exchangeDetails && order.exchangeDetails.invoiceNo) {
+        // Find the previous order using the invoiceNo
+        const previousOrder = await Order.findOne({
+          invoice: order.exchangeDetails.invoiceNo,
+          serialId: 'showroom',
+        }).populate({
+          path: 'cartItems.productId',
+          select: 'title sizeDetails',
+        }).lean();
+
+        // Filter out cartItems that match exchangeDetails items
+        if (previousOrder && previousOrder.cartItems) {
+          const exchangeItems = order.exchangeDetails.items || [];
+          // Find cartItems that match exchangeItems by productId and size
+          const updatedCartItems = previousOrder.cartItems.map(prevItem => {
+            // Check if there's a corresponding exchange item
+            const exchangeItem = exchangeItems.find(exchangeItem =>
+              exchangeItem.productId.toString() === prevItem.productId._id.toString() &&
+              exchangeItem.size === prevItem.size
+            );
+
+            if (exchangeItem) {
+              // Calculate new quantity
+              const newQuantity = prevItem.quantity - exchangeItem.quantity;
+              return {
+                ...prevItem,
+                quantity: newQuantity // Allow zero quantity
+              };
+            }
+
+            return prevItem; // Return the original item if no match found
+          });
+
+          // Update previousOrder's cartItems with the modified items
+          previousOrder.cartItems = updatedCartItems; // Now previousOrder has updated cartItems
+
+          // Remove any existing order with the same invoice
+          const existingOrderIndex = updatedOrders.findIndex(existingOrder => existingOrder.invoice === previousOrder.invoice);
+          if (existingOrderIndex !== -1) {
+            // Remove the existing order if found
+            updatedOrders.splice(existingOrderIndex, 1);
+          }
+
+          // Add the current previousOrder to the updatedOrders array
+          updatedOrders.push(previousOrder);
+        }
+      }
+    }
+
+    // Calculate purchase price for all filtered cart items from updatedOrders
+    const totalPurchasePrice = updatedOrders.reduce((total, order) => {
+      return total + calculateTotalPurchasePrice(order.cartItems);
+    }, 0);
+
+    console.log(updatedOrders);
+
+    // Calculate total profit
+    totalProfit = totalSellAmount - totalPurchasePrice;
+
+    // Return the results including totalProfit
+    res.status(200).json({
+      totalSellCount,
+      totalSellAmount,
+      totalExchangeAmount,
+      totalProfit,
+      updatedOrders
+    });
+  } catch (error) {
+    console.error('Error fetching manager sales stats:', error);
+    res.status(500).json({ message: 'An error occurred', error: error.message || error });
   }
 };

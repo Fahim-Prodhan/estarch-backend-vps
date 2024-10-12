@@ -3,81 +3,95 @@ import Product from "../models/product.js";
 import ProductAsset from "../models/productAsset.js";
 
 export const createManufacture = async (req, res) => {
-    const { productId, assets, totalProduct, otherCost, costPerProduct } = req.body;
-  
-    // Validation
-    if (!productId || !assets || totalProduct <= 0 || otherCost < 0) {
-      return res.status(400).json({ message: 'Invalid manufacturing data.' });
+  const { productId, assets, totalProduct, otherCost, costPerProduct } = req.body;
+
+  // Validation
+  if (!productId || !assets || totalProduct <= 0 || otherCost < 0) {
+    return res.status(400).json({ message: 'Invalid manufacturing data.' });
+  }
+
+  try {
+    // Find the selected product
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
     }
-  
-    try {
-      // Find the selected product
-      const product = await Product.findById(productId);
-      if (!product) {
-        return res.status(404).json({ message: 'Product not found' });
+
+    // Validate and check asset availability
+    for (const asset of assets) {
+      const { assetId, usedQuantity } = asset;
+
+      const productAsset = await ProductAsset.findById(assetId);
+      if (!productAsset) {
+        return res.status(404).json({ message: `Asset with ID ${assetId} not found` });
       }
-  
-      // Validate and check asset availability
-      for (const asset of assets) {
-        const { assetId, usedQuantity } = asset;
-  
-        const productAsset = await ProductAsset.findById(assetId);
-        if (!productAsset) {
-          return res.status(404).json({ message: `Asset with ID ${assetId} not found` });
-        }
-  
-        if (productAsset.quantity < usedQuantity) {
-          return res.status(400).json({ message: `Not enough ${productAsset.assetName} in stock.` });
-        }
+
+      if (productAsset.quantity < usedQuantity) {
+        return res.status(400).json({ message: `Not enough ${productAsset.assetName} in stock.` });
       }
-  
-      // Check if there are existing manufacture records for this product
-      const existingManufactureRecord = await ManufactureProduct.findOne({ productId }).sort({ version: -1 });
-  
-      if (existingManufactureRecord) {
-        // Update existing manufacture record
-        existingManufactureRecord.assets = assets;
-        existingManufactureRecord.totalProduct = totalProduct;
-        existingManufactureRecord.otherCost = otherCost;
-        existingManufactureRecord.costPerProduct = costPerProduct;
-        existingManufactureRecord.totalCost = otherCost + (totalProduct * costPerProduct);
-        existingManufactureRecord.version += 1; // Increment the version for the update
-  
-        // Save the updated manufacture record
-        await existingManufactureRecord.save();
-      } else {
-        // If no existing record, create a new one
-        const newManufacture = new ManufactureProduct({
-          productId,
-          assets,
-          totalProduct,
-          otherCost,
-          totalCost: otherCost + (totalProduct * costPerProduct),  // Example cost calculation
-          costPerProduct,
-          version: 1  // Start with version 1
-        });
-  
-        // Save the new manufacture order
-        await newManufacture.save();
-      }
-  
-      // Update asset quantities
-      for (const asset of assets) {
-        const { assetId, usedQuantity } = asset;
-  
-        await ProductAsset.findByIdAndUpdate(assetId, {
-          $inc: { quantity: -usedQuantity }
-        });
-      }
-  
-      // Respond with the created or updated manufacture order
-      res.status(201).json({ message: 'Manufacturing order processed successfully.' });
-    } catch (error) {
-      console.error('Error processing manufacturing:', error);
-      res.status(500).json({ message: 'Failed to process manufacturing.' });
     }
-  };
-  
+
+    // Check if there are existing manufacture records for this product
+    const existingManufactureRecord = await ManufactureProduct.findOne({ productId }).sort({ version: -1 });
+
+    if (existingManufactureRecord) {
+      // Update existing manufacture record
+      existingManufactureRecord.assets = assets;
+      existingManufactureRecord.totalProduct = totalProduct;
+      existingManufactureRecord.otherCost = otherCost;
+      existingManufactureRecord.costPerProduct = costPerProduct;
+      existingManufactureRecord.totalCost = otherCost + (totalProduct * costPerProduct);
+      existingManufactureRecord.version += 1; // Increment the version for the update
+
+      // Save the updated manufacture record
+      await existingManufactureRecord.save();
+    } else {
+      // If no existing record, create a new one
+      const newManufacture = new ManufactureProduct({
+        productId,
+        assets,
+        totalProduct,
+        otherCost,
+        totalCost: otherCost + (totalProduct * costPerProduct),  // Example cost calculation
+        costPerProduct,
+        version: 1  // Start with version 1
+      });
+
+      // Save the new manufacture order
+      await newManufacture.save();
+    }
+
+    // Update asset quantities
+    for (const asset of assets) {
+      const { assetId, usedQuantity } = asset;
+
+      await ProductAsset.findByIdAndUpdate(assetId, {
+        $inc: { quantity: -usedQuantity }
+      });
+    }
+
+    // Update the product's sizeDetails (purchasePrice and ospPrice)
+    if (product.sizeDetails.length > 0) {
+      for (let sizeUpdate of product.sizeDetails) {
+        // Update purchasePrice and ospPrice for each size
+        if (sizeUpdate._id) {
+          sizeUpdate.purchasePrice = costPerProduct;
+          sizeUpdate.ospPrice = costPerProduct;
+        }
+      }
+
+      // Save the updated product with size details
+      await product.save();
+    }
+
+    // Respond with the created or updated manufacture order
+    res.status(201).json({ message: 'Manufacturing order processed successfully, and size details updated.' });
+  } catch (error) {
+    console.error('Error processing manufacturing:', error);
+    res.status(500).json({ message: 'Failed to process manufacturing.' });
+  }
+};
+
 
 
 export const getAllManufactureProducts = async (req, res) => {
