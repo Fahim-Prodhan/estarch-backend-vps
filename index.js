@@ -38,6 +38,7 @@ import productAssetRoutes from './server/routes/productAssetRoutes.js'
 import assetRoutes from './server/routes/assetsRoutes.js'
 import manufactureProduct from './server/routes/manufactureProductRoutes.js'
 import cashRoutes from './server/routes/cashRoutes.js';
+import courierAccountRoutes from './server/routes/courierAccountRoutes.js';
 dotenv.config();
 
 const app = express();
@@ -119,7 +120,7 @@ app.use('/api/cash', cashRoutes);
 app.use('/api/product-asset',productAssetRoutes)
 app.use('/api/others-asset',assetRoutes)
 app.use('/api/manufacture-product',manufactureProduct)
-
+app.use('/api/courier-account', courierAccountRoutes);
 // Upload route
 app.post('/upload', uploadSingle, (req, res) => {
   res.json({ file: req.file ? req.file.path : null });

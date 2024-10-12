@@ -25,7 +25,8 @@ import {
     updateOrderNoForAllOrders,
     createOnlinePosOrder,
     getSentToCourierOrders,
-    getCourierProcessingOrders
+    getCourierProcessingOrders,
+    handleOrderReturns 
     
 } from '../controllers/orderController.js';
 
@@ -55,7 +56,7 @@ router.get('/status-count', getCountOfStatus);
 router.get('/manager/:managerId/stats', getManagerSalesStats);
 router.get('/oders/showrooms', getShowroomOrders);
 router.put('/update-order-numbers', updateOrderNoForAllOrders);
-
+router.post('/orders/returns', handleOrderReturns);
 router.get('/get-sent-courier-orders', getSentToCourierOrders);
 router.get('/get-courier-processing-orders', getCourierProcessingOrders);
 

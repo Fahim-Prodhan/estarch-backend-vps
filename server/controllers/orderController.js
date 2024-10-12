@@ -5,6 +5,7 @@ import Order from '../models/order.js'; // Adjust the import path based on your 
 import Product from "../models/product.js";
 import moment from 'moment';
 import UserPaymentOption from '../models/UserPaymentOption.js'; // Assuming this is the model for user payment options
+import CourierAccount from '../models/courierAccount.js';
 // Get all notes for a specific order
 export const getAllNotesController = async (req, res) => {
   try {
@@ -267,7 +268,7 @@ export const getCountOfStatus = async (req, res) => {
       'lastStatus.name': 'doubleOrderCancel',
       serialId: { $in: serialIds }
     });
-    
+
     const courierReturn = await Order.countDocuments({
       'lastStatus.name': 'courierReturn',
       serialId: { $in: serialIds }
@@ -770,99 +771,103 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     // Find the order by ID
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
+    if (status === 'delivered') {
+      const order = await Order.findById(orderId);
+      console.log(order.grandTotal - order.advanced);
     }
 
-    // Define status groups based on the rules
-    const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel', 'doubleOrderCancel'];
-    const beforeConfirmRestricted = [
-      'hold', 'processing', 'sendToCourier', 'courierProcessing',
-      'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-      'return', 'exchange','courierReturn'
-    ];
+    // if (!order) {
+    //   return res.status(404).json({ error: 'Order not found' });
+    // }
 
-    const afterConfirmAllowed = [
-      'hold', 'processing', 'sendToCourier', 'courierProcessing',
-      'delivered', 'partialReturn', 'returnWithDeliveryCharge',
-      'return', 'exchange','courierReturn'
-    ];
-    const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
+    // // Define status groups based on the rules
+    // const beforeConfirmAllowed = ['new', 'pending', 'pendingPayment', 'cancel', 'doubleOrderCancel'];
+    // const beforeConfirmRestricted = [
+    //   'hold', 'processing', 'sendToCourier', 'courierProcessing',
+    //   'delivered', 'partialReturn', 'returnWithDeliveryCharge',
+    //   'return', 'exchange', 'courierReturn'
+    // ];
 
-    const isConfirmed = order.status.some(s => s.name === 'confirm');
-    const isCancelled = order.status.some(s => s.name === 'cancel');
-    const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
+    // const afterConfirmAllowed = [
+    //   'hold', 'processing', 'sendToCourier', 'courierProcessing',
+    //   'delivered', 'partialReturn', 'returnWithDeliveryCharge',
+    //   'return', 'exchange', 'courierReturn'
+    // ];
+    // const afterConfirmRestricted = ['new', 'pending', 'pendingPayment', 'cancel', 'confirm', 'doubleOrderCancel'];
 
-    const currentStatus = order.lastStatus?.name;
+    // const isConfirmed = order.status.some(s => s.name === 'confirm');
+    // const isCancelled = order.status.some(s => s.name === 'cancel');
+    // const isDoubleOrderCancel = order.status.some(s => s.name === 'doubleOrderCancel');
 
-    // Restrict all statuses if the order is already canceled
-    if (isCancelled || isDoubleOrderCancel) {
-      return res.status(400).json({
-        error: `Order is already canceled. No further status updates are allowed.`
-      });
-    }
+    // const currentStatus = order.lastStatus?.name;
 
-    // Restriction based on confirmation status
-    if (!isConfirmed) {
-      // Before confirmation logic
-      if (beforeConfirmRestricted.includes(status)) {
-        return res.status(400).json({
-          error: `Cannot move to ${status} before the order is confirmed.`
-        });
-      }
-    } else {
-      // After confirmation logic
-      if (afterConfirmRestricted.includes(status)) {
-        return res.status(400).json({
-          error: `Cannot move to ${status} after the order is confirmed.`
-        });
-      }
+    // // Restrict all statuses if the order is already canceled
+    // if (isCancelled || isDoubleOrderCancel) {
+    //   return res.status(400).json({
+    //     error: `Order is already canceled. No further status updates are allowed.`
+    //   });
+    // }
 
-      // Additional condition after 'confirm' status
-      const allowedAfterConfirm = ['hold', 'processing', 'sendToCourier'];
-      if (!allowedAfterConfirm.includes(status) && currentStatus === 'confirm') {
-        return res.status(400).json({
-          error: `After 'confirm', status can only be updated to 'hold', 'processing', or 'sendToCourier' directly. Cannot skip to ${status}.`
-        });
-      }
+    // // Restriction based on confirmation status
+    // if (!isConfirmed) {
+    //   // Before confirmation logic
+    //   if (beforeConfirmRestricted.includes(status)) {
+    //     return res.status(400).json({
+    //       error: `Cannot move to ${status} before the order is confirmed.`
+    //     });
+    //   }
+    // } else {
+    //   // After confirmation logic
+    //   if (afterConfirmRestricted.includes(status)) {
+    //     return res.status(400).json({
+    //       error: `Cannot move to ${status} after the order is confirmed.`
+    //     });
+    //   }
 
-      // Restriction on transitioning from 'hold' or 'processing'
-      if (currentStatus === 'hold' || currentStatus === 'processing') {
-        const notAllowedFromHoldOrProcessing = ['courierProcessing', 'delivered','courierReturn'];
-        if (notAllowedFromHoldOrProcessing.includes(status)) {
-          return res.status(400).json({
-            error: `Cannot move to ${status} directly from '${currentStatus}'.`
-          });
-        }
-      }
-    }
+    //   // Additional condition after 'confirm' status
+    //   const allowedAfterConfirm = ['hold', 'processing', 'sendToCourier'];
+    //   if (!allowedAfterConfirm.includes(status) && currentStatus === 'confirm') {
+    //     return res.status(400).json({
+    //       error: `After 'confirm', status can only be updated to 'hold', 'processing', or 'sendToCourier' directly. Cannot skip to ${status}.`
+    //     });
+    //   }
 
-    // Update the lastStatus field
-    order.lastStatus = {
-      name: status,
-      timestamp: new Date()
-    };
+    //   // Restriction on transitioning from 'hold' or 'processing'
+    //   if (currentStatus === 'hold' || currentStatus === 'processing') {
+    //     const notAllowedFromHoldOrProcessing = ['courierProcessing', 'delivered', 'courierReturn'];
+    //     if (notAllowedFromHoldOrProcessing.includes(status)) {
+    //       return res.status(400).json({
+    //         error: `Cannot move to ${status} directly from '${currentStatus}'.`
+    //       });
+    //     }
+    //   }
+    // }
 
-    // Update product size details if the status is 'confirm'
-    if (status === 'confirm') {
-      for (const item of order.cartItems) {
-        const product = await Product.findById(item.productId);
-        if (product) {
-          const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
-          if (sizeDetail) {
-            sizeDetail.openingStock -= item.quantity;
-            await product.save();
-          }
-        }
-      }
-    }
+    // // Update the lastStatus field
+    // order.lastStatus = {
+    //   name: status,
+    //   timestamp: new Date()
+    // };
 
-    // Update the status
-    order.status.push({ name: status, user: userId, timestamp: new Date() });
-    await order.save();
+    // // Update product size details if the status is 'confirm'
+    // if (status === 'confirm') {
+    //   for (const item of order.cartItems) {
+    //     const product = await Product.findById(item.productId);
+    //     if (product) {
+    //       const sizeDetail = product.sizeDetails.find(detail => detail.size === item.size);
+    //       if (sizeDetail) {
+    //         sizeDetail.openingStock -= item.quantity;
+    //         await product.save();
+    //       }
+    //     }
+    //   }
+    // }
 
-    return res.json(order);
+    // // Update the status
+    // order.status.push({ name: status, user: userId, timestamp: new Date() });
+    // await order.save();
+
+    // return res.json(order);
   } catch (error) {
     console.error('Failed to update order status:', error);
     return res.status(500).json({ error: 'Failed to update order status', details: error.message });
@@ -1440,7 +1445,9 @@ export const createPOSOrder = async (req, res) => {
 
     // Fetch the UserPaymentOption based on the manager/userId
     const userPaymentOptions = await UserPaymentOption.findOne({ userId: manager });
-    
+    console.log();
+
+
     if (!userPaymentOptions || !userPaymentOptions.paymentOption) {
       console.log('User Payment Options or accounts not found for this manager');
 
@@ -1465,108 +1472,108 @@ export const createPOSOrder = async (req, res) => {
       }
       // Save updated user payment options after modifying payment amounts
       console.log(userPaymentOptions);
-      
+
       await userPaymentOptions.save();
     }
 
 
 
-    // const invoice = generateInvoiceNumber();
-    // const initialStatus = [{ name: 'new', user: null }];
-    // // Find the last order and get the highest orderNo
-    // const lastOrder = await Order.countDocuments({});
-    // // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
-    // const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
-    // // Create the order with the given data
-    // const order = new Order({
-    //   serialId,
-    //   invoice,
-    //   orderNotes,
-    //   orderNo: newOrderNo,
-    //   name,
-    //   address,
-    //   area,
-    //   phone,
-    //   altPhone,
-    //   notes,
-    //   totalAmount,
-    //   deliveryCharge,
-    //   discount,
-    //   grandTotal,
-    //   advanced,
-    //   condition,
-    //   cartItems,
-    //   paymentMethod,
-    //   courier,
-    //   employee,
-    //   userId,
-    //   manager,
-    //   status: initialStatus,
-    //   payments, // Include the updated payments
-    //   exchangeDetails,
-    //   exchangeAmount,
-    //   adminDiscount,
-    //   orderNo: newOrderNo
-    // });
+    const invoice = generateInvoiceNumber();
+    const initialStatus = [{ name: 'new', user: null }];
+    // Find the last order and get the highest orderNo
+    const lastOrder = await Order.countDocuments({});
+    // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
+    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+    // Create the order with the given data
+    const order = new Order({
+      serialId,
+      invoice,
+      orderNotes,
+      orderNo: newOrderNo,
+      name,
+      address,
+      area,
+      phone,
+      altPhone,
+      notes,
+      totalAmount,
+      deliveryCharge,
+      discount,
+      grandTotal,
+      advanced,
+      condition,
+      cartItems,
+      paymentMethod,
+      courier,
+      employee,
+      userId,
+      manager,
+      status: initialStatus,
+      payments, // Include the updated payments
+      exchangeDetails,
+      exchangeAmount,
+      adminDiscount,
+      orderNo: newOrderNo
+    });
 
     // Update stock for each cart item (reduce stock)
-    // for (const item of cartItems) {
-    //   console.log(item.productId);
-    //   const product = await Product.findById(item.productId);
-    //   console.log(product);
-    //   if (product) {
-    //     const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
-    //     if (sizeDetail) {
-    //       sizeDetail.openingStock -= item.quantity; // Reduce stock
-    //       await product.save(); // Save updated product
-    //     }
-    //   }
-    // }
+    for (const item of cartItems) {
+      console.log(item.productId);
+      const product = await Product.findById(item.productId);
+      console.log(product);
+      if (product) {
+        const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+        if (sizeDetail) {
+          sizeDetail.openingStock -= item.quantity; // Reduce stock
+          await product.save(); // Save updated product
+        }
+      }
+    }
 
     // Update stock for each exchange item (increase stock)
-    // if (exchangeDetails && exchangeDetails.items) {
-    //   // Loop through the exchanged items
-    //   for (const exchangeItem of exchangeDetails.items) {
-    //     const product = await Product.findById(exchangeItem.productId);
-    //     if (product) {
-    //       const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
-    //       if (sizeDetail) {
-    //         sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
-    //         await product.save(); // Save updated product
-    //       }
-    //     }
-    //   }
+    if (exchangeDetails && exchangeDetails.items) {
+      // Loop through the exchanged items
+      for (const exchangeItem of exchangeDetails.items) {
+        const product = await Product.findById(exchangeItem.productId);
+        if (product) {
+          const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
+          if (sizeDetail) {
+            sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
+            await product.save(); // Save updated product
+          }
+        }
+      }
 
-    //   // Find the order by the exchangeDetails invoiceNo
-    //   const order = await Order.findOne({ "invoice": exchangeDetails.invoiceNo });
-    //   if (order) {
-    //     // Update the lastStatus to 'exchange'
-    //     order.lastStatus = {
-    //       name: 'exchange',
-    //       timestamp: new Date()
-    //     };
+      // Find the order by the exchangeDetails invoiceNo
+      const order = await Order.findOne({ "invoice": exchangeDetails.invoiceNo });
+      if (order) {
+        // Update the lastStatus to 'exchange'
+        order.lastStatus = {
+          name: 'exchange',
+          timestamp: new Date()
+        };
 
-    //     // Save the updated order
-    //     await order.save();
-    //   } else {
-    //     console.log('Order with this invoice number not found.');
-    //   }
-    // }
+        // Save the updated order
+        await order.save();
+      } else {
+        console.log('Order with this invoice number not found.');
+      }
+    }
 
 
     // Send SMS only if serialId is 'showroom' and phone is provided
-    // if (serialId === 'showroom' && phone) {
-    //   try {
-    //     const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
-    //     const response = await sendSMS(primaryUrl);
-    //     console.log('SMS sent:', response);
-    //   } catch (error) {
-    //     console.error('Failed to send SMS:', error);
-    //   }
-    // }
-    // await order.save();
+    if (serialId === 'showroom' && phone) {
+      try {
+        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+        const response = await sendSMS(primaryUrl);
+        console.log('SMS sent:', response);
+      } catch (error) {
+        console.error('Failed to send SMS:', error);
+      }
+    }
+    await order.save();
 
-    return res.status(201).json({ message: 'Order placed successfully'});
+    return res.status(201).json({ message: 'Order placed successfully' });
   } catch (error) {
     console.error('Error placing order:', error);
     return res.status(500).json({ message: 'Server error', error });
@@ -1623,7 +1630,6 @@ export const getCourierProcessingOrders = async (req, res) => {
         { 'lastStatus.name': 'courierProcessing' }
       ]
     });
-
     // Return the orders in the response
     res.status(200).json(orders);
   } catch (error) {
@@ -1632,3 +1638,64 @@ export const getCourierProcessingOrders = async (req, res) => {
   }
 };
 
+export const handleOrderReturns = async (req, res) => {
+  const { products, orderId, amount,
+    returnDeliveryCharge,
+    partialReturn, } = req.body;
+
+  try {
+    // Find the order by orderId
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    // Iterate through the products array to update each product's openingStock
+    for (const product of products) {
+      const { productId, quantity, size } = product;
+      const targetSize = size;
+      // Find the product by productId
+      const productDetails = await Product.findById(productId);
+      if (!productDetails) {
+        return res.status(404).json({ message: `Product with ID ${productId} not found` });
+      }
+
+      console.log('targetSize', targetSize);
+
+      const sizeDetail = productDetails.sizeDetails.find(size => size.size === targetSize);
+      if (!sizeDetail) {
+        console.log(`Size detail not found for barcode`);
+        return res.status(404).json({ error: `Size detail not found for barcode` });
+
+
+      }
+      // Update the product's openingStock
+      sizeDetail.openingStock += quantity;
+      await productDetails.save();
+    }
+    // Determine the new status based on the flags
+    if (returnDeliveryCharge) {
+      order.lastStatus.name = 'returnWithDeliveryCharge';
+    } else if (returnDeliveryCharge && partialReturn) {
+      order.lastStatus.name = 'partialReturn';
+    } else {
+      order.lastStatus.name = 'return';
+    }
+
+    // // Update the order status
+    await order.save();
+
+    // Update the courier account if amount is greater than 0
+    if (amount > 0) {
+      const account = await CourierAccount.findOne();
+      if (account) {
+        account.availableAmount += amount;
+        await account.save();
+      }
+    }
+
+    return res.status(200).json({ message: 'Order return processed successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error', error });
+  }
+};

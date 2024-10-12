@@ -7,7 +7,7 @@ const userPaymentOptionSchema = new mongoose.Schema({
     ref: 'User',
   },
   paymentOption: {
-    type: PaymentOption.schema, // Embed the PaymentOption schema
+    type: PaymentOption.schema, 
     required: true
   },
   createdAt: {
