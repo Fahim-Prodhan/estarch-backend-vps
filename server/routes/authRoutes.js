@@ -1,5 +1,5 @@
 import express from 'express';
-import {getUserByMobile, loginUser, registerUser, verifyOtp, setPassword,getUserById,logout,registerAdmin,loginAdmin,loginShowroomManager } from '../controllers/authController.js';
+import {getUserByMobile,findUsersByRole, loginUser, registerUser, verifyOtp, setPassword,getUserById,logout,registerAdmin,loginAdmin,loginShowroomManager } from '../controllers/authController.js';
 import { registerInvestor } from '../controllers/accountController.js';
 
 const router = express.Router();
@@ -21,5 +21,6 @@ router.post('/register-admin',registerAdmin)
 router.post('/register-investor',registerInvestor)
 router.post('/login-admin',loginAdmin)
 router.post('/login-showroom-manager',loginShowroomManager)
+router.get('/users/accountant', findUsersByRole);
 
 export default router;

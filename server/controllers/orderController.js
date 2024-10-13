@@ -6,6 +6,7 @@ import Product from "../models/product.js";
 import moment from 'moment';
 import UserPaymentOption from '../models/UserPaymentOption.js'; // Assuming this is the model for user payment options
 import CourierAccount from '../models/courierAccount.js';
+import Expense from '../models/expense.js';
 // Get all notes for a specific order
 export const getAllNotesController = async (req, res) => {
   try {
@@ -424,28 +425,53 @@ export const createOrder = async (req, res) => {
 
 export const createOnlinePosOrder = async (req, res) => {
   try {
+    // Extract order data from request
     const {
       serialId, orderNotes, name, address, area, phone, altPhone, notes,
       totalAmount, deliveryCharge, discount, grandTotal, advanced,
-      condition, cartItems, paymentMethod, courier, employee, userId
+      condition, cartItems, paymentMethod, courier, employee, userId, manager, payments,
+      exchangeDetails, exchangeAmount, adminDiscount
     } = req.body;
 
+    // Fetch the UserPaymentOption based on the manager/userId
+    const userPaymentOptions = await UserPaymentOption.findOne({ userId: manager });
+    console.log(userPaymentOptions);
+
+
+    if (!userPaymentOptions || !userPaymentOptions.paymentOption) {
+      console.log('User Payment Options or accounts not found for this manager');
+
+      return res.status(404).json({ message: 'User Payment Options or accounts not found for this manager' });
+    }
+
+    console.log(payments);
+    
+    // Validate payments before processing
+    if (!payments || !Array.isArray(payments) || payments.length !== 0) {
+      // Validate and update payment details
+      for (const payment of payments) {
+        const account = userPaymentOptions.paymentOption.accounts.find(acc => acc.accountType === payment.accountType);
+        const paymentOption = account.payments.find(p => p.paymentOption === payment.paymentOption);
+       if (paymentOption) {
+        payment.accountNumber = paymentOption.accountNumber;
+        paymentOption.amount += Number(payment.amount); // Ensure this is a number
+       }
+      }
+      await userPaymentOptions.save();
+    }
+
+    const invoice = generateInvoiceNumber();
+    const initialStatus = [{ name: 'new', user: null }];
     // Find the last order and get the highest orderNo
     const lastOrder = await Order.countDocuments({});
     // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
     const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
-
-    const invoice = generateInvoiceNumber();
-    // console.log("invoice:", invoice);
-
-    const initialStatus = [{ name: 'new', user: null }];
-
-
     // Create the order with the given data
     const order = new Order({
       serialId,
       invoice,
       orderNotes,
+      orderNo: newOrderNo,
       name,
       address,
       area,
@@ -463,19 +489,67 @@ export const createOnlinePosOrder = async (req, res) => {
       courier,
       employee,
       userId,
+      manager,
       status: initialStatus,
+      payments, // Include the updated payments
+      exchangeDetails,
+      exchangeAmount,
+      adminDiscount,
       orderNo: newOrderNo
     });
 
+    // Update stock for each cart item (reduce stock)
+    // for (const item of cartItems) {
+    //   console.log(item.productId);
+    //   const product = await Product.findById(item.productId);
+    //   console.log(product);
+    //   if (product) {
+    //     const sizeDetail = product.sizeDetails.find(size => size.size === item.size);
+    //     if (sizeDetail) {
+    //       sizeDetail.openingStock -= item.quantity; // Reduce stock
+    //       await product.save(); // Save updated product
+    //     }
+    //   }
+    // }
+
+    // Update stock for each exchange item (increase stock)
+    if (exchangeDetails && exchangeDetails.items) {
+      // Loop through the exchanged items
+      for (const exchangeItem of exchangeDetails.items) {
+        const product = await Product.findById(exchangeItem.productId);
+        if (product) {
+          const sizeDetail = product.sizeDetails.find(size => size.size === exchangeItem.size);
+          if (sizeDetail) {
+            sizeDetail.openingStock += exchangeItem.quantity; // Increase stock for exchange
+            await product.save(); // Save updated product
+          }
+        }
+      }
+
+      // Find the order by the exchangeDetails invoiceNo
+      const order = await Order.findOne({ "invoice": exchangeDetails.invoiceNo });
+      if (order) {
+        // Update the lastStatus to 'exchange'
+        order.lastStatus = {
+          name: 'exchange',
+          timestamp: new Date()
+        };
+
+        // Save the updated order
+        await order.save();
+      } else {
+        console.log('Order with this invoice number not found.');
+      }
+    }
+
     await order.save();
 
-    return res.status(201).json({ message: 'Order placed successfully', order });
+    return res.status(201).json({ message: 'Order placed successfully' });
   } catch (error) {
     console.error('Error placing order:', error);
     return res.status(500).json({ message: 'Server error', error });
   }
 };
-
 
 export const updateOrderStatus = async (req, res) => {
   try {
@@ -485,11 +559,14 @@ export const updateOrderStatus = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ error: 'Invalid userId format' });
     }
-
+    const order = await Order.findById(orderId);
     // Find the order by ID
     if (status === 'delivered') {
-      const order = await Order.findById(orderId);
-      console.log(order.grandTotal - order.advanced);
+      const amount = order.grandTotal - order.advanced;
+      const account = await CourierAccount.findOne();
+      account.availableAmount += amount;
+      order.advanced = order.grandTotal;
+      await account.save();
     }
 
     if (!order) {
@@ -539,7 +616,6 @@ export const updateOrderStatus = async (req, res) => {
           error: `Cannot move to ${status} after the order is confirmed.`
         });
       }
-
       // Additional condition after 'confirm' status
       const allowedAfterConfirm = ['hold', 'processing', 'sendToCourier'];
       if (!allowedAfterConfirm.includes(status) && currentStatus === 'confirm') {
@@ -547,7 +623,6 @@ export const updateOrderStatus = async (req, res) => {
           error: `After 'confirm', status can only be updated to 'hold', 'processing', or 'sendToCourier' directly. Cannot skip to ${status}.`
         });
       }
-
       // Restriction on transitioning from 'hold' or 'processing'
       if (currentStatus === 'hold' || currentStatus === 'processing') {
         const notAllowedFromHoldOrProcessing = ['courierProcessing', 'delivered', 'courierReturn'];
@@ -1015,35 +1090,44 @@ export const getManagerSalesStats = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(managerId)) {
       return res.status(400).json({ message: 'Invalid managerId' });
     }
-
     // Initialize date filter
     const dateFilter = {};
 
     if (singleDate && !isNaN(new Date(singleDate).getTime())) {
-      // If a single date is provided, set the filter for the whole day
+      // If a single date is provided, set the filter for the whole day (local time)
       const startDateLocal = new Date(`${singleDate}T00:00:00`);
       const endDateLocal = new Date(`${singleDate}T23:59:59`);
       dateFilter.$gte = startDateLocal;
       dateFilter.$lte = endDateLocal;
     } else {
-      // Create date range filter if startDate and endDate are provided or fallback to today
-      const today = new Date();
-      const startOfToday = new Date(today.setHours(0, 0, 0, 0));
-      const endOfToday = new Date(today.setHours(23, 59, 59, 999));
-
+      // Handle date range for startDate and endDate with local time
       if (startDate && !isNaN(new Date(startDate).getTime())) {
-        dateFilter.$gte = new Date(startDate);
-      } else {
-        dateFilter.$gte = startOfToday;
+        // Set startDate with local time at the start of the day
+        const startDateLocal = new Date(`${startDate}T00:00:00`);
+        dateFilter.$gte = startDateLocal;
       }
 
       if (endDate && !isNaN(new Date(endDate).getTime())) {
-        dateFilter.$lte = new Date(endDate);
-      } else {
+        // Set endDate with local time at the end of the day
+        const endDateLocal = new Date(`${endDate}T23:59:59`);
+        dateFilter.$lte = endDateLocal;
+      }
+
+      // If neither startDate nor endDate is provided, fallback to today's date range (optional)
+      if (!startDate && !endDate) {
+        const today = new Date();
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+        dateFilter.$gte = startOfToday;
         dateFilter.$lte = endOfToday;
       }
     }
 
+    const expenses = await Expense.find({
+      senderId: new mongoose.Types.ObjectId(managerId),
+      createdAt: dateFilter,
+      isApprove: true,
+    }).lean();
     // Fetch orders with managerId, date filter, and serialId 'showroom'
     const orders = await Order.find({
       manager: new mongoose.Types.ObjectId(managerId),
@@ -1055,53 +1139,23 @@ export const getManagerSalesStats = async (req, res) => {
     let totalSellCount = 0;
     let totalSellAmount = 0;
     let totalExchangeAmount = 0;
-    let totalCashAmount = 0;
-    let totalCardAmount = 0;
-    let totalOnlineAmount = 0;
+    let totalExpense = 0;
 
     // Calculate totals
+    expenses.forEach(order => {
+      totalExpense += order.amount; 
+    });
     orders.forEach(order => {
-      totalSellCount += 1;  // Increment for each order
-      totalSellAmount += order.grandTotal || 0;  // Add grand total of each order
-      totalExchangeAmount += order.exchangeAmount || 0;  // Add exchange amount of each order
-
-      // Calculate total payments and classify by payment type
-      if (order.payments && Array.isArray(order.payments)) {
-        let totalPayments = 0;
-        order.payments.forEach(payment => {
-          const paymentAmount = parseFloat(payment.amount) || 0;
-          totalPayments += paymentAmount;
-          switch (payment.type) {
-            case 'Card':
-              totalCardAmount += paymentAmount;
-              break;
-            case 'Online':
-              totalOnlineAmount += paymentAmount;
-              break;
-            case 'Cash':
-              totalCashAmount += paymentAmount;
-              break;
-            default:
-              break;
-          }
-        });
-
-        // Cash amount is total order amount minus total payments
-        const orderCashAmount = order.grandTotal - totalPayments;
-        totalCashAmount += orderCashAmount;
-      } else {
-        // Handle the case where payments array is not present
-        totalCashAmount += order.grandTotal || 0;
-      }
+      totalSellCount += 1; 
+      totalSellAmount += order.grandTotal || 0;  
+      totalExchangeAmount += order.exchangeAmount || 0;  
     });
 
     res.status(200).json({
       totalSellCount,
       totalSellAmount,
       totalExchangeAmount,
-      totalCashAmount,
-      totalCardAmount,
-      totalOnlineAmount,
+      totalExpense
     });
   } catch (error) {
     console.error('Error fetching manager sales stats:', error);
@@ -1320,14 +1374,11 @@ export const createPOSOrder = async (req, res) => {
 
     // Fetch the UserPaymentOption based on the manager/userId
     const userPaymentOptions = await UserPaymentOption.findOne({ userId: manager });
-    console.log();
-
-
     if (!userPaymentOptions || !userPaymentOptions.paymentOption) {
-      console.log('User Payment Options or accounts not found for this manager');
-
       return res.status(404).json({ message: 'User Payment Options or accounts not found for this manager' });
     }
+    console.log(payments);
+    
     // Validate payments before processing
     if (!payments || !Array.isArray(payments) || payments.length !== 0) {
       // Validate and update payment details
@@ -1337,6 +1388,8 @@ export const createPOSOrder = async (req, res) => {
           return res.status(400).json({ message: `Account type ${payment.accountType} not found` });
         }
         const paymentOption = account.payments.find(p => p.paymentOption === payment.paymentOption);
+        console.log(paymentOption);
+        
         if (!paymentOption) {
           return res.status(400).json({ message: `Payment option ${payment.paymentOption} not found for account type ${payment.accountType}` });
         }
@@ -1346,7 +1399,6 @@ export const createPOSOrder = async (req, res) => {
         paymentOption.amount += Number(payment.amount); // Ensure this is a number
       }
       // Save updated user payment options after modifying payment amounts
-      console.log(userPaymentOptions);
 
       await userPaymentOptions.save();
     }
@@ -1448,7 +1500,7 @@ export const createPOSOrder = async (req, res) => {
     }
     await order.save();
 
-    return res.status(201).json({ message: 'Order placed successfully' });
+    return res.status(201).json({ message: 'Order placed successfully' , order });
   } catch (error) {
     console.error('Error placing order:', error);
     return res.status(500).json({ message: 'Server error', error });
@@ -1515,8 +1567,8 @@ export const getCourierProcessingOrders = async (req, res) => {
 
 export const handleOrderReturns = async (req, res) => {
   const { products, orderId, amount,
-    returnDeliveryCharge,
-    partialReturn, } = req.body;
+    returnDeliveryCharge,userId,
+    partialReturn  } = req.body;
 
   try {
     // Find the order by orderId
@@ -1550,12 +1602,15 @@ export const handleOrderReturns = async (req, res) => {
     // Determine the new status based on the flags
     if (returnDeliveryCharge) {
       order.lastStatus.name = 'returnWithDeliveryCharge';
+      order.status.push({ name:'returnWithDeliveryCharge', user: userId, timestamp: new Date() });
     } else if (returnDeliveryCharge && partialReturn) {
       order.lastStatus.name = 'partialReturn';
+      order.status.push({ name:'partialReturn', user: userId, timestamp: new Date() });
     } else {
       order.lastStatus.name = 'return';
+      order.status.push({ name:'return', user: userId, timestamp: new Date() });
     }
-
+   
     // // Update the order status
     await order.save();
 
