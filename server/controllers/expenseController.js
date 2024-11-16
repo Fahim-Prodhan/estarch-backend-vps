@@ -1,10 +1,31 @@
 import Expense from '../models/expense.js';
 import Asset from '../models/Assect.js';
-import MainAccount from "../models/mainAccount.js";
+import User from '../models/user.js';
+import UserPaymentOption from "../models/UserPaymentOption.js";
 // Create a new expense
 export const createExpense = async (req, res) => {
+    const { amount,
+        expenseType,
+        details,
+        quantity,
+        isAsset,
+        isApprove,
+        assetName,
+        senderId } = req.body
+    const accountants = await User.findOne({ role: 'accountant' });
     try {
-        const expense = new Expense(req.body);
+        const data = {
+            amount,
+            expenseType,
+            details,
+            quantity,
+            isAsset,
+            isApprove,
+            assetName,
+            senderId,
+            receiverId: accountants._id
+        }
+        const expense = new Expense(data);
         await expense.save();
         res.status(201).json({ message: 'Expense created successfully', expense });
     } catch (error) {
@@ -72,11 +93,12 @@ export const handleApprove = async (req, res) => {
         if (!expense) {
             return res.status(404).json({ message: 'Expense not found' });
         }
-        const receiver = await MainAccount.findOne({ userId: expense.receiverId });
-        if (receiver) {
-            receiver.earnAmount -= expense.amount;
-            await receiver.save();
-        }
+        const accountUser = await User.findOne({ _id: expense.senderId });
+        const accountPayment = await UserPaymentOption.findOne({ userId: accountUser._id });
+        const accounts = accountPayment.paymentOption.accounts.find(acc => acc.accountType.toLowerCase() === 'cash');
+        const paymentDetails = accounts.payments.find(p => p.paymentOption === '');
+        paymentDetails.amount -= parseInt(expense.amount, 10);
+        await accountPayment.save();
         expense.isApprove = true;
         await expense.save();
 
@@ -84,7 +106,7 @@ export const handleApprove = async (req, res) => {
             const asset = new Asset({
                 name: expense.assetName,
                 quantity: expense.quantity,
-                price: expense.amount / expense.quantity, 
+                price: expense.amount / expense.quantity,
             });
 
             await asset.save();

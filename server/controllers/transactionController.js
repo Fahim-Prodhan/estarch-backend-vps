@@ -27,6 +27,7 @@ export const createTransaction = async (req, res) => {
             isApprove: false,
             payments
         });
+        console.log(transaction);
 
         await transaction.save();
         res.status(201).json({ message: "Transaction created successfully", transaction });
@@ -92,7 +93,7 @@ export const approveTransaction = async (req, res) => {
             const receiver = await Investor.findOne({ userId: transaction.receiverId });
 
             if (sender && receiver) {
-                const accountPayment = await UserPaymentOption.findOne({ userId: transaction.senderId });
+                const accountPayment = await UserPaymentOption.findOne({ userId: transaction.senderId });           
                 for (const payment of transaction.payments) {
                     const { accountType, paymentOption, amount } = payment;
 
@@ -104,6 +105,8 @@ export const approveTransaction = async (req, res) => {
                         const paymentDetails = account.payments.find(p => p.paymentOption === paymentOption);
 
                         if (paymentDetails) {
+                            console.log(paymentDetails);
+                            
                             // Subtract the amount from the user's payment balance
                             paymentDetails.amount -= amount;
 
@@ -121,7 +124,7 @@ export const approveTransaction = async (req, res) => {
                 }
                 // Add to receiver's balance
                 receiver.withdrawAmount += transaction.amount;
-                await sender.save();
+                await accountPayment.save();
                 await receiver.save();
 
                 res.status(200).json({ message: "Transaction approved and accounts updated", transaction });
@@ -176,7 +179,7 @@ export const approveTransaction = async (req, res) => {
 
                         if (paymentDetails) {
                             // Subtract the amount from the user's payment balance
-                            paymentDetails.amount += amount;
+                            paymentDetails.amount += parseInt(amount, 10);
                         } else {
                             return res.status(404).json({ message: `Payment option ${paymentOption} not found` });
                         }
