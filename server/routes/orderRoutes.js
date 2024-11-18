@@ -27,7 +27,8 @@ import {
     getSentToCourierOrders,
     getCourierProcessingOrders,
     handleOrderReturns, 
-    profitCountForShowroom
+    profitCountForShowroom,
+    getBestSellingReport
     
 } from '../controllers/orderController.js';
 
@@ -61,5 +62,6 @@ router.post('/orders/returns', handleOrderReturns);
 router.get('/get-sent-courier-orders', getSentToCourierOrders);
 router.get('/get-courier-processing-orders', getCourierProcessingOrders);
 router.get('/showroom-profit', profitCountForShowroom);
+router.get('/report-best-selling', getBestSellingReport);
 
 export default router;
