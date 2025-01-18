@@ -17,7 +17,8 @@ import {
     getCategoriesByTypeName,
     getCategoryById,
     toggleCategoryStatus,
-    toggleSubCategoryStatus
+    toggleSubCategoryStatus,
+    getSubCategoryById
 } from '../controllers/categoryController.js';
 import uploader from '../middleware/uploader.js';
 
@@ -28,6 +29,7 @@ router.post('/categories', uploader.single('image'), createCategory);
 
 router.post('/subcategories',uploader.single('image'), createSubCategory);
 router.get('/find/:id', getCategoryById);
+router.get('/subcategories/find/:id', getSubCategoryById);
 router.get('/subcategories', getSubCategories);
 router.get('/categories', getCategoriesWithSubCategoriesAndTypes);
 router.get('/categories/:typeName', getCategoriesByTypeName);

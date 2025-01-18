@@ -1801,8 +1801,8 @@ const endOfDay = (date) => {
 
 export const getBestSellingReport = async (req, res) => {
   try {
-    const { singleDate, startDate, endDate, serialId } = req.query;
-    console.log({ singleDate, startDate, endDate, serialId });
+    const { singleDate, startDate, endDate, serialId, sku } = req.query;
+    console.log({ singleDate, startDate, endDate, serialId, sku });
 
     // Initialize date filter
     const dateFilter = {};
@@ -1829,6 +1829,9 @@ export const getBestSellingReport = async (req, res) => {
         serialId: { $in: ['E-commerce', 'Store', 'Facebook', 'WhatsApp'] },
       };
     }
+
+    // Initialize SKU filter
+    const skuFilter = sku ? { 'product.SKU': { $regex: sku, $options: "i" } } : {};
 
     // Aggregate orders based on the date or date range (or lifetime if no date is provided)
     const orders = await Order.aggregate([
@@ -1862,6 +1865,11 @@ export const getBestSellingReport = async (req, res) => {
         $unwind: '$product',
       },
       {
+        $match: {
+          ...skuFilter, // Apply the SKU filter
+        },
+      },
+      {
         $lookup: {
           from: 'categories',
           localField: 'product.selectedCategoryName',
@@ -1893,7 +1901,7 @@ export const getBestSellingReport = async (req, res) => {
         $project: {
           productId: '$_id',
           productName: '$product.productName',
-          SKU:'$product.SKU',
+          SKU: '$product.SKU', // Include SKU in output
           totalQuantity: 1,
           totalRevenue: 1,
           images: '$product.images',
@@ -1910,119 +1918,3 @@ export const getBestSellingReport = async (req, res) => {
     return res.status(500).json({ message: 'Something went wrong' });
   }
 };
-
-// export const getBestSellingReport = async (req, res) => {
-//   try {
-//     const { singleDate, startDate, endDate, serialId } = req.query;
-//     console.log({ singleDate, startDate, endDate, serialId });
-
-//     // Initialize date filter
-//     const dateFilter = {};
-
-//     if (singleDate && !isNaN(new Date(singleDate).getTime())) {
-//       const startDateLocal = startOfDay(singleDate);
-//       const endDateLocal = endOfDay(singleDate);
-//       dateFilter.$gte = startDateLocal;
-//       dateFilter.$lte = endDateLocal;
-//     } else if (startDate && !isNaN(new Date(startDate).getTime()) && endDate && !isNaN(new Date(endDate).getTime())) {
-//       const startDateLocal = startOfDay(startDate);
-//       const endDateLocal = endOfDay(endDate);
-//       dateFilter.$gte = startDateLocal;
-//       dateFilter.$lte = endDateLocal;
-//     }
-
-//     // Initialize serialId filter
-//     let serialIdFilter = {};
-
-//     if (serialId === 'showroom') {
-//       serialIdFilter = { serialId: 'showroom' };
-//     } else if (serialId === 'online') {
-//       serialIdFilter = {
-//         serialId: { $in: ['E-commerce', 'Store', 'Facebook', 'WhatsApp'] },
-//       };
-//     }
-
-//     // Aggregate orders based on the date or date range (or lifetime if no date is provided)
-//     const orders = await Order.aggregate([
-//       {
-//         $match: {
-//           ...(dateFilter.$gte && dateFilter.$lte
-//             ? { createdAt: { $gte: dateFilter.$gte, $lte: dateFilter.$lte } }
-//             : {}),
-//           ...serialIdFilter,
-//         },
-//       },
-//       {
-//         $unwind: '$cartItems', // Flatten the cart items array
-//       },
-//       {
-//         $group: {
-//           _id: '$cartItems.productId',
-//           totalQuantity: { $sum: '$cartItems.quantity' },
-//           totalRevenue: { $sum: { $multiply: ['$cartItems.quantity', '$cartItems.price'] } },
-//         },
-//       },
-//       {
-//         $lookup: {
-//           from: 'products',
-//           localField: '_id',
-//           foreignField: '_id',
-//           as: 'product',
-//         },
-//       },
-//       {
-//         $unwind: '$product',
-//       },
-//       {
-//         $lookup: {
-//           from: 'categories',
-//           localField: 'product.selectedCategoryName',
-//           foreignField: 'name',
-//           as: 'category',
-//         },
-//       },
-//       {
-//         $unwind: { path: '$category', preserveNullAndEmptyArrays: true },
-//       },
-//       {
-//         $lookup: {
-//           from: 'subcategories',
-//           localField: 'product.selectedSubCategory',
-//           foreignField: 'name',
-//           as: 'subcategory',
-//         },
-//       },
-//       {
-//         $unwind: { path: '$subcategory', preserveNullAndEmptyArrays: true },
-//       },
-//       {
-//         $sort: { totalQuantity: -1 }, // Sort by total quantity sold
-//       },
-//       {
-//         $limit: 20, // Limit to top 20 best sellers
-//       },
-//       {
-//         $project: {
-//           productId: '$_id',
-//           productName: '$product.productName',
-//           SKU: '$product.SKU', // Add SKU here
-//           totalQuantity: 1,
-//           totalRevenue: 1,
-//           images: '$product.images',
-//           categoryName: { $ifNull: ['$category.name', null] },  // If no category, return null
-//           subcategoryName: { $ifNull: ['$subcategory.name', null] }  // If no subcategory, return null
-//         }
-//       },
-//     ]);
-
-//     // Return the aggregated best-selling products with SKU included
-//     return res.status(200).json(orders);
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ message: 'Something went wrong' });
-//   }
-// };
-
-
-
-

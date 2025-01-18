@@ -59,6 +59,16 @@ export const getCategoryById = async (req, res) =>{
         res.send(error)
     }
 }
+// get Subcategory by categoryID
+export const getSubCategoryById = async (req, res) =>{
+    const { id } = req.params;
+    try {
+        const result = await SubCategory.findById(id)
+        res.send(result)
+    } catch (error) {
+        res.send(error)
+    }
+}
 
 
 // Get all Categories with SubCategories
