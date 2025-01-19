@@ -1,6 +1,6 @@
 import Product from "../models/product.js";
 import SubCategory from '../models/subCategory.js';
-import Order from '../models/order.js'; 
+import Order from '../models/order.js';
 
 // Create a new product
 export const createProduct = async (req, res) => {
@@ -215,13 +215,15 @@ export const getAllProductsByCategoryId = async (req, res) => {
 // getAllProductsByCategoryName with filter main one (fahim)
 export const getAllProductsByCategoryName = async (req, res) => {
   const { categoryName } = req.params;
-  const { ranges, subcategories, sizes, sortBy } = req.query;
+  // const { ranges, subcategories, sizes, sortBy } = req.query;
+  const { ranges, subcategories, sizes, sortBy, page = 1, limit = 8 } = req.query;
+  let limitForProduct = page * limit;
 
   try {
     // Decode the categoryName and trim spaces
     const decodedCategoryName = decodeURIComponent(categoryName).trim();
-    console.log(categoryName);
-    
+    // console.log(categoryName);
+
 
     // Parse query parameters
     let parsedRanges = [];
@@ -298,7 +300,61 @@ export const getAllProductsByCategoryName = async (req, res) => {
     }
 
     // Fetch products based on the constructed query and sort order
-    const products = await Product.find(query).sort(sortOptions).populate('charts');
+    const products = await Product.find(query)
+    .sort(sortOptions)
+    .limit(Number(limitForProduct))
+    .populate('charts');
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// getAllProductsByCategoryNameApp no with filter main one (fahim) (no scroll loading)
+export const getAllProductsByCategoryNameApp = async (req, res) => {
+  const { categoryName } = req.params;
+  // const { ranges, subcategories, sizes, sortBy } = req.query;
+  // const { ranges, subcategories, sizes, sortBy, page = 1, limit = 8 } = req.query;
+
+  try {
+    // Decode the categoryName and trim spaces
+    const decodedCategoryName = decodeURIComponent(categoryName).trim();
+    // console.log(categoryName);
+
+   // Build the query condition
+   let query = {
+    selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') },
+    // serialNo: { $gt: 0 },
+    catSerialNo: { $gt: 0 },
+  };
+    const products = await Product.find(query)
+    .populate('charts');
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// getAllProductsByCategoryName with filter main one (fahim)
+export const getAllProductsByCategoryNameHome = async (req, res) => {
+  const { categoryName } = req.params;
+
+  try {
+    // Decode the categoryName and trim spaces
+    const decodedCategoryName = decodeURIComponent(categoryName).trim();
+   
+    let query = {
+      selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') },
+      // serialNo: { $gt: 0 },
+      catSerialNo: { $gt: 0 },
+    };
+  
+    // Fetch products based on the constructed query and sort order
+    const products = await Product.find(query)
+    .limit(12)
+    .populate('charts');
     res.json(products);
   } catch (err) {
     console.error("Error fetching products:", err);
@@ -330,10 +386,13 @@ export const getAllProductsByCategoryNameStatusOn = async (req, res) => {
 // get Product By subcategoryName
 export const getAllProductsBySubcategoryNameHome = async (req, res) => {
   const { subcategoryName } = req.params; // Assuming you're passing the subcategory as a query parameter
+  const decodedSubCategoryName = decodeURIComponent(subcategoryName).trim();
 
   try {
-    const products = await Product.find({ selectedSubCategory: subcategoryName, SubcatSerialNo: { $gt: 0 } });
+    const products = await Product.find({ selectedSubCategory: decodedSubCategoryName, SubcatSerialNo: { $gt: 0 } }).limit(12);
     const subcategory = await SubCategory.findOne({ name: subcategoryName }).populate('category')
+    console.log(products);
+    
     res.status(200).json({ products, subcategory });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching products', error });
@@ -345,13 +404,13 @@ export const getAllProductsBySubcategoryName = async (req, res) => {
   const { subcategoryName } = req.params;
   const { ranges, sizes, sortBy } = req.query;
 
-  
+
 
   try {
     // Decode the categoryName and trim spaces
     const decodedSubCategoryName = decodeURIComponent(subcategoryName).trim();
     console.log(decodedSubCategoryName);
-    
+
 
     // Parse query parameters
     let parsedRanges = [];
@@ -534,7 +593,7 @@ export const getAllNewArrivalProduct = async (req, res) => {
 
 export const getHomePageNewArrival = async (req, res) => {
   try {
-    const newArrival = await Product.find({ serialNo: { $gt: 0 } }).sort({serialNo: 1}).limit(10)
+    const newArrival = await Product.find({ serialNo: { $gt: 0 } }).sort({ serialNo: 1 }).limit(10)
     res.send(newArrival)
   } catch (error) {
     res.send(error)
@@ -1102,7 +1161,7 @@ export const getProductByBarcodeForPos = async (req, res) => {
       openingStock: sizeDetail.openingStock,
       ospPrice: sizeDetail.ospPrice,
       productName: product.productName,
-      quantity: 1, 
+      quantity: 1,
       regularPrice: sizeDetail.regularPrice,
       salePrice: sizeDetail.salePrice,
       serialNo: product.serialNo,
@@ -1111,7 +1170,7 @@ export const getProductByBarcodeForPos = async (req, res) => {
       totalStock: product.sizeDetails.reduce((total, detail) => total + detail.openingStock, 0),
       wholesalePrice: sizeDetail.wholesalePrice,
       _id: product._id,
-      productId:product._id
+      productId: product._id
     };
 
     return res.status(200).json(response);
@@ -1183,21 +1242,21 @@ export const calculateTotalStockAndPrices = async (req, res) => {
     let totalWholesalePrice = 0;
     let totalOspPrice = 0;
 
-// Loop through each product and calculate totals
-products.forEach((product) => {
-  // Sum up stock and prices for each product's sizeDetails
-  product.sizeDetails.forEach((sizeDetail) => {
-    const stock = sizeDetail.openingStock || 0;
-    totalStock += stock;
-    
-    // Multiply each price by its corresponding openingStock
-    totalRegularPrice += (sizeDetail.regularPrice || 0) * stock;
-    totalSalePrice += (sizeDetail.salePrice || 0) * stock;
-    totalWholesalePrice += (sizeDetail.wholesalePrice || 0) * stock;
-    totalOspPrice += (sizeDetail.ospPrice || 0) * stock;
-    totalPurchasePrice += (sizeDetail.purchasePrice || 0) * stock;
-  });
-});
+    // Loop through each product and calculate totals
+    products.forEach((product) => {
+      // Sum up stock and prices for each product's sizeDetails
+      product.sizeDetails.forEach((sizeDetail) => {
+        const stock = sizeDetail.openingStock || 0;
+        totalStock += stock;
+
+        // Multiply each price by its corresponding openingStock
+        totalRegularPrice += (sizeDetail.regularPrice || 0) * stock;
+        totalSalePrice += (sizeDetail.salePrice || 0) * stock;
+        totalWholesalePrice += (sizeDetail.wholesalePrice || 0) * stock;
+        totalOspPrice += (sizeDetail.ospPrice || 0) * stock;
+        totalPurchasePrice += (sizeDetail.purchasePrice || 0) * stock;
+      });
+    });
 
     // Send the totals as a response
     res.status(200).json({

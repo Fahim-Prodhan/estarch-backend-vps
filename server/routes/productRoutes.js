@@ -1,5 +1,5 @@
 import express from 'express';
-import {getProductForSearch,getBestSellingProducts,updatePurchasePriceToRatio,getProductByBarcodeForPos, getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival,getAllStatusOnProduct, updateProductCategorySerials,updateProductSubcategorySerials, getAllProductsByCategoryNameStatusOn,getAllProductsBySubcategoryNameStatusOn, getAllProductsBySubcategoryNameHome ,calculateTotalStockAndPrices} from '../controllers/productController.js';
+import {getProductForSearch,getAllProductsByCategoryNameApp, getAllProductsByCategoryNameHome,getBestSellingProducts,updatePurchasePriceToRatio,getProductByBarcodeForPos, getProductByBarcode,searchProductByBarcode,toggleBooleanField,toggleSizeAvailability,searchProductListsByName,updateProductSerials,getProducts, createProduct,getProductsForPos, getAllProducts, getProductById, updateProduct, deleteProduct, getAllProductsByType, getAllProductsByCategoryId, getNewArrival,getFeaturedProducts,getAllNewArrivalProduct,getAllFeatureProduct,generateSku,getAllProductsByCategoryName,getProductByName,getAllProductsBySubcategoryName,getHomePageNewArrival,getAllStatusOnProduct, updateProductCategorySerials,updateProductSubcategorySerials, getAllProductsByCategoryNameStatusOn,getAllProductsBySubcategoryNameStatusOn, getAllProductsBySubcategoryNameHome ,calculateTotalStockAndPrices} from '../controllers/productController.js';
 
 const router = express.Router();
 
@@ -16,6 +16,8 @@ router.get('/products-for-pos', getProductsForPos);
 router.get('/feature-products', getFeaturedProducts);
 router.get('/products/category/:id', getAllProductsByCategoryId);
 router.get('/products/category/products/:categoryName', getAllProductsByCategoryName);
+router.get('/products/category/products/app/:categoryName', getAllProductsByCategoryNameApp);
+router.get('/products/category/products/home/:categoryName', getAllProductsByCategoryNameHome);
 router.get('/products/category-status-on/products/:categoryName', getAllProductsByCategoryNameStatusOn);
 router.get('/products/subcategory-status-on/products/:subcategoryName', getAllProductsBySubcategoryNameStatusOn);
 router.get('/products/subcategory/:subcategoryName', getAllProductsBySubcategoryName);
