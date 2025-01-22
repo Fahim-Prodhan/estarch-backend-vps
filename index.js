@@ -63,7 +63,8 @@ const allowedOrigins = [
   'https://www.estarch.shop',
   'http://localhost:5173',
   'https://showroom.estarch.com.bd',
-  'http://192.168.0.103:8081'
+  'http://192.168.0.103:8081',
+  'https://estarch-admin.vercel.app'
 ];
 
 app.use(
