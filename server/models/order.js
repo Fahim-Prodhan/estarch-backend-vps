@@ -62,9 +62,7 @@ const orderSchema = new mongoose.Schema({
       required: true, 
       default: 'new'
     },
-    timestamp: {
-      type: Date
-    }
+      timestamp: { type: Date, default: Date.now }
   },
   isPrint:{type: Boolean, default:false},
   payments:[],
@@ -79,9 +77,27 @@ const orderSchema = new mongoose.Schema({
       size: { type: String, required: true },
     }]
   },
+  
+  coupon: {
+    name: { type: String, default: null },
+    discountAmount: { type: Number, default: 0 },
+  },
+  giftCard: {
+    code: { type: String, default: null },
+    giftAmount: { type: Number, default: 0 },
+  },
+
   exchangeAmount:{ type: Number, default: null }
 
 }, { timestamps: true });
+
+// Middleware to update lastStatus.timestamp when lastStatus.name changes
+orderSchema.pre('save', function (next) {
+  if (this.isModified('lastStatus.name')) {
+    this.lastStatus.timestamp = new Date(); // Update the timestamp
+  }
+  next();
+});
 
 // Create and export the Order model
 const Order = mongoose.model('Order', orderSchema);
