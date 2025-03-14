@@ -1487,11 +1487,10 @@ export const createPOSOrder = async (req, res) => {
       }
     }
 
-
     // Send SMS only if serialId is 'showroom' and phone is provided
     if (serialId === 'showroom' && phone) {
       try {
-        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=ESTARCH&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
         const response = await sendSMS(primaryUrl);
         console.log('SMS sent:', response);
       } catch (error) {

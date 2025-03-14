@@ -745,6 +745,7 @@ export const getProductById = async (req, res) => {
 export const getProductByName = async (req, res) => {
   const { productName } = req.params;
   const { sku } = req.params
+console.log(sku);
 
   try {
     // Decode and trim productName

@@ -9,13 +9,14 @@ import mongoose from 'mongoose';
 
 // Send OTP function
 const sendOtp = async (mobile, otp) => {
-  const url = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${mobile}&messageContent=Your OTP is ${otp}`;
+  const url = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=ESTARCH&toUser=${mobile}&messageContent=Your OTP is ${otp}`;
   await axios.get(url);
 };
 
 export const registerUser = async (req, res) => {
   const { mobile } = req.body;
-
+  console.log(mobile);
+  
   // Validate mobile number
   if (!mobile || !/^\+880[0-9]{10}$/.test(mobile)) {
     return res.status(400).json({ message: 'Invalid mobile number' });
@@ -373,5 +374,113 @@ export const findUsersByRole = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+export const registerUserApp = async (req, res) => {
+  try {
+    const { fullName, address, mobile, email, password } = req.body;
+
+    // Check if the mobile number is already registered
+    const existingUser = await User.findOne({ mobile });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Mobile number is already registered' });
+    }
+    // Check if the email is already registered (if provided)
+    if (email) {
+      const existingEmail = await User.findOne({ email });
+      if (existingEmail) {
+        return res.status(400).json({ message: 'Email is already registered' });
+      }
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create a new user
+    const newUser = new User({
+      fullName,
+      address,
+      mobile,
+      email: email || undefined, 
+      password: hashedPassword,
+    });
+
+    await newUser.save();
+
+    return res.status(201).json({ message: 'User registered successfully', user: newUser });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const loginUserApp = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid email or password' });
+    }
+
+    return res.status(200).json({ message: 'Login successful', user });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const loginWithPhoneNumber = async (req, res) => {
+  try {
+    const { mobile } = req.body;
+    // Check if user exists
+    let user = await User.findOne({ mobile });
+    if (!user) {
+      user = new User({ mobile }); // Create new user with only mobile number
+      await user.save();
+    }
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+    await user.save();
+    // Send OTP
+    await sendOtp(mobile, otp);
+    return res.status(200).json({ message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const verifyOtpForApp = async (req, res) => {
+  try {
+    const { mobile, otp } = req.body;
+
+    // Check if user exists
+    const user = await User.findOne({ mobile });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    // Verify OTP
+    if (user.otp !== otp || new Date() > user.otpExpires) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Clear OTP after successful verification
+    user.otp = null;
+    user.otpExpires = null;
+    user.isActive = true;
+    await user.save();
+
+    return res.status(200).json({ message: 'OTP verified successfully', user });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };

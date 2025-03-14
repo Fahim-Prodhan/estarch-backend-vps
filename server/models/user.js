@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  address: {
+    type: String,
+    default: ''
+  },
   mobile: {
     type: String,
     required: [true, 'Mobile number is required'],
