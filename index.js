@@ -39,6 +39,12 @@ import assetRoutes from './server/routes/assetsRoutes.js'
 import manufactureProduct from './server/routes/manufactureProductRoutes.js'
 import cashRoutes from './server/routes/cashRoutes.js';
 import courierAccountRoutes from './server/routes/courierAccountRoutes.js';
+import couponRoutes from './server/routes/couponRoutes.js';
+import giftCardRoutes from './server/routes/giftCardRoutes.js';
+import membershipRoutes from './server/routes/membershipRoutes.js';
+import footerContentsRoutes from './server/routes/footerContentsRoutes.js';
+
+
 dotenv.config();
 
 const app = express();
@@ -123,6 +129,10 @@ app.use('/api/product-asset',productAssetRoutes)
 app.use('/api/others-asset',assetRoutes)
 app.use('/api/manufacture-product',manufactureProduct)
 app.use('/api/courier-account', courierAccountRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/giftcards', giftCardRoutes);
+app.use('/api/memberships', membershipRoutes);
+app.use('/api/footer-contents', footerContentsRoutes);
 // Upload route
 app.post('/upload', uploadSingle, (req, res) => {
   res.json({ file: req.file ? req.file.path : null });

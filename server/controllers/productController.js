@@ -249,6 +249,7 @@ export const getAllProductsByCategoryName = async (req, res) => {
       selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') },
       // serialNo: { $gt: 0 },
       catSerialNo: { $gt: 0 },
+      productStatus: true,
     };
     let andConditions = [];
 
@@ -327,6 +328,7 @@ export const getAllProductsByCategoryNameApp = async (req, res) => {
     selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') },
     // serialNo: { $gt: 0 },
     catSerialNo: { $gt: 0 },
+    productStatus: true,
   };
     const products = await Product.find(query)
     .populate('charts');
@@ -349,6 +351,7 @@ export const getAllProductsByCategoryNameHome = async (req, res) => {
       selectedCategoryName: { $regex: new RegExp(`^${decodedCategoryName}$`, 'i') },
       // serialNo: { $gt: 0 },
       catSerialNo: { $gt: 0 },
+      productStatus: true,
     };
   
     // Fetch products based on the constructed query and sort order
@@ -432,6 +435,8 @@ export const getAllProductsBySubcategoryName = async (req, res) => {
       selectedSubCategory: { $regex: new RegExp(`^${decodedSubCategoryName}$`, 'i') },
       // serialNo: { $gt: 0 },
       SubcatSerialNo: { $gt: 0 },
+      productStatus: true,
+      productStatus: true,
     };
 
     let andConditions = [];
@@ -1280,10 +1285,36 @@ export const calculateTotalStockAndPrices = async (req, res) => {
 };
 
 
+// export const getProductForSearch = async (req, res) => {
+//   try {
+//     // Find products where serialNo, catSerialNo, or SubcatSerialNo are greater than 0
+//     const products = await Product.find({
+//       $or: [
+//         { serialNo: { $gt: 0 } },
+//         { catSerialNo: { $gt: 0 } },
+//         { SubcatSerialNo: { $gt: 0 } }
+//       ]
+//     });
+
+//     // Check if products are found
+//     if (products.length === 0) {
+//       return res.status(404).json({ message: 'No products found with serial numbers greater than 0' });
+//     }
+
+//     // Send the products back as response
+//     res.status(200).json(products);
+//   } catch (error) {
+//     // Handle errors
+//     console.error('Error fetching products:', error);
+//     res.status(500).json({ message: 'Server error. Please try again later.' });
+//   }
+// };
+
 export const getProductForSearch = async (req, res) => {
   try {
-    // Find products where serialNo, catSerialNo, or SubcatSerialNo are greater than 0
+    // Find products that have serial numbers > 0 and productStatus is true
     const products = await Product.find({
+      productStatus: true,
       $or: [
         { serialNo: { $gt: 0 } },
         { catSerialNo: { $gt: 0 } },
@@ -1293,14 +1324,14 @@ export const getProductForSearch = async (req, res) => {
 
     // Check if products are found
     if (products.length === 0) {
-      return res.status(404).json({ message: 'No products found with serial numbers greater than 0' });
+      return res.status(404).json({ message: "No active products found with serial numbers greater than 0" });
     }
 
     // Send the products back as response
     res.status(200).json(products);
   } catch (error) {
     // Handle errors
-    console.error('Error fetching products:', error);
-    res.status(500).json({ message: 'Server error. Please try again later.' });
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Server error. Please try again later." });
   }
 };

@@ -147,7 +147,8 @@ export const getAllOrders = async (req, res) => {
     }
 
     const orders = await Order.find(query)
-      .sort({ updatedAt: -1, createdAt: -1 }) // Prioritize updatedAt, fallback to createdAt
+      // .sort({ updatedAt: -1, createdAt: -1 }) // Prioritize updatedAt, fallback to createdAt
+      .sort({ 'lastStatus.timestamp': -1 })
       .skip((page - 1) * size)
       .limit(size)
       .populate({
@@ -348,20 +349,19 @@ export const createOrder = async (req, res) => {
     const {
       orderNotes, name, address, area, phone, notes,
       advanced, condition, cartItems, paymentMethod,
-      userId
+      userId,coupon
     } = req.body;
-
-    console.log(cartItems);
 
 
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'new', user: null }];
 
     // Find the last order and get the highest orderNo
-    const lastOrder = await Order.countDocuments({});
+    // const lastOrder = await Order.countDocuments();
+    const lastOrder = await Order.findOne().sort({ orderNo: -1 }).select('orderNo');
+    
     // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
-    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
-
+    const newOrderNo = lastOrder.orderNo ? parseInt(lastOrder.orderNo + 1) : 1;
 
     let totalDiscount = 0;
     let totalAmount = 0;
@@ -391,7 +391,7 @@ export const createOrder = async (req, res) => {
         discountAmount
       };
     }));
-    const grandTotal = totalAmount + deliveryCharge;
+    const grandTotal = totalAmount + deliveryCharge - coupon?.discountAmount;
     const order = new Order({
       serialId: 'E-commerce',
       invoice,
@@ -412,7 +412,8 @@ export const createOrder = async (req, res) => {
       paymentMethod,
       userId,
       status: initialStatus,
-      orderNo: newOrderNo
+      orderNo: newOrderNo,
+      coupon: coupon
     });
     await order.save();
     return res.status(201).json({ message: 'Order placed successfully', order });
@@ -1181,14 +1182,27 @@ export const getShowroomOrders = async (req, res) => {
     if (invoice) {
       filters.invoice = invoice;
     }
-    // Only apply the date filter if neither phone nor invoice is provided
-    if (!phone && !invoice && date) {
-      const startDateLocal = new Date(`${date}T00:00:00`);
-      const endDateLocal = new Date(`${date}T23:59:59`);
-      filters.createdAt = {
-        $gte: startDateLocal.toISOString(),
-        $lt: endDateLocal.toISOString()
-      };
+
+    // Handle date filter
+    if (!phone && !invoice) {
+      if (date) {
+        // If a specific date is provided, filter for that date
+        const startDateLocal = new Date(`${date}T00:00:00`);
+        const endDateLocal = new Date(`${date}T23:59:59`);
+        filters.createdAt = {
+          $gte: startDateLocal.toISOString(),
+          $lt: endDateLocal.toISOString(),
+        };
+      } else {
+        // If no date is provided, default to today's date
+        const today = new Date();
+        const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+        const endOfToday = new Date(today.setHours(23, 59, 59, 999));
+        filters.createdAt = {
+          $gte: startOfToday.toISOString(),
+          $lte: endOfToday.toISOString(),
+        };
+      }
     }
 
     // Fetch showroom orders with the applied filters
@@ -1369,7 +1383,7 @@ export const createPOSOrder = async (req, res) => {
       serialId, orderNotes, name, address, area, phone, altPhone, notes,
       totalAmount, deliveryCharge, discount, grandTotal, advanced,
       condition, cartItems, paymentMethod, courier, employee, userId, manager, payments,
-      exchangeDetails, exchangeAmount, adminDiscount
+      exchangeDetails, exchangeAmount, adminDiscount, giftCard,membership
     } = req.body;
 
     // Fetch the UserPaymentOption based on the manager/userId
@@ -1406,7 +1420,8 @@ export const createPOSOrder = async (req, res) => {
 
 
     const invoice = generateInvoiceNumber();
-    const initialStatus = [{ name: 'new', user: null }];
+    const initialStatus = [{ name: 'delivered', user: null }];
+    const lastStatus = { name: 'delivered'};
     // Find the last order and get the highest orderNo
     const lastOrder = await Order.countDocuments({});
     // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
@@ -1440,7 +1455,10 @@ export const createPOSOrder = async (req, res) => {
       exchangeDetails,
       exchangeAmount,
       adminDiscount,
-      orderNo: newOrderNo
+      orderNo: newOrderNo,
+      lastStatus:lastStatus,
+      giftCard,
+      membership
     });
 
     // Update stock for each cart item (reduce stock)
@@ -1488,15 +1506,16 @@ export const createPOSOrder = async (req, res) => {
     }
 
     // Send SMS only if serialId is 'showroom' and phone is provided
-    if (serialId === 'showroom' && phone) {
-      try {
-        const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=ESTARCH&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
-        const response = await sendSMS(primaryUrl);
-        console.log('SMS sent:', response);
-      } catch (error) {
-        console.error('Failed to send SMS:', error);
-      }
-    }
+    // if (serialId === 'showroom' && phone) {
+    //   try {
+    //     const primaryUrl = `https://smpp.revesms.com:7790/sendtext?apikey=2e2d49f9273cc83c&secretkey=f4bef7bd&callerID=1234&toUser=${phone}&messageContent=Thanks%20for%20Choosing%20'ESTARCH'%0AINV:%20${invoice}%0APaid:${totalAmount}TK%0AJoin%20us%20with%20Facebook%20:%20https://www.facebook.com/Estarch.com.bd%0AC.Care:%20+8801706060651`;
+    //     const response = await sendSMS(primaryUrl);
+    //     console.log('SMS sent:', response);
+    //   } catch (error) {
+    //     console.error('Failed to send SMS:', error);
+    //   }
+    // }
+
     await order.save();
 
     return res.status(201).json({ message: 'Order placed successfully' , order });
@@ -1797,42 +1816,149 @@ const endOfDay = (date) => {
   return end;
 };
 
+// this getBestSellingReport is deprecated for not handling the exchange amount
+// export const getBestSellingReport = async (req, res) => {
+//   try {
+//     const { singleDate, startDate, endDate, serialId, sku } = req.query;
+//     console.log({ singleDate, startDate, endDate, serialId, sku });
+
+//     // Initialize date filter
+//     const dateFilter = {};
+
+//     if (singleDate && !isNaN(new Date(singleDate).getTime())) {
+//       const startDateLocal = startOfDay(singleDate);
+//       const endDateLocal = endOfDay(singleDate);
+//       dateFilter.$gte = startDateLocal;
+//       dateFilter.$lte = endDateLocal;
+//     } else if (startDate && !isNaN(new Date(startDate).getTime()) && endDate && !isNaN(new Date(endDate).getTime())) {
+//       const startDateLocal = startOfDay(startDate);
+//       const endDateLocal = endOfDay(endDate);
+//       dateFilter.$gte = startDateLocal;
+//       dateFilter.$lte = endDateLocal;
+//     }
+
+//     // Initialize serialId filter
+//     let serialIdFilter = {};
+
+//     if (serialId === 'showroom') {
+//       serialIdFilter = { serialId: 'showroom' };
+//     } else if (serialId === 'online') {
+//       serialIdFilter = {
+//         serialId: { $in: ['E-commerce', 'Store', 'Facebook', 'WhatsApp'] },
+//       };
+//     }
+
+//     // Initialize SKU filter
+//     const skuFilter = sku ? { 'product.SKU': { $regex: sku, $options: "i" } } : {};
+
+//     // Aggregate orders based on the date or date range (or lifetime if no date is provided)
+//     const orders = await Order.aggregate([
+//       {
+//         $match: {
+//           ...(dateFilter.$gte && dateFilter.$lte
+//             ? { createdAt: { $gte: dateFilter.$gte, $lte: dateFilter.$lte } }
+//             : {}),
+//           ...serialIdFilter,
+//           "lastStatus.name": { $in: ["delivered", "exchange"] },
+//         },
+//       },
+//       {
+//         $unwind: '$cartItems', // Flatten the cart items array
+//       },
+//       {
+//         $group: {
+//           _id: '$cartItems.productId',
+//           totalQuantity: { $sum: '$cartItems.quantity' },
+//           totalRevenue: { $sum: { $multiply: ['$cartItems.quantity', '$cartItems.price'] } },
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: 'products',
+//           localField: '_id',
+//           foreignField: '_id',
+//           as: 'product',
+//         },
+//       },
+//       {
+//         $unwind: '$product',
+//       },
+//       {
+//         $match: {
+//           ...skuFilter, // Apply the SKU filter
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: 'categories',
+//           localField: 'product.selectedCategoryName',
+//           foreignField: 'name',
+//           as: 'category',
+//         },
+//       },
+//       {
+//         $unwind: { path: '$category', preserveNullAndEmptyArrays: true },
+//       },
+//       {
+//         $lookup: {
+//           from: 'subcategories',
+//           localField: 'product.selectedSubCategory',
+//           foreignField: 'name',
+//           as: 'subcategory',
+//         },
+//       },
+//       {
+//         $unwind: { path: '$subcategory', preserveNullAndEmptyArrays: true },
+//       },
+//       {
+//         $sort: { totalQuantity: -1 }, // Sort by total quantity sold
+//       },
+//       {
+//         $limit: 20, // Limit to top 10 best sellers
+//       },
+//       {
+//         $project: {
+//           productId: '$_id',
+//           productName: '$product.productName',
+//           SKU: '$product.SKU', // Include SKU in output
+//           totalQuantity: 1,
+//           totalRevenue: 1,
+//           images: '$product.images',
+//           categoryName: { $ifNull: ['$category.name', null] },  // If no category, return null
+//           subcategoryName: { $ifNull: ['$subcategory.name', null] }  // If no subcategory, return null
+//         }
+//       },
+//     ]);
+
+//     // Return the aggregated best-selling products
+//     return res.status(200).json(orders);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: 'Something went wrong' });
+//   }
+// };
+
 
 export const getBestSellingReport = async (req, res) => {
   try {
     const { singleDate, startDate, endDate, serialId, sku } = req.query;
     console.log({ singleDate, startDate, endDate, serialId, sku });
 
-    // Initialize date filter
     const dateFilter = {};
-
-    if (singleDate && !isNaN(new Date(singleDate).getTime())) {
-      const startDateLocal = startOfDay(singleDate);
-      const endDateLocal = endOfDay(singleDate);
-      dateFilter.$gte = startDateLocal;
-      dateFilter.$lte = endDateLocal;
-    } else if (startDate && !isNaN(new Date(startDate).getTime()) && endDate && !isNaN(new Date(endDate).getTime())) {
-      const startDateLocal = startOfDay(startDate);
-      const endDateLocal = endOfDay(endDate);
-      dateFilter.$gte = startDateLocal;
-      dateFilter.$lte = endDateLocal;
+    if (singleDate) {
+      dateFilter.$gte = startOfDay(singleDate);
+      dateFilter.$lte = endOfDay(singleDate);
+    } else if (startDate && endDate) {
+      dateFilter.$gte = startOfDay(startDate);
+      dateFilter.$lte = endOfDay(endDate);
     }
 
-    // Initialize serialId filter
     let serialIdFilter = {};
+    if (serialId === 'showroom') serialIdFilter = { serialId: 'showroom' };
+    else if (serialId === 'online') serialIdFilter = { serialId: { $in: ['E-commerce', 'Store', 'Facebook', 'WhatsApp'] } };
 
-    if (serialId === 'showroom') {
-      serialIdFilter = { serialId: 'showroom' };
-    } else if (serialId === 'online') {
-      serialIdFilter = {
-        serialId: { $in: ['E-commerce', 'Store', 'Facebook', 'WhatsApp'] },
-      };
-    }
+    const skuFilter = sku ? { 'product.SKU': { $regex: sku, $options: 'i' } } : {};
 
-    // Initialize SKU filter
-    const skuFilter = sku ? { 'product.SKU': { $regex: sku, $options: "i" } } : {};
-
-    // Aggregate orders based on the date or date range (or lifetime if no date is provided)
     const orders = await Order.aggregate([
       {
         $match: {
@@ -1840,6 +1966,7 @@ export const getBestSellingReport = async (req, res) => {
             ? { createdAt: { $gte: dateFilter.$gte, $lte: dateFilter.$lte } }
             : {}),
           ...serialIdFilter,
+          "lastStatus.name": { $in: ["delivered", "exchange"] },
         },
       },
       {
@@ -1848,8 +1975,7 @@ export const getBestSellingReport = async (req, res) => {
       {
         $group: {
           _id: '$cartItems.productId',
-          totalQuantity: { $sum: '$cartItems.quantity' },
-          totalRevenue: { $sum: { $multiply: ['$cartItems.quantity', '$cartItems.price'] } },
+          totalQuantity: { $sum: '$cartItems.quantity' }, // Total quantity sold
         },
       },
       {
@@ -1867,6 +1993,60 @@ export const getBestSellingReport = async (req, res) => {
         $match: {
           ...skuFilter, // Apply the SKU filter
         },
+      },
+      {
+        $lookup: {
+          from: 'orders',
+          localField: '_id',
+          foreignField: 'exchangeDetails.items.productId',
+          as: 'exchangeOrders',
+        },
+      },
+      {
+        $unwind: {
+          path: '$exchangeOrders',
+          preserveNullAndEmptyArrays: true, // Keep products without exchanges
+        },
+      },
+      {
+        $unwind: {
+          path: '$exchangeOrders.exchangeDetails.items',
+          preserveNullAndEmptyArrays: true, // Keep products without exchanges
+        },
+      },
+      {
+        $group: {
+          _id: '$_id',
+          totalQuantity: { $first: '$totalQuantity' }, // Retain the total quantity sold
+          exchangedQuantity: {
+            $sum: {
+              $cond: [
+                { $eq: ['$exchangeOrders.exchangeDetails.items.productId', '$_id'] },
+                '$exchangeOrders.exchangeDetails.items.quantity',
+                0,
+              ],
+            },
+          }, // Total quantity exchanged for this product
+        },
+      },
+      {
+        $project: {
+          productId: '$_id',
+          totalQuantity: { $subtract: ['$totalQuantity', '$exchangedQuantity'] }, // Adjust for exchanges
+          totalRevenue: { $sum: { $multiply: ['$cartItems.quantity', '$cartItems.price'] } },
+
+        },
+      },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: '_id',
+          as: 'product',
+        },
+      },
+      {
+        $unwind: '$product',
       },
       {
         $lookup: {
@@ -1891,29 +2071,33 @@ export const getBestSellingReport = async (req, res) => {
         $unwind: { path: '$subcategory', preserveNullAndEmptyArrays: true },
       },
       {
-        $sort: { totalQuantity: -1 }, // Sort by total quantity sold
+        $sort: { totalQuantity: -1 }, // Sort by adjusted total quantity
       },
       {
-        $limit: 20, // Limit to top 10 best sellers
+        $limit: 20, // Limit to top 20 best sellers
       },
       {
         $project: {
           productId: '$_id',
           productName: '$product.productName',
-          SKU: '$product.SKU', // Include SKU in output
+          SKU: '$product.SKU',
           totalQuantity: 1,
-          totalRevenue: 1,
+          totalRevenue: { $multiply: ['$product.salePrice', '$totalQuantity'] }, 
           images: '$product.images',
-          categoryName: { $ifNull: ['$category.name', null] },  // If no category, return null
-          subcategoryName: { $ifNull: ['$subcategory.name', null] }  // If no subcategory, return null
-        }
+          categoryName: { $ifNull: ['$category.name', null] },
+          subcategoryName: { $ifNull: ['$subcategory.name', null] },
+        },
       },
     ]);
 
-    // Return the aggregated best-selling products
     return res.status(200).json(orders);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Something went wrong' });
+    return res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+
+
+
+

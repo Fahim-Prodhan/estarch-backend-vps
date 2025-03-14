@@ -35,6 +35,8 @@ export const getPaymentOptionById = async (req, res) => {
   }
 };
 
+
+
 // Update a payment option by ID
 export const updatePaymentOption = async (req, res) => {
   console.log('working');
