@@ -1383,7 +1383,7 @@ export const createPOSOrder = async (req, res) => {
       serialId, orderNotes, name, address, area, phone, altPhone, notes,
       totalAmount, deliveryCharge, discount, grandTotal, advanced,
       condition, cartItems, paymentMethod, courier, employee, userId, manager, payments,
-      exchangeDetails, exchangeAmount, adminDiscount, giftCard
+      exchangeDetails, exchangeAmount, adminDiscount, giftCard,membership
     } = req.body;
 
     // Fetch the UserPaymentOption based on the manager/userId
@@ -1457,7 +1457,8 @@ export const createPOSOrder = async (req, res) => {
       adminDiscount,
       orderNo: newOrderNo,
       lastStatus:lastStatus,
-      giftCard
+      giftCard,
+      membership
     });
 
     // Update stock for each cart item (reduce stock)

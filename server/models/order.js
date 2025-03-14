@@ -86,6 +86,11 @@ const orderSchema = new mongoose.Schema({
     code: { type: String, default: null },
     giftAmount: { type: Number, default: 0 },
   },
+  membership: {
+    cardNumber: { type: Number, default: 0 },
+    membershipDiscount: { type: Number, default: 0 },
+    phone: { type: Number, default: 0 },
+  },
 
   exchangeAmount:{ type: Number, default: null }
 
