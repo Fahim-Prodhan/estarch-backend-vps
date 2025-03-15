@@ -70,7 +70,8 @@ const allowedOrigins = [
   'http://localhost:5173',
   'https://showroom.estarch.com.bd',
   'http://192.168.0.103:8081',
-  'https://estarch-admin.vercel.app'
+  'https://estarch-admin.vercel.app',
+  'http://localhost:8081'
 ];
 
 app.use(

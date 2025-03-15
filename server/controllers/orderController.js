@@ -118,7 +118,7 @@ export const getAllOrders = async (req, res) => {
 
     // Filter by serialId
     query['$and'].push({
-      serialId: { $in: ["E-commerce", "Store", "Facebook", "WhatsApp"] }
+      serialId: { $in: ["E-commerce", "Store", "Facebook", "WhatsApp", "App"] }
     });
 
     // Filter by status if provided
@@ -349,8 +349,13 @@ export const createOrder = async (req, res) => {
     const {
       orderNotes, name, address, area, phone, notes,
       advanced, condition, cartItems, paymentMethod,
-      userId,coupon
+      userId,coupon,serialId
     } = req.body;
+
+    console.log( orderNotes, name, address, area, phone, notes,
+      advanced, condition, cartItems, paymentMethod,
+      userId,coupon);
+    
 
 
     const invoice = generateInvoiceNumber();
@@ -393,7 +398,7 @@ export const createOrder = async (req, res) => {
     }));
     const grandTotal = totalAmount + deliveryCharge - coupon?.discountAmount;
     const order = new Order({
-      serialId: 'E-commerce',
+      serialId: serialId || 'E-commerce',
       invoice,
       orderNotes,
       name,
