@@ -469,9 +469,14 @@ export const createOnlinePosOrder = async (req, res) => {
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'new', user: null }];
     // Find the last order and get the highest orderNo
-    const lastOrder = await Order.countDocuments({});
+    // const lastOrder = await Order.countDocuments({});
+    // // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
+    // const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+
+    const lastOrder = await Order.findOne().sort({ orderNo: -1 }).select('orderNo');  
     // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
-    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+    const newOrderNo = lastOrder.orderNo ? parseInt(lastOrder.orderNo + 1) : 1;
+
     // Create the order with the given data
     const order = new Order({
       serialId,
@@ -809,7 +814,14 @@ export const getUserOrderByMobile = async (req, res) => {
     const orders = await Order.find({ phone }).populate('cartItems.productId').populate('userId').populate('employee');
 
     if (orders.length === 0) {
-      return res.status(404).json({ message: 'No orders found for this mobile number' });
+      const responseData = {
+        phone: phone,
+        name: '',
+        address: '',
+        orderList:[]
+      };
+  
+      return res.status(404).json(responseData);
     }
 
     // Extract common user details (assuming all orders have the same user details)
@@ -1390,7 +1402,6 @@ export const createPOSOrder = async (req, res) => {
       condition, cartItems, paymentMethod, courier, employee, userId, manager, payments,
       exchangeDetails, exchangeAmount, adminDiscount, giftCard,membership
     } = req.body;
-
     // Fetch the UserPaymentOption based on the manager/userId
     const userPaymentOptions = await UserPaymentOption.findOne({ userId: manager });
     if (!userPaymentOptions || !userPaymentOptions.paymentOption) {
@@ -1428,9 +1439,15 @@ export const createPOSOrder = async (req, res) => {
     const initialStatus = [{ name: 'delivered', user: null }];
     const lastStatus = { name: 'delivered'};
     // Find the last order and get the highest orderNo
-    const lastOrder = await Order.countDocuments({});
+    // const lastOrder = await Order.countDocuments({});
+    // // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
+    // const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+
+    const lastOrder = await Order.findOne().sort({ orderNo: -1 }).select('orderNo');
+    
     // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
-    const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
+    const newOrderNo = lastOrder.orderNo ? parseInt(lastOrder.orderNo + 1) : 1;
+
     // Create the order with the given data
     const order = new Order({
       serialId,
@@ -1465,7 +1482,8 @@ export const createPOSOrder = async (req, res) => {
       giftCard,
       membership
     });
-
+    console.log(order);
+    
     // Update stock for each cart item (reduce stock)
     for (const item of cartItems) {
       console.log(item.productId);

@@ -831,7 +831,7 @@ export const getProductsForPos = async (req, res) => {
       ];
     }
 
-    // Aggregate the products with total stock
+    // Aggregate the products with total stock and randomly select 8
     const productsWithTotalStock = await Product.aggregate([
       { $match: query },
       {
@@ -840,7 +840,8 @@ export const getProductsForPos = async (req, res) => {
             $sum: "$sizeDetails.openingStock"
           }
         }
-      }
+      },
+      { $sample: { size: 8 } } // Randomly pick 8 products
     ]);
 
     res.status(200).json(productsWithTotalStock);
@@ -848,6 +849,7 @@ export const getProductsForPos = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 export const generateSku = async (req, res) => {
