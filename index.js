@@ -71,7 +71,16 @@ const allowedOrigins = [
   'https://showroom.estarch.com.bd',
   'http://192.168.0.103:8081',
   'https://estarch-admin.vercel.app',
-  'http://localhost:8081'
+  'http://localhost:8081',
+  'https://estarch-client-test.vercel.app',
+  'https://estarch-admin-test.netlify.app',
+  'https://estarch-showroom-test.netlify.app',
+  'http://185.227.134.170:5001',
+  'https://genz.estarch.com.bd',
+  'https://showroom.estarch.online',
+  'https://admin.estarch.online',
+  'https://www.estarchbd.com',
+  'https://estarchbd.com',
 ];
 
 app.use(

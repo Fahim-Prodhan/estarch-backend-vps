@@ -886,12 +886,18 @@ export const getTotalOrderCountOfUser = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 export const getOrderByInvoice = async (req, res) => {
   try {
     const { invoice } = req.params;
     console.log(invoice);
 
-    const order = await Order.findOne({ invoice });
+    const order = await Order.findOne({ invoice})
+    .populate('userId', 'name email')
+    .populate('cartItems.productId', 'productName SKU sizeDetails selectedCategoryName selectedBrand ')
+    .populate('exchangeDetails.items.productId', 'productName SKU sizeDetails') // Populate sizeDetails for exchange items
+    .populate('manager', 'fullName')
+    .populate('employee', 'name');
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -900,6 +906,22 @@ export const getOrderByInvoice = async (req, res) => {
     res.status(200).json(order);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export const getLastOrderBySerialId = async (req, res) => {
+  try {
+    const order = await Order.findOne({ serialId: "showroom" })
+      .sort({ createdAt: -1 }) // Sort in descending order to get the latest
+      .lean(); // Use lean() for faster response
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json(order);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -1103,6 +1125,9 @@ export const getManagerSalesStats = async (req, res) => {
   try {
     const { singleDate, startDate, endDate } = req.query;
     const { managerId } = req.params;
+
+    console.log(singleDate);
+    
 
     // Validate managerId
     if (!mongoose.Types.ObjectId.isValid(managerId)) {

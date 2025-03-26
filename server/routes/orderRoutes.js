@@ -29,6 +29,7 @@ import {
     handleOrderReturns, 
     profitCountForShowroom,
     getBestSellingReport,
+    getLastOrderBySerialId,
     
     
 } from '../controllers/orderController.js';
@@ -49,6 +50,7 @@ router.get('/order/:id', getOrderById);
 router.get('/orders/:phone', getUserOrderByMobile);
 router.get('/order-count/:userId',getTotalOrderCountOfUser);
 router.get('/order/invoice/:invoice', getOrderByInvoice);
+router.get('/order/get/invoice', getLastOrderBySerialId);
 router.post('/orders/notes/:orderId', addNoteController);
 router.get('/orders/notes/:orderId',getAllNotesController);
 router.get('/order/status/:orderId', getAllStatusByOrderId);
