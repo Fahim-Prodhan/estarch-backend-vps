@@ -6,22 +6,16 @@ const generateCardNumber = () => {
 
 export const createMembershipCard = async (req, res) => {
     try {
-        const { tier, discountPercentage } = req.body;
+        const {cardNumber, tier, discountPercentage } = req.body;
 
-        if (!tier || discountPercentage === undefined) {
+        if (!tier || discountPercentage === undefined || !cardNumber) {
             return res.status(400).json({ success: false, message: "All fields are required." });
         }
 
-        let cardNumber;
-        let cardExists = true;
+        const existingCard = await MembershipCard.findOne({ cardNumber });
 
-        // Ensure the card number is unique
-        while (cardExists) {
-            cardNumber = generateCardNumber();
-            const existingCard = await MembershipCard.findOne({ cardNumber });
-            if (!existingCard) {
-                cardExists = false;
-            }
+        if(existingCard){
+            return res.status(400).json({success: false, message: "Card Number Already Exist !"})
         }
 
         const newCard = await MembershipCard.create({
@@ -36,6 +30,37 @@ export const createMembershipCard = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+export const updateMembershipCard = async (req, res) => {
+    try {
+        const { cardNumber } = req.params; // Assuming the cardNumber is passed in the URL
+        const { tier, discountPercentage, isActive } = req.body;
+        console.log(cardNumber);
+        
+
+        if (!tier && discountPercentage === undefined && isActive === undefined) {
+            return res.status(400).json({ success: false, message: "At least one field is required for update." });
+        }
+
+        const existingCard = await MembershipCard.findOne({ cardNumber });
+
+        if (!existingCard) {
+            return res.status(404).json({ success: false, message: "Membership card not found." });
+        }
+
+        // Update only provided fields
+        if (tier) existingCard.tier = tier;
+        if (discountPercentage !== undefined) existingCard.discountPercentage = discountPercentage;
+        if (isActive !== undefined) existingCard.isActive = isActive;
+
+        await existingCard.save();
+
+        res.status(200).json({ success: true, message: "Membership card updated successfully.", card: existingCard });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 
 // Controller to get all membership cards
 export const getMembershipCards = async (req, res) => {

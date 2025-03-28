@@ -1432,7 +1432,6 @@ export const createPOSOrder = async (req, res) => {
     if (!userPaymentOptions || !userPaymentOptions.paymentOption) {
       return res.status(404).json({ message: 'User Payment Options or accounts not found for this manager' });
     }
-    console.log(payments);
     
     // Validate payments before processing
     if (!payments || !Array.isArray(payments) || payments.length !== 0) {

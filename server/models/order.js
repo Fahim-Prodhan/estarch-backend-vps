@@ -89,7 +89,7 @@ const orderSchema = new mongoose.Schema({
   membership: {
     cardNumber: { type: Number, default: 0 },
     membershipDiscount: { type: Number, default: 0 },
-    phone: { type: Number, default: 0 },
+    phone: { type: String, default: 0 },
   },
 
   exchangeAmount:{ type: Number, default: null }
