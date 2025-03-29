@@ -753,11 +753,11 @@ export const getOrderById = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
     // Fetch all orders to determine the index
-    const allOrders = await Order.find().sort({ createdAt: 1 });
+    //const allOrders = await Order.find().sort({ createdAt: 1 });
 
     // Calculate the order number as the index + 1
-    const orderIndex = allOrders.findIndex(o => o._id.toString() === orderId);
-    const orderNumber = orderIndex + 1;
+    //const orderIndex = allOrders.findIndex(o => o._id.toString() === orderId);
+    //const orderNumber = orderIndex + 1;
 
     // Modify cartItems to include barcode and SKU
     const modifiedCartItems = orderWithDetails.cartItems.map((item) => {
@@ -790,7 +790,7 @@ export const getOrderById = async (req, res) => {
     // Prepare the final response
     const orderWithNumberAndModifiedItems = {
       ...orderWithDetails.toObject(),  // Convert Mongoose document to plain JS object
-      orderNumber,
+      //orderNumber,
       cartItems: modifiedCartItems,  // Add modified cartItems
       exchangeDetails: {
         ...orderWithDetails.exchangeDetails.toObject(),  // Convert exchangeDetails to plain JS object

@@ -824,12 +824,20 @@ export const getProductsForPos = async (req, res) => {
       query.selectedSubCategory = subcategory;
     }
 
+    // if (search) {
+    //   query.$or = [
+    //     { productName: { $regex: search, $options: 'i' } },
+    //     { SKU: { $regex: search, $options: 'i' } }
+    //   ];
+    // }
+
     if (search) {
       query.$or = [
-        { productName: { $regex: search, $options: 'i' } },
-        { SKU: { $regex: search, $options: 'i' } }
+        { SKU: { $regex: `^${search}$`, $options: 'i' } }, // Exact match
+        { SKU: { $regex: `${search}$`, $options: 'i' } }  // Ends with search term
       ];
     }
+    
 
     // Aggregate the products with total stock and randomly select 8
     const productsWithTotalStock = await Product.aggregate([
