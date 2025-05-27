@@ -30,6 +30,9 @@ import {
     profitCountForShowroom,
     getBestSellingReport,
     getLastOrderBySerialId,
+    getTopStats,
+    getOrderSourcePie,
+    getTodaysOrderStats
     
     
 } from '../controllers/orderController.js';
@@ -66,5 +69,11 @@ router.get('/get-sent-courier-orders', getSentToCourierOrders);
 router.get('/get-courier-processing-orders', getCourierProcessingOrders);
 router.get('/showroom-profit', profitCountForShowroom);
 router.get('/report-best-selling', getBestSellingReport);
+router.get('/top/stats', getTopStats);
+router.get('/order-source-pie', getOrderSourcePie);
+router.get('/today-order-stats', getTodaysOrderStats);
+
+
+
 
 export default router;

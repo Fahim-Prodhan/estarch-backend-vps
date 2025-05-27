@@ -349,13 +349,13 @@ export const createOrder = async (req, res) => {
     const {
       orderNotes, name, address, area, phone, notes,
       advanced, condition, cartItems, paymentMethod,
-      userId,coupon,serialId
+      userId, coupon, serialId
     } = req.body;
 
-    console.log( orderNotes, name, address, area, phone, notes,
+    console.log(orderNotes, name, address, area, phone, notes,
       advanced, condition, cartItems, paymentMethod,
-      userId,coupon);
-    
+      userId, coupon);
+
 
 
     const invoice = generateInvoiceNumber();
@@ -364,7 +364,7 @@ export const createOrder = async (req, res) => {
     // Find the last order and get the highest orderNo
     // const lastOrder = await Order.countDocuments();
     const lastOrder = await Order.findOne().sort({ orderNo: -1 }).select('orderNo');
-    
+
     // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
     const newOrderNo = lastOrder.orderNo ? parseInt(lastOrder.orderNo + 1) : 1;
 
@@ -451,17 +451,17 @@ export const createOnlinePosOrder = async (req, res) => {
     }
 
     console.log(payments);
-    
+
     // Validate payments before processing
     if (!payments || !Array.isArray(payments) || payments.length !== 0) {
       // Validate and update payment details
       for (const payment of payments) {
         const account = userPaymentOptions.paymentOption.accounts.find(acc => acc.accountType === payment.accountType);
         const paymentOption = account.payments.find(p => p.paymentOption === payment.paymentOption);
-       if (paymentOption) {
-        payment.accountNumber = paymentOption.accountNumber;
-        paymentOption.amount += Number(payment.amount); // Ensure this is a number
-       }
+        if (paymentOption) {
+          payment.accountNumber = paymentOption.accountNumber;
+          paymentOption.amount += Number(payment.amount); // Ensure this is a number
+        }
       }
       await userPaymentOptions.save();
     }
@@ -473,7 +473,7 @@ export const createOnlinePosOrder = async (req, res) => {
     // // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
     // const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
 
-    const lastOrder = await Order.findOne().sort({ orderNo: -1 }).select('orderNo');  
+    const lastOrder = await Order.findOne().sort({ orderNo: -1 }).select('orderNo');
     // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
     const newOrderNo = lastOrder.orderNo ? parseInt(lastOrder.orderNo + 1) : 1;
 
@@ -818,9 +818,9 @@ export const getUserOrderByMobile = async (req, res) => {
         phone: phone,
         name: '',
         address: '',
-        orderList:[]
+        orderList: []
       };
-  
+
       return res.status(404).json(responseData);
     }
 
@@ -892,12 +892,12 @@ export const getOrderByInvoice = async (req, res) => {
     const { invoice } = req.params;
     console.log(invoice);
 
-    const order = await Order.findOne({ invoice})
-    .populate('userId', 'name email')
-    .populate('cartItems.productId', 'productName SKU sizeDetails selectedCategoryName selectedBrand ')
-    .populate('exchangeDetails.items.productId', 'productName SKU sizeDetails') // Populate sizeDetails for exchange items
-    .populate('manager', 'fullName')
-    .populate('employee', 'name');
+    const order = await Order.findOne({ invoice })
+      .populate('userId', 'name email')
+      .populate('cartItems.productId', 'productName SKU sizeDetails selectedCategoryName selectedBrand ')
+      .populate('exchangeDetails.items.productId', 'productName SKU sizeDetails') // Populate sizeDetails for exchange items
+      .populate('manager', 'fullName')
+      .populate('employee', 'name');
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -1127,7 +1127,7 @@ export const getManagerSalesStats = async (req, res) => {
     const { managerId } = req.params;
 
     console.log(singleDate);
-    
+
 
     // Validate managerId
     if (!mongoose.Types.ObjectId.isValid(managerId)) {
@@ -1186,12 +1186,12 @@ export const getManagerSalesStats = async (req, res) => {
 
     // Calculate totals
     expenses.forEach(order => {
-      totalExpense += order.amount; 
+      totalExpense += order.amount;
     });
     orders.forEach(order => {
-      totalSellCount += 1; 
-      totalSellAmount += order.grandTotal || 0;  
-      totalExchangeAmount += order.exchangeAmount || 0;  
+      totalSellCount += 1;
+      totalSellAmount += order.grandTotal || 0;
+      totalExchangeAmount += order.exchangeAmount || 0;
     });
 
     res.status(200).json({
@@ -1425,14 +1425,14 @@ export const createPOSOrder = async (req, res) => {
       serialId, orderNotes, name, address, area, phone, altPhone, notes,
       totalAmount, deliveryCharge, discount, grandTotal, advanced,
       condition, cartItems, paymentMethod, courier, employee, userId, manager, payments,
-      exchangeDetails, exchangeAmount, adminDiscount, giftCard,membership
+      exchangeDetails, exchangeAmount, adminDiscount, giftCard, membership
     } = req.body;
     // Fetch the UserPaymentOption based on the manager/userId
     const userPaymentOptions = await UserPaymentOption.findOne({ userId: manager });
     if (!userPaymentOptions || !userPaymentOptions.paymentOption) {
       return res.status(404).json({ message: 'User Payment Options or accounts not found for this manager' });
     }
-    
+
     // Validate payments before processing
     if (!payments || !Array.isArray(payments) || payments.length !== 0) {
       // Validate and update payment details
@@ -1443,7 +1443,7 @@ export const createPOSOrder = async (req, res) => {
         }
         const paymentOption = account.payments.find(p => p.paymentOption === payment.paymentOption);
         console.log(paymentOption);
-        
+
         if (!paymentOption) {
           return res.status(400).json({ message: `Payment option ${payment.paymentOption} not found for account type ${payment.accountType}` });
         }
@@ -1461,14 +1461,14 @@ export const createPOSOrder = async (req, res) => {
 
     const invoice = generateInvoiceNumber();
     const initialStatus = [{ name: 'delivered', user: null }];
-    const lastStatus = { name: 'delivered'};
+    const lastStatus = { name: 'delivered' };
     // Find the last order and get the highest orderNo
     // const lastOrder = await Order.countDocuments({});
     // // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
     // const newOrderNo = lastOrder ? parseInt(lastOrder + 1) : 1;
 
     const lastOrder = await Order.findOne().sort({ orderNo: -1 }).select('orderNo');
-    
+
     // Set the orderNo to be last order's orderNo + 1 or 1 if this is the first order
     const newOrderNo = lastOrder.orderNo ? parseInt(lastOrder.orderNo + 1) : 1;
 
@@ -1502,12 +1502,12 @@ export const createPOSOrder = async (req, res) => {
       exchangeAmount,
       adminDiscount,
       orderNo: newOrderNo,
-      lastStatus:lastStatus,
+      lastStatus: lastStatus,
       giftCard,
       membership
     });
     console.log(order);
-    
+
     // Update stock for each cart item (reduce stock)
     for (const item of cartItems) {
       console.log(item.productId);
@@ -1565,7 +1565,7 @@ export const createPOSOrder = async (req, res) => {
 
     await order.save();
 
-    return res.status(201).json({ message: 'Order placed successfully' , order });
+    return res.status(201).json({ message: 'Order placed successfully', order });
   } catch (error) {
     console.error('Error placing order:', error);
     return res.status(500).json({ message: 'Server error', error });
@@ -1632,8 +1632,8 @@ export const getCourierProcessingOrders = async (req, res) => {
 
 export const handleOrderReturns = async (req, res) => {
   const { products, orderId, amount,
-    returnDeliveryCharge,userId,
-    partialReturn  } = req.body;
+    returnDeliveryCharge, userId,
+    partialReturn } = req.body;
 
   try {
     // Find the order by orderId
@@ -1667,15 +1667,15 @@ export const handleOrderReturns = async (req, res) => {
     // Determine the new status based on the flags
     if (returnDeliveryCharge) {
       order.lastStatus.name = 'returnWithDeliveryCharge';
-      order.status.push({ name:'returnWithDeliveryCharge', user: userId, timestamp: new Date() });
+      order.status.push({ name: 'returnWithDeliveryCharge', user: userId, timestamp: new Date() });
     } else if (returnDeliveryCharge && partialReturn) {
       order.lastStatus.name = 'partialReturn';
-      order.status.push({ name:'partialReturn', user: userId, timestamp: new Date() });
+      order.status.push({ name: 'partialReturn', user: userId, timestamp: new Date() });
     } else {
       order.lastStatus.name = 'return';
-      order.status.push({ name:'return', user: userId, timestamp: new Date() });
+      order.status.push({ name: 'return', user: userId, timestamp: new Date() });
     }
-   
+
     // // Update the order status
     await order.save();
 
@@ -2129,7 +2129,7 @@ export const getBestSellingReport = async (req, res) => {
           productName: '$product.productName',
           SKU: '$product.SKU',
           totalQuantity: 1,
-          totalRevenue: { $multiply: ['$product.salePrice', '$totalQuantity'] }, 
+          totalRevenue: { $multiply: ['$product.salePrice', '$totalQuantity'] },
           images: '$product.images',
           categoryName: { $ifNull: ['$category.name', null] },
           subcategoryName: { $ifNull: ['$subcategory.name', null] },
@@ -2145,6 +2145,291 @@ export const getBestSellingReport = async (req, res) => {
 };
 
 
+export const getTopStats = async (req, res) => {
+  try {
+    // 1. Top 5 Selling Categories by Quantity
+
+    const topCategories = await Order.aggregate([
+      { $unwind: '$cartItems' },
+      // Join with Product collection to get category info
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'cartItems.productId',
+          foreignField: '_id',
+          as: 'productDetails',
+        },
+      },
+      { $unwind: '$productDetails' },
+      {
+        $group: {
+          _id: '$productDetails.selectedCategoryName', // or selectedCategoryName
+          totalQuantity: { $sum: '$cartItems.quantity' },
+          totalSales: { $sum: { $multiply: ['$cartItems.quantity', '$cartItems.price'] } },
+        },
+      },
+      { $sort: { totalQuantity: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          category: '$_id',
+          totalQuantity: 1,
+          totalSales: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    // 2. Top 5 Selling Products by Quantity
+
+    const topProducts = await Order.aggregate([
+      { $unwind: '$cartItems' },
+      {
+        $group: {
+          _id: '$cartItems.productId',
+          totalQuantity: { $sum: '$cartItems.quantity' },
+          totalSales: { $sum: { $multiply: ['$cartItems.quantity', '$cartItems.price'] } },
+        },
+      },
+      { $sort: { totalQuantity: -1 } },
+      { $limit: 5 },
+      // Lookup product name
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'product',
+        },
+      },
+      { $unwind: '$product' },
+      {
+        $project: {
+          productId: '$_id',
+          productName: '$product.productName',
+          totalQuantity: 1,
+          totalSales: 1,
+          _id: 0,
+        },
+      },
+    ]);
+
+    // 3. Top 5 Customers by total amount spent
+
+    const topCustomers = await Order.aggregate([
+      {
+        // Group by customer identifier fields: name + phone (you can customize)
+        $group: {
+          _id: { name: '$name', phone: '$phone' },
+          totalOrders: { $sum: 1 },
+          totalSpent: { $sum: '$grandTotal' },
+          address: { $first: '$address' },
+          area: { $first: '$area' }
+        }
+      },
+      {
+        // Optional: Exclude guest customers if needed
+        $match: {
+          '_id.name': { $ne: 'guest' },
+          '_id.phone': { $ne: 'guest' }
+        }
+      },
+      { $sort: { totalSpent: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          name: '$_id.name',
+          phone: '$_id.phone',
+          address: 1,
+          area: 1,
+          totalOrders: 1,
+          totalSpent: 1,
+          _id: 0
+        }
+      }
+    ]);
 
 
+    return res.json({
+      topCategories,
+      topProducts,
+      topCustomers,
+    });
+  } catch (error) {
+    console.error('Error fetching top stats:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
 
+
+export const getOrderSourcePie = async (req, res) => {
+  try {
+    const data = await Order.aggregate([
+      {
+        $group: {
+          _id: '$serialId',       // Group by serialId (order source)
+          count: { $sum: 1 },     // Count how many orders for each source
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          source: '$_id',
+          count: 1,
+        }
+      },
+      { $sort: { count: -1 } }    // Optional: sort descending by count
+    ]);
+
+    return res.json(data);
+
+  } catch (error) {
+    console.error('Error getting order source pie data:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+export const getTodaysOrderStats = async (req, res) => {
+  try {
+    // Parse date query param (format: YYYY-MM-DD), default to today
+    const queryDate = req.query.date ? new Date(req.query.date) : new Date();
+
+    // Start and end of the day
+    const start = new Date(queryDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(queryDate);
+    end.setHours(23, 59, 59, 999);
+
+    // 1. Total Orders (all orders created on that date)
+    const totalOrders = await Order.countDocuments({
+      createdAt: { $gte: start, $lte: end },
+    });
+
+    // 2. Get all orders created on that date with cart items and phone
+    const todaysOrders = await Order.find({
+      createdAt: { $gte: start, $lte: end },
+    }).select('cartItems phone grandTotal');
+
+    // 3. Calculate total profit
+    // Collect all unique productIds from today's cart items
+    const uniqueProductIds = new Set();
+    todaysOrders.forEach(order => {
+      order.cartItems.forEach(item => {
+        uniqueProductIds.add(item.productId.toString());
+      });
+    });
+
+    // Fetch relevant products
+    const products = await Product.find({ _id: { $in: Array.from(uniqueProductIds) } }).select('sizeDetails');
+
+    // Build map: key = productId|size, value = purchasePrice
+    const productSizeMap = new Map();
+    products.forEach(product => {
+      product.sizeDetails.forEach(sizeDetail => {
+        const key = product._id.toString() + '|' + sizeDetail.size;
+        productSizeMap.set(key, sizeDetail.purchasePrice || 0);
+      });
+    });
+
+    // Calculate total profit from cart items
+    let totalProfit = 0;
+    todaysOrders.forEach(order => {
+      order.cartItems.forEach(item => {
+        const key = item.productId.toString() + '|' + item.size;
+        const purchasePrice = productSizeMap.get(key) || 0;
+        const profitPerItem = (item.price - purchasePrice) * item.quantity;
+        totalProfit += profitPerItem;
+      });
+    });
+
+    // 4. New Customer Value (based on phone)
+    // Get unique phones from today's orders excluding empty or 'guest'
+    const todaysPhones = [...new Set(
+      todaysOrders
+        .map(o => o.phone)
+        .filter(p => p && p.toLowerCase() !== 'guest')
+    )];
+
+    // Phones with orders before the day
+    const existingPhonesOrders = await Order.aggregate([
+      {
+        $match: {
+          phone: { $in: todaysPhones },
+          createdAt: { $lt: start },
+        },
+      },
+      { $group: { _id: '$phone' } },
+    ]);
+    const existingPhones = existingPhonesOrders.map(o => o._id);
+
+    // Phones that are new customers (no previous orders)
+    const newPhones = todaysPhones.filter(p => !existingPhones.includes(p));
+
+    // Sum grandTotal for orders placed by new customers today
+    const newCustomerValue = todaysOrders
+      .filter(o => newPhones.includes(o.phone))
+      .reduce((sum, o) => sum + (o.grandTotal || 0), 0);
+
+    // 5. Count orders by lastStatus.name for that date (filter by lastStatus.timestamp)
+    const statusCountsAgg = await Order.aggregate([
+      {
+        $match: {
+          'lastStatus.timestamp': { $gte: start, $lte: end },
+        },
+      },
+      {
+        $group: {
+          _id: '$lastStatus.name',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const statusCountMap = {};
+    statusCountsAgg.forEach(s => {
+      statusCountMap[s._id] = s.count;
+    });
+
+    const exchangeStatuses = ['exchange'];
+    const returnStatuses = [
+      'return',
+      'returnWithDeliveryCharge',
+      'partialReturn',
+      'courierReturn',
+    ];
+
+    const exchangeOrderCount = exchangeStatuses.reduce(
+      (acc, status) => acc + (statusCountMap[status] || 0),
+      0,
+    );
+
+    const returnOrderCount = returnStatuses.reduce(
+      (acc, status) => acc + (statusCountMap[status] || 0),
+      0,
+    );
+
+    // 6. Delivered orders excluding showroom (serialId !== 'showroom')
+    const deliveredOrdersExcludingShowroom = await Order.countDocuments({
+      'lastStatus.name': 'delivered',
+      'lastStatus.timestamp': { $gte: start, $lte: end },
+      serialId: { $ne: 'showroom' },
+    });
+
+    // Send response
+    return res.json({
+      totalProfit,
+      newCustomerValue,
+      totalOrders,
+      pendingOrders: statusCountMap['pending'] || 0,
+      confirmOrders: statusCountMap['confirm'] || 0,
+      deliveredOrders: deliveredOrdersExcludingShowroom,
+      exchangeOrders: exchangeOrderCount,
+      returnOrders: returnOrderCount,
+    });
+  } catch (error) {
+    console.error("Error fetching order stats:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};

@@ -58,3 +58,26 @@ export const deleteSupplier = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getSupplierStats = async (req, res) => {
+  try {
+    const totalSuppliers = await Supplier.countDocuments();
+    const totalDueAggregate = await Supplier.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalDue: { $sum: "$due" }
+        }
+      }
+    ]);
+
+    const totalDue = totalDueAggregate.length > 0 ? totalDueAggregate[0].totalDue : 0;
+
+    res.status(200).json({
+      totalSuppliers,
+      totalDue,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

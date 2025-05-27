@@ -43,6 +43,8 @@ import couponRoutes from './server/routes/couponRoutes.js';
 import giftCardRoutes from './server/routes/giftCardRoutes.js';
 import membershipRoutes from './server/routes/membershipRoutes.js';
 import footerContentsRoutes from './server/routes/footerContentsRoutes.js';
+import visitRoutes from './server/routes/visitRoutes.js';
+import salesmanRoutes from './server/routes/salesmanRoutes.js';
 
 
 dotenv.config();
@@ -143,6 +145,9 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/giftcards', giftCardRoutes);
 app.use('/api/memberships', membershipRoutes);
 app.use('/api/footer-contents', footerContentsRoutes);
+app.use('/api/visits', visitRoutes);
+app.use('/api/salesmen', salesmanRoutes);
+
 // Upload route
 app.post('/upload', uploadSingle, (req, res) => {
   res.json({ file: req.file ? req.file.path : null });
